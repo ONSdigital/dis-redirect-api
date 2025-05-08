@@ -36,27 +36,6 @@ paths:
           $ref: '#/responses/Unauthorised'
         500:
           $ref: '#/responses/InternalError'
-    post:
-      summary: "Create a new redirect"
-      tags:
-        - "Private"
-      security:
-        - Authorization: []
-      produces:
-        - application/json
-      parameters:
-        - $ref: "#/parameters/Redirect"
-      responses:
-        201:
-          description: "The newly created redirect"
-          schema:
-            $ref: "#/definitions/Redirect"
-        400:
-          $ref: '#/responses/BadRequest'
-        401:
-          $ref: '#/responses/Unauthorised'
-        500:
-          $ref: '#/responses/InternalError'
   /redirects/{id}:
     get:
       summary: "Get a redirect"
@@ -82,7 +61,7 @@ paths:
         500:
           $ref: '#/responses/InternalError'
     put:
-      summary: "Update a redirect"
+      summary: "Update a redirect if it exists or creates a new one for a given id"
       tags:
         - "Private"
       security:
@@ -96,12 +75,14 @@ paths:
           description: "The updated redirect"
           schema:
             $ref: "#/definitions/Redirect"
+        201:
+          description: "The created redirect"
+          schema:
+            $ref: "#/definitions/Redirect"
         400:
           $ref: '#/responses/BadRequest'
         401:
           $ref: '#/responses/Unauthorised'
-        404:
-          $ref: '#/responses/NotFound'
         500:
           $ref: '#/responses/InternalError'
     delete:
