@@ -33,3 +33,24 @@ jobs:
         uses: sonatype-nexus-community/nancy-github-action@main
         with:
           nancyVersion: "latest"
+
+  dis-redirect-api-build:
+    needs: dis-redirect-api-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run build test
+        run: make build
+
+  dis-redirect-api-lint:
+    needs: dis-redirect-api-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run lint checks
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.64.6
+
