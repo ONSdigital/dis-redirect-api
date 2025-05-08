@@ -48,6 +48,10 @@ lint: ## Used in ci to run linters against Go code
 lint-local: ## Use locally to run linters against Go code
 	golangci-lint run ./...
 
+.PHONY: validate-specification
+validate-specification: # Validate swagger spec
+	redocly lint swagger.yaml
+
 .PHONY: test
 test: ## Runs unit tests including checks for race conditions and returns coverage
 	go test -race -cover ./...
