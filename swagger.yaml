@@ -23,8 +23,8 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: "#/parameters/Limit"
-        - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/Count"
+        - $ref: "#/parameters/Cursor"
       responses:
         200: 
           description: "Paginated list of redirects"
@@ -142,20 +142,18 @@ responses:
     description: "The request was invalid."
 
 parameters:
-  Limit:
+  Count:
     in: query
-    name: limit
-    description: "The number of redirects requested, defaulted to 10 and limited to 1000."
+    name: count
+    description: "The approximate number of redirects requested, defaulted to 10 and limited to 1000."
     type: integer
     default: 10
     required: false
-  Offset:
+  Cursor:
     in: query
-    name: offset
+    name: cursor
     description: >
-      The offset into the complete ordered set of redirects, which 
-      specifies the first resource to return (starting at 0). Use this parameter as a pagination 
-      mechanism along with the limit parameter.
+      The cursor value returned from a previous response. 0 should be used for the first request
     type: integer
     default: 0
     required: false
@@ -207,23 +205,21 @@ definitions:
     properties:
       count:
         type: integer
-        description: How many resources are present in the response
+        description: How many redirects are present in the response
       items:
         type: array
         description: Array containing results.
         items: 
           $ref: "#/definitions/Redirect"
-      limit:
-        type: integer
-        description: Max number of items we're returning in this response.
-      offset:
-        type: integer
-        description: >
-          The number of documents into the full list that this particular response is starting at, 
-          this should default to 0 if not set.
+      cursor:
+        type: string
+        description: The cursor we're returning items for.
+      next_cursor:
+        type: string
+        description: Cursor to use for the next page. "0" means end of iteration.
       total_count:
         type: integer
-        description: How many resources are available in total
+        description: How many redirects are available in total
   RedirectPostBody:
     type: object
     properties:
@@ -233,7 +229,6 @@ definitions:
       to:
         type: string
         example: "/business"
- 
   Health:
     type: object
     properties:
