@@ -1,38 +1,135 @@
 swagger: "2.0"
 info:
   title: "dis-redirect-api"
-  description: "A GO API for URL redirect."
+  description: "A Go API for URL redirects."
   version: 1.0.0
   license:
     name: "Open Government Licence v3.0"
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 basePath: "/v1"
 schemes:
-  - http
+  - https
 tags:
-  - name: "hello"
-  - name: "private"
+  - name: "Private"
+    description: "Used for private endpoints when API is in private mode"
 paths:
-  /hello:
+  /redirects:
     get:
+      summary: "Get a list of redirects"
       tags:
-        - hello
-      summary: Example hello world endpoint
-      description: Returns an example payload.
+        - "Private"
+      security:
+        - Authorization: []
       produces:
         - application/json
+      parameters:
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
       responses:
-        200:
-          description: OK
+        200: 
+          description: "Paginated list of redirects"
           schema:
-            $ref: "#/definitions/HelloResponse"
+            $ref: "#/definitions/RedirectList"
+        400:
+          $ref: '#/responses/BadRequest'
+        401:
+          $ref: '#/responses/Unauthorised'
         500:
           $ref: '#/responses/InternalError'
-
+    post:
+      summary: "Create a new redirect"
+      tags:
+        - "Private"
+      security:
+        - Authorization: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/Redirect"
+      responses:
+        201:
+          description: "The newly created redirect"
+          schema:
+            $ref: "#/definitions/Redirect"
+        400:
+          $ref: '#/responses/BadRequest'
+        401:
+          $ref: '#/responses/Unauthorised'
+        500:
+          $ref: '#/responses/InternalError'
+  /redirects/{id}:
+    get:
+      summary: "Get a redirect"
+      tags:
+        - "Private"
+      security:
+        - Authorization: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/RedirectID"
+      responses:
+        200: 
+          description: "A single redirect"
+          schema:
+            $ref: "#/definitions/Redirect"
+        400:
+          $ref: '#/responses/BadRequest'
+        401:
+          $ref: '#/responses/Unauthorised'
+        404:
+          $ref: '#/responses/NotFound'
+        500:
+          $ref: '#/responses/InternalError'
+    put:
+      summary: "Update a redirect"
+      tags:
+        - "Private"
+      security:
+        - Authorization: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/RedirectID"
+      responses:
+        200:
+          description: "The updated redirect"
+          schema:
+            $ref: "#/definitions/Redirect"
+        400:
+          $ref: '#/responses/BadRequest'
+        401:
+          $ref: '#/responses/Unauthorised'
+        404:
+          $ref: '#/responses/NotFound'
+        500:
+          $ref: '#/responses/InternalError'
+    delete:
+      summary: "Delete a redirect"
+      tags:
+        - "Private"
+      security:
+        - Authorization: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/RedirectID"
+      responses:
+        204:
+          $ref: '#/responses/NoContent'
+        400:
+          $ref: '#/responses/BadRequest'
+        401:
+          $ref: '#/responses/Unauthorised'
+        404:
+          $ref: '#/responses/NotFound'
+        500:
+          $ref: '#/responses/InternalError'
   /health:
     get:
+      security: []
       tags:
-        - private
+        - Private
       summary: "Returns API's health status"
       description: "Returns health status of the API and checks on dependent services"
       produces:
@@ -49,16 +146,113 @@ paths:
 
 responses:
   InternalError:
-    description: "Failed to process the request due to an internal error"
+    description: "Failed to process the request due to an internal error."
+
+  Unauthorised:
+    description: "Failed to process the request due to being unauthorised."
+
+  NotFound:
+    description: "The specified resource was not found."
+
+  NoContent:
+    description: "No content to be returned"
+
+  BadRequest:
+    description: "The request was invalid."
+
+parameters:
+  Limit:
+    in: query
+    name: limit
+    description: "The number of redirects requested, defaulted to 10 and limited to 1000."
+    type: integer
+    default: 10
+    required: false
+  Offset:
+    in: query
+    name: offset
+    description: >
+      The offset into the complete ordered set of redirects, which 
+      specifies the first resource to return (starting at 0). Use this parameter as a pagination 
+      mechanism along with the limit parameter.
+    type: integer
+    default: 0
+    required: false
+  RedirectID:
+    in: path
+    type: string
+    name: id
+    required: true
+    schema:
+      $ref: "#/definitions/RedirectID"
+  Redirect:
+    in: body
+    name: redirect
+    description: "A redirect to be created"
+    schema: 
+      $ref: "#/definitions/RedirectPostBody"
 
 definitions:
-  HelloResponse:
+  Redirect:
     type: object
     properties:
-      message:
+      from:
         type: string
-        description: "Message returned by hello world endpoint"
-        example: "Hello, world!"
+        example: "/economy"
+      to:
+        type: string
+        example: "/business"
+      id:
+        $ref: "#/definitions/RedirectID"
+      links:
+        type: object
+        properties:
+          self:
+            description: "A link to the individual redirect"
+            type: object
+            properties:
+              href:
+                description: "A fully qualified URL to the redirect API response"
+                type: string
+                example: "https://api.beta.ons.gov.uk/v1/redirects/a1b2c3d4e5f67890123456789abcdef0"
+              id:
+                $ref: "#/definitions/RedirectID"
+  RedirectID:
+    type: string
+    description: "Unique identifier for a redirect, represented as an MD5 hash of the from path"
+    example: "a1b2c3d4e5f67890123456789abcdef0"
+  RedirectList:
+    type: object
+    properties:
+      count:
+        type: integer
+        description: How many resources are present in the response
+      items:
+        type: array
+        description: Array containing results.
+        items: 
+          $ref: "#/definitions/Redirect"
+      limit:
+        type: integer
+        description: Max number of items we're returning in this response.
+      offset:
+        type: integer
+        description: >
+          The number of documents into the full list that this particular response is starting at, 
+          this should default to 0 if not set.
+      total_count:
+        type: integer
+        description: How many resources are available in total
+  RedirectPostBody:
+    type: object
+    properties:
+      from:
+        type: string
+        example: "/economy"
+      to:
+        type: string
+        example: "/business"
+ 
   Health:
     type: object
     properties:
@@ -128,3 +322,9 @@ definitions:
         type: string
         description: "The last failed health check date and time of the external service"
         example: "2019-09-22T11:48:51.0000001Z"
+securityDefinitions:
+  Authorization:
+    name: Authorization
+    description: "Service Auth Token used by Auth service"
+    in: header
+    type: apiKey
