@@ -54,3 +54,20 @@ jobs:
         with:
           version: v1.64.6
 
+  dis-redirect-api-unit:
+    needs: dis-redirect-api-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run unit tests
+        run: make test
+
+  dis-redirect-api-component:
+    needs: dis-redirect-api-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run component tests
+        run: make test-component
