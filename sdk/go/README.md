@@ -15,12 +15,12 @@ package main
 
 import (
     "context"
-    "github.com/ONSdigital/dis-redirect-api/sdk"
+    redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 )
 
 func main() {
     ...
-    redirectAPIClient := sdk.NewClient("http://localhost:29900")
+    redirectAPIClient := redirectAPI.NewClient("http://localhost:29900")
     ...
 }
 ```
