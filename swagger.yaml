@@ -18,8 +18,7 @@ paths:
       summary: "Get a list of redirects"
       tags:
         - "Private"
-      security:
-        - Authorization: []
+      security: []
       produces:
         - application/json
       parameters:
@@ -32,8 +31,6 @@ paths:
             $ref: "#/definitions/RedirectList"
         400:
           $ref: '#/responses/BadRequest'
-        401:
-          $ref: '#/responses/Unauthorised'
         500:
           $ref: '#/responses/InternalError'
   /redirects/{id}:
@@ -41,8 +38,7 @@ paths:
       summary: "Get a redirect"
       tags:
         - "Private"
-      security:
-        - Authorization: []
+      security: []
       produces:
         - application/json
       parameters:
@@ -54,8 +50,6 @@ paths:
             $ref: "#/definitions/Redirect"
         400:
           $ref: '#/responses/BadRequest'
-        401:
-          $ref: '#/responses/Unauthorised'
         404:
           $ref: '#/responses/NotFound'
         500:
