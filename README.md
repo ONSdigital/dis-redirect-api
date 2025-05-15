@@ -38,6 +38,13 @@ npm install -g redocly-cli
 | OTEL_BATCH_TIMEOUT           | 5s                 | Timeout for OpenTelemetry
 | OTEL_ENABLED                 | false              | Feature flag to enable OpenTelemetry
 
+### SDKs
+
+This API has two SDKs available:
+
+* [Go](./sdk/go/README.md)
+* [Java](./sdk/java/README.md)
+
 ## Contributing
 
 See [CONTRIBUTING](CONTRIBUTING.md) for details.

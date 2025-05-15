@@ -12,16 +12,32 @@ VERSION ?= $(shell git tag --points-at HEAD | grep ^v | head -n 1)
 
 LDFLAGS = -ldflags "-X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT) -X main.Version=$(VERSION)"
 
+JAVA_SDK_DIR="./sdk/java"
+
 .PHONY: all
 all: delimiter-AUDIT audit delimiter-LINTERS lint delimiter-UNIT-TESTS test delimiter-COMPONENT_TESTS test-component delimiter-FINISH ## Runs multiple targets, audit, lint, test and test-component
 
 .PHONY: audit
-audit: ## Runs checks for security vulnerabilities on dependencies (including transient ones)
+audit: audit-go audit-java ## Runs checks for security vulnerabilities on dependencies (including transient ones)
+	
+.PHONY: audit-go
+audit-go:
 	go list -json -m all | nancy sleuth
 
+.PHONY: audit-java
+audit-java: 
+	mvn -f $(JAVA_SDK_DIR) ossindex:audit
+
 .PHONY: build
-build: ## Builds binary of application code and stores in bin directory as dis-redirect-api
+build: build-go build-java
+
+.PHONY: build-go
+build-go: ## Builds binary of application code and stores in bin directory as dis-redirect-api
 	go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dis-redirect-api
+
+.PHONY: build-java
+build-java:	
+	mvn -f $(JAVA_SDK_DIR) clean package -Dmaven.test.skip -Dossindex.skip=true
 
 .PHONY: convey
 convey: ## Runs unit test suite and outputs results on http://127.0.0.1:8080/
@@ -41,8 +57,15 @@ fmt: ## Run Go formatting on code
 	go fmt ./...
 
 .PHONY: lint
-lint: ## Used in ci to run linters against Go code
+lint: lint-go lint-java
+
+.PHONY: lint-go
+lint-go: ## Used in ci to run linters against Go code
 	golangci-lint run ./...
+
+.PHONY: lint-java
+lint-java:
+	mvn -f $(JAVA_SDK_DIR) clean checkstyle:check test-compile
 
 .PHONY: lint-local
 lint-local: ## Use locally to run linters against Go code
@@ -53,8 +76,15 @@ validate-specification: # Validate swagger spec
 	redocly lint swagger.yaml
 
 .PHONY: test
-test: ## Runs unit tests including checks for race conditions and returns coverage
+test: test-go test-java
+
+.PHONY: test-go
+test-go: ## Runs unit tests including checks for race conditions and returns coverage
 	go test -race -cover ./...
+
+.PHONY: test-java
+test-java:
+	mvn -f $(JAVA_SDK_DIR) -Dossindex.skip=true test
 
 .PHONY: test-component
 test-component: ## Runs component test suite
