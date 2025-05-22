@@ -74,6 +74,7 @@ func (e *ExternalServiceList) GetRedis(ctx context.Context, cfg config.RedisConf
 	return redis, nil
 }
 
+// DoGetRedis initialises a dis-redis client
 func (e *Init) DoGetRedis(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
 	redis := &redis.Redis{
 		RedisConfig: cfg,

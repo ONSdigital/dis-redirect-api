@@ -13,6 +13,8 @@ type Redis struct {
 	cfg.RedisConfig
 }
 
+// Init returns an initialised Redis client encapsulating a connection to the redis server/cluster with the given configuration
+// and an error
 func (r *Redis) Init(ctx context.Context) (disRedisClient *disRedis.Client, err error) {
 	redisClient, redisClientErr := disRedis.NewClient(ctx, &disRedis.ClientConfig{
 		Address: r.Address,
@@ -24,6 +26,7 @@ func (r *Redis) Init(ctx context.Context) (disRedisClient *disRedis.Client, err 
 	return redisClient, err
 }
 
+// Checker call the healthcheck of dis-redis and returns the health state of the redis instance
 func (r *Redis) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	redisClient, err := r.Init(ctx)
 	if err != nil {
