@@ -30,6 +30,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
 	r := mux.NewRouter()
 
+	// Get Redis client
+	redisClient, err := serviceList.GetRedis(ctx, cfg.RedisConfig)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise dis-redis", err)
+		return nil, err
+	}
+
 	if cfg.OtelEnabled {
 		r.Use(otelmux.Middleware(cfg.OTServiceName))
 
@@ -50,7 +57,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc); err != nil {
+	if err := registerCheckers(ctx, hc, redisClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -120,9 +127,17 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context,
-	hc HealthChecker) (err error) {
-	// TODO: add other health checks here, as per dp-upload-service
+// registerCheckers adds the checkers for the provided clients to the health check object
+func registerCheckers(ctx context.Context, hc HealthChecker, redisCli api.Redis) (err error) {
+	hasErrors := false
 
+	if err = hc.AddCheck("Redis", redisCli.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for dis-redis", err)
+	}
+
+	if hasErrors {
+		return errors.New("Error(s) registering checkers for healthcheck")
+	}
 	return nil
 }
