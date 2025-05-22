@@ -64,6 +64,7 @@ paths:
         - application/json
       parameters:
         - $ref: "#/parameters/RedirectID"
+        - $ref: "#/parameters/Redirect"
       responses:
         200:
           description: "The updated redirect"
@@ -163,7 +164,7 @@ parameters:
     name: redirect
     description: "A redirect to be created"
     schema: 
-      $ref: "#/definitions/RedirectPostBody"
+      $ref: "#/definitions/RedirectPutBody"
 
 definitions:
   Redirect:
@@ -214,7 +215,7 @@ definitions:
       total_count:
         type: integer
         description: How many redirects are available in total
-  RedirectPostBody:
+  RedirectPutBody:
     type: object
     properties:
       from:
