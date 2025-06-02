@@ -16,7 +16,7 @@ type Service struct {
 	Config      *config.Config
 	Server      HTTPServer
 	Router      *mux.Router
-	API         *api.API
+	API         *api.RedirectAPI
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
 	RedisClient RedisClient
