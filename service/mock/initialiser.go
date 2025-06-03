@@ -4,8 +4,6 @@
 package mock
 
 import (
-	"context"
-	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"net/http"
@@ -28,9 +26,6 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
-//			DoGetRedisFunc: func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-//				panic("mock out the DoGetRedis method")
-//			},
 //		}
 //
 //		// use mockedInitialiser in code that requires service.Initialiser
@@ -43,9 +38,6 @@ type InitialiserMock struct {
 
 	// DoGetHealthCheckFunc mocks the DoGetHealthCheck method.
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
-
-	// DoGetRedisFunc mocks the DoGetRedis method.
-	DoGetRedisFunc func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -67,17 +59,9 @@ type InitialiserMock struct {
 			// Version is the version argument value.
 			Version string
 		}
-		// DoGetRedis holds details about calls to the DoGetRedis method.
-		DoGetRedis []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Cfg is the cfg argument value.
-			Cfg config.RedisConfig
-		}
 	}
 	lockDoGetHTTPServer  sync.RWMutex
 	lockDoGetHealthCheck sync.RWMutex
-	lockDoGetRedis       sync.RWMutex
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
@@ -157,41 +141,5 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 	mock.lockDoGetHealthCheck.RLock()
 	calls = mock.calls.DoGetHealthCheck
 	mock.lockDoGetHealthCheck.RUnlock()
-	return calls
-}
-
-// DoGetRedis calls DoGetRedisFunc.
-func (mock *InitialiserMock) DoGetRedis(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-	if mock.DoGetRedisFunc == nil {
-		panic("InitialiserMock.DoGetRedisFunc: method is nil but Initialiser.DoGetRedis was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Cfg config.RedisConfig
-	}{
-		Ctx: ctx,
-		Cfg: cfg,
-	}
-	mock.lockDoGetRedis.Lock()
-	mock.calls.DoGetRedis = append(mock.calls.DoGetRedis, callInfo)
-	mock.lockDoGetRedis.Unlock()
-	return mock.DoGetRedisFunc(ctx, cfg)
-}
-
-// DoGetRedisCalls gets all the calls that were made to DoGetRedis.
-// Check the length with:
-//
-//	len(mockedInitialiser.DoGetRedisCalls())
-func (mock *InitialiserMock) DoGetRedisCalls() []struct {
-	Ctx context.Context
-	Cfg config.RedisConfig
-} {
-	var calls []struct {
-		Ctx context.Context
-		Cfg config.RedisConfig
-	}
-	mock.lockDoGetRedis.RLock()
-	calls = mock.calls.DoGetRedis
-	mock.lockDoGetRedis.RUnlock()
 	return calls
 }

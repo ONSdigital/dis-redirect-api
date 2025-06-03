@@ -19,6 +19,7 @@ type Service struct {
 	API         *api.API
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
+	RedisClient RedisClient
 }
 
 // Run the service
@@ -30,13 +31,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
 	r := mux.NewRouter()
 
-	// Get Redis client
-	redisClient, err := serviceList.GetRedis(ctx, cfg.RedisConfig)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise dis-redis", err)
-		return nil, err
-	}
-
 	if cfg.OtelEnabled {
 		r.Use(otelmux.Middleware(cfg.OTServiceName))
 
@@ -46,6 +40,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
 	// TODO: Add other(s) to serviceList here
+
+	// Get Redis client
+	redisClient, err := GetRedisClient(ctx, cfg.RedisConfig)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise dis-redis", err)
+		return nil, err
+	}
 
 	// Setup the API
 	a := api.Setup(ctx, r)
@@ -78,6 +79,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		HealthCheck: hc,
 		ServiceList: serviceList,
 		Server:      s,
+		RedisClient: redisClient,
 	}, nil
 }
 
@@ -128,7 +130,7 @@ func (svc *Service) Close(ctx context.Context) error {
 }
 
 // registerCheckers adds the checkers for the provided clients to the health check object
-func registerCheckers(ctx context.Context, hc HealthChecker, redisCli api.Redis) (err error) {
+func registerCheckers(ctx context.Context, hc HealthChecker, redisCli RedisClient) (err error) {
 	hasErrors := false
 
 	if err = hc.AddCheck("Redis", redisCli.Checker); err != nil {

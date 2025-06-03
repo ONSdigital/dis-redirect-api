@@ -5,9 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
-	"github.com/ONSdigital/dis-redirect-api/redis"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
 
@@ -24,7 +22,7 @@ type Component struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 	apiFeature     *componenttest.APIFeature
-	RedisClient    *redis.Redis
+	RedisClient    *service.RedisClient
 }
 
 func NewComponent() (*Component, error) {
@@ -44,7 +42,6 @@ func NewComponent() (*Component, error) {
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
-		DoGetRedisFunc:       c.DoGetRedisOk,
 	}
 
 	c.svcList = service.NewServiceList(initMock)
@@ -90,8 +87,4 @@ func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) servic
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
 	return c.HTTPServer
-}
-
-func (c *Component) DoGetRedisOk(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-	return c.RedisClient, nil
 }

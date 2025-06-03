@@ -10,8 +10,6 @@ import (
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
-	apimock "github.com/ONSdigital/dis-redirect-api/api/mock"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
@@ -37,10 +35,6 @@ var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitComm
 	return nil, errHealthcheck
 }
 
-var funcDoGetRedisErr = func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-	return nil, errRedis
-}
-
 var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
 	return nil
 }
@@ -55,12 +49,16 @@ func TestRun(t *testing.T) {
 			StartFunc:    func(ctx context.Context) {},
 		}
 
-		redisMock := &apimock.RedisMock{}
-
 		serverWg := &sync.WaitGroup{}
 		serverMock := &mock.HTTPServerMock{
 			ListenAndServeFunc: func() error {
 				serverWg.Done()
+				return nil
+			},
+		}
+
+		redisClientMock := &mock.RedisClientMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
 				return nil
 			},
 		}
@@ -76,10 +74,6 @@ func TestRun(t *testing.T) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisOk := func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-			return redisMock, nil
-		}
-
 		funcDoGetHTTPServer := func(bindAddr string, router http.Handler) service.HTTPServer {
 			return serverMock
 		}
@@ -88,9 +82,17 @@ func TestRun(t *testing.T) {
 			return failingServerMock
 		}
 
+		service.GetRedisClient = func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+			return redisClientMock, nil
+		}
+
 		Convey("Given that initialising Redis returns an error", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetRedisFunc: funcDoGetRedisErr,
+				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
+				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
+			}
+			service.GetRedisClient = func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+				return nil, errRedis
 			}
 
 			svcErrors := make(chan error, 1)
@@ -100,7 +102,10 @@ func TestRun(t *testing.T) {
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errRedis)
 				So(svcList.HealthCheck, ShouldBeFalse)
-				So(svcList.Redis, ShouldBeFalse)
+
+				Convey("And no checkers are registered ", func() {
+					So(hcMock.AddCheckCalls(), ShouldHaveLength, 0)
+				})
 			})
 		})
 
@@ -108,7 +113,6 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
 				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
-				DoGetRedisFunc:       funcDoGetRedisOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -117,7 +121,6 @@ func TestRun(t *testing.T) {
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errHealthcheck)
 				So(svcList.HealthCheck, ShouldBeFalse)
-				So(svcList.Redis, ShouldBeTrue)
 			})
 
 			Reset(func() {
@@ -134,7 +137,6 @@ func TestRun(t *testing.T) {
 
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc: funcDoGetHTTPServer,
-				DoGetRedisFunc:      funcDoGetRedisOk,
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
@@ -148,7 +150,6 @@ func TestRun(t *testing.T) {
 			Convey("Then service Run fails, but all checks try to register", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
-				So(svcList.Redis, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 1)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Redis")
@@ -159,7 +160,6 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
 				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-				DoGetRedisFunc:       funcDoGetRedisOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -191,7 +191,6 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
 				DoGetHTTPServerFunc:  funcDoGetFailingHTTPSerer,
-				DoGetRedisFunc:       funcDoGetRedisOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -237,19 +236,11 @@ func TestClose(t *testing.T) {
 			},
 		}
 
-		// Redis Close will fail if healthcheck and http server are not already closed
-		redicMock := &apimock.RedisMock{
-			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
-		}
-
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
-				},
-				DoGetRedisFunc: func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-					return redicMock, nil
 				},
 			}
 
@@ -276,9 +267,6 @@ func TestClose(t *testing.T) {
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
-				},
-				DoGetRedisFunc: func(ctx context.Context, cfg config.RedisConfig) (api.Redis, error) {
-					return redicMock, nil
 				},
 			}
 
