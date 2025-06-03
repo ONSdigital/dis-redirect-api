@@ -35,6 +35,10 @@ var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitComm
 	return nil, errHealthcheck
 }
 
+var funcDoGetRedisErr = func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+	return nil, errRedis
+}
+
 var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
 	return nil
 }
@@ -52,6 +56,8 @@ func TestRun(t *testing.T) {
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
 			StartFunc:    func(ctx context.Context) {},
 		}
+
+		redisMock := &mock.RedisClientMock{}
 
 		serverWg := &sync.WaitGroup{}
 		serverMock := &mock.HTTPServerMock{
@@ -74,7 +80,7 @@ func TestRun(t *testing.T) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisClientOk := func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+		funcDoGetRedisOk := func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
 			return redisMock, nil
 		}
 
@@ -243,7 +249,7 @@ func TestClose(t *testing.T) {
 		}
 
 		// Redis Close will fail if healthcheck and http server are not already closed
-		redisMock := &mock.RedisClientMock{
+		redicMock := &mock.RedisClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -253,8 +259,8 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
-					return redisMock, nil
+				DoGetRedisFunc: func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+					return redicMock, nil
 				},
 			}
 
@@ -282,8 +288,8 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
-					return redisMock, nil
+				DoGetRedisFunc: func(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+					return redicMock, nil
 				},
 			}
 

@@ -11,6 +11,11 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
+type Redis struct {
+	config.RedisConfig
+	ServiceList *ExternalServiceList
+}
+
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
 	HealthCheck bool
