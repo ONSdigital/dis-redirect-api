@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	disRedis "github.com/ONSdigital/dis-redis"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -31,6 +32,9 @@ func TestConfig(t *testing.T) {
 					OTExporterOTLPEndpoint:     "localhost:4317",
 					OTServiceName:              "dis-redirect-api",
 					OtelEnabled:                false,
+					RedisConfig: disRedis.ClientConfig{
+						Address: "localhost:6379",
+					},
 				})
 			})
 

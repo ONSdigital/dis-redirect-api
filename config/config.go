@@ -42,7 +42,7 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisConfig: RedisConfig{
-			Address: "",
+			Address: "localhost:6379",
 		},
 	}
 
