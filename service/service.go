@@ -42,7 +42,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// TODO: Add other(s) to serviceList here
 
 	// Get Redis client
-	redisClient, err := GetRedisClient(ctx, cfg.RedisConfig)
+	redisClient, err := serviceList.GetRedisClient(ctx, cfg.RedisConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise dis-redis", err)
 		return nil, err
@@ -51,8 +51,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Setup the API
 	a := api.Setup(ctx, r)
 
+	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
-
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err

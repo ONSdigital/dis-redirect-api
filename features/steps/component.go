@@ -8,7 +8,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
-
+	disRedis "github.com/ONSdigital/dis-redis"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -22,7 +22,6 @@ type Component struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 	apiFeature     *componenttest.APIFeature
-	RedisClient    *service.RedisClient
 }
 
 func NewComponent() (*Component, error) {
@@ -42,6 +41,7 @@ func NewComponent() (*Component, error) {
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
+		DoGetRedisClientFunc: c.DoGetRedisClientOk,
 	}
 
 	c.svcList = service.NewServiceList(initMock)
@@ -87,4 +87,12 @@ func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) servic
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
 	return c.HTTPServer
+}
+
+func (c *Component) DoGetRedisClientOk(ctx context.Context, cfg config.RedisConfig) (service.RedisClient, error) {
+	redisCli, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
+		Address: cfg.Address,
+	})
+
+	return redisCli, err
 }

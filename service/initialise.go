@@ -6,16 +6,16 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/config"
 	disRedis "github.com/ONSdigital/dis-redis"
-	"github.com/ONSdigital/log.go/v2/log"
-
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
 	HealthCheck bool
 	Init        Initialiser
+	Redis       bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -61,8 +61,19 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	return &hc, nil
 }
 
-// GetRedisClient initialises a dis-redis client
-var GetRedisClient = func(ctx context.Context, cfg config.RedisConfig) (RedisClient, error) {
+// GetRedisClient creates a Redis client and sets the Redis flag to true
+func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg config.RedisConfig) (RedisClient, error) {
+	redis, err := e.Init.DoGetRedisClient(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Redis = true
+	return redis, nil
+}
+
+// DoGetRedisClient initialises a dis-redis client
+func (e *Init) DoGetRedisClient(ctx context.Context, cfg config.RedisConfig) (RedisClient, error) {
 	redisClient, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
 		Address: cfg.Address,
 	})
