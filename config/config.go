@@ -7,6 +7,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+// RedisConfig is a type that wraps around the dis-redis ClientConfig
 type RedisConfig = disRedis.ClientConfig
 
 // Config represents service configuration for dis-redirect-api
