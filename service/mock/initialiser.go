@@ -5,6 +5,7 @@ package mock
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"net/http"
@@ -27,7 +28,7 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
-//			DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+//			DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 //				panic("mock out the DoGetRedisClient method")
 //			},
 //		}
@@ -44,7 +45,7 @@ type InitialiserMock struct {
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
 
 	// DoGetRedisClientFunc mocks the DoGetRedisClient method.
-	DoGetRedisClientFunc func(ctx context.Context, cfg *config.Config) (service.RedisClient, error)
+	DoGetRedisClientFunc func(ctx context.Context, cfg *config.Config) (api.RedisClient, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -160,7 +161,7 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 }
 
 // DoGetRedisClient calls DoGetRedisClientFunc.
-func (mock *InitialiserMock) DoGetRedisClient(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+func (mock *InitialiserMock) DoGetRedisClient(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 	if mock.DoGetRedisClientFunc == nil {
 		panic("InitialiserMock.DoGetRedisClientFunc: method is nil but Initialiser.DoGetRedisClient was just called")
 	}

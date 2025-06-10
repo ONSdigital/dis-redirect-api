@@ -10,6 +10,8 @@ import (
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
+	"github.com/ONSdigital/dis-redirect-api/api"
+	"github.com/ONSdigital/dis-redirect-api/api/apimock"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
@@ -39,7 +41,7 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 	return nil
 }
 
-var funcDoGetRedisClientErr = func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+var funcDoGetRedisClientErr = func(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 	return nil, errRedis
 }
 
@@ -61,7 +63,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		redisMock := &mock.RedisClientMock{}
+		redisMock := &apimock.RedisClientMock{}
 
 		failingServerMock := &mock.HTTPServerMock{
 			ListenAndServeFunc: func() error {
@@ -74,7 +76,7 @@ func TestRun(t *testing.T) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisClientOk := func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+		funcDoGetRedisClientOk := func(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 			return redisMock, nil
 		}
 
@@ -243,7 +245,7 @@ func TestClose(t *testing.T) {
 		}
 
 		// Redis Close will fail if healthcheck and http server are not already closed
-		redisMock := &mock.RedisClientMock{
+		redisMock := &apimock.RedisClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -253,7 +255,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 					return redisMock, nil
 				},
 			}
@@ -282,7 +284,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
+				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 					return redisMock, nil
 				},
 			}

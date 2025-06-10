@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ONSdigital/dis-redirect-api/api"
+	"github.com/ONSdigital/dis-redirect-api/api/apimock"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -14,12 +16,15 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r)
+		mockRedis := &apimock.RedisClientMock{}
+
+		redirectAPI := api.Setup(ctx, r, mockRedis)
 
 		// TODO: remove hello world example handler route test case
 		Convey("When created the following routes should have been added", func() {
 			// Replace the check below with any newly added api endpoints
-			So(hasRoute(api.Router, "/hello", "GET"), ShouldBeTrue)
+			So(hasRoute(redirectAPI.Router, "/hello", "GET"), ShouldBeTrue)
+			So(hasRoute(redirectAPI.Router, "/redirects/{id}", "GET"), ShouldBeTrue)
 		})
 	})
 }
