@@ -16,10 +16,9 @@ type Service struct {
 	Config      *config.Config
 	Server      HTTPServer
 	Router      *mux.Router
-	API         *api.API
+	API         *api.RedirectAPI
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
-	RedisClient RedisClient
 }
 
 // Run the service
@@ -47,7 +46,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Set up the API
-	a := api.Setup(ctx, r)
+	a := api.Setup(ctx, r, redisClient)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -77,7 +76,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		HealthCheck: hc,
 		ServiceList: serviceList,
 		Server:      s,
-		RedisClient: redisClient,
 	}, nil
 }
 
@@ -128,7 +126,7 @@ func (svc *Service) Close(ctx context.Context) error {
 }
 
 // registerCheckers adds the checkers for the provided clients to the health check object
-func registerCheckers(ctx context.Context, hc HealthChecker, redisCli RedisClient) (err error) {
+func registerCheckers(ctx context.Context, hc HealthChecker, redisCli api.RedisClient) (err error) {
 	hasErrors := false
 
 	if err = hc.AddCheck("Redis", redisCli.Checker); err != nil {
