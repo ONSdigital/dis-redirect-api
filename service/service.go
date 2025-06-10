@@ -42,7 +42,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// TODO: Add other(s) to serviceList here
 
 	// Get Redis client
-	redisClient, err := serviceList.GetRedisClient(ctx, cfg.RedisConfig)
+	redisClient, err := serviceList.GetRedisClient(ctx, cfg.RedisAddress)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise dis-redis", err)
 		return nil, err

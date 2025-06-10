@@ -62,8 +62,8 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 }
 
 // GetRedisClient creates a Redis client and sets the Redis flag to true
-func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg config.RedisConfig) (RedisClient, error) {
-	redis, err := e.Init.DoGetRedisClient(ctx, cfg)
+func (e *ExternalServiceList) GetRedisClient(ctx context.Context, redisAddress string) (RedisClient, error) {
+	redis, err := e.Init.DoGetRedisClient(ctx, redisAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +73,9 @@ func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg config.Red
 }
 
 // DoGetRedisClient initialises a dis-redis client
-func (e *Init) DoGetRedisClient(ctx context.Context, cfg config.RedisConfig) (RedisClient, error) {
+func (e *Init) DoGetRedisClient(ctx context.Context, redisAddress string) (RedisClient, error) {
 	redisClient, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
-		Address: cfg.Address,
+		Address: redisAddress,
 	})
 	if err != nil {
 		log.Error(ctx, "failed to create dis-redis client", err)
