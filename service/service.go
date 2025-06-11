@@ -46,7 +46,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	// Setup the API
+	// Set up the API
 	a := api.Setup(ctx, r)
 
 	// Get HealthCheck
