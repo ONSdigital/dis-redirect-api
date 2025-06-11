@@ -89,9 +89,9 @@ func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) servic
 	return c.HTTPServer
 }
 
-func (c *Component) DoGetRedisClientOk(ctx context.Context, redisConfig service.RedisConfig) (service.RedisClient, error) {
+func (c *Component) DoGetRedisClientOk(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
 	redisCli, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
-		Address: redisConfig.Address,
+		Address: cfg.RedisAddress,
 	})
 
 	return redisCli, err

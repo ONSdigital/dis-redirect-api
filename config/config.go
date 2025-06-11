@@ -3,12 +3,8 @@ package config
 import (
 	"time"
 
-	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/kelseyhightower/envconfig"
 )
-
-// RedisConfig is a type that wraps around the dis-redis ClientConfig
-type RedisConfig = disRedis.ClientConfig
 
 // Config represents service configuration for dis-redirect-api
 type Config struct {

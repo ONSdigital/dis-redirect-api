@@ -39,7 +39,7 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 	return nil
 }
 
-var funcDoGetRedisClientErr = func(ctx context.Context, redisConfig service.RedisConfig) (service.RedisClient, error) {
+var funcDoGetRedisClientErr = func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
 	return nil, errRedis
 }
 
@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisClientOk := func(ctx context.Context, redisConfig service.RedisConfig) (service.RedisClient, error) {
+		funcDoGetRedisClientOk := func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
 			return redisMock, nil
 		}
 
@@ -253,7 +253,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, redisConfig service.RedisConfig) (service.RedisClient, error) {
+				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
 					return redisMock, nil
 				},
 			}
@@ -282,7 +282,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, redisConfig service.RedisConfig) (service.RedisClient, error) {
+				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (service.RedisClient, error) {
 					return redisMock, nil
 				},
 			}
