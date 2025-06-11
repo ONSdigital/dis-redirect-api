@@ -5,6 +5,7 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
+	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -21,6 +22,9 @@ type Service struct {
 	HealthCheck HealthChecker
 	RedisClient RedisClient
 }
+
+// RedisConfig is a type that wraps around the dis-redis ClientConfig
+type RedisConfig = disRedis.ClientConfig
 
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
@@ -41,8 +45,12 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// TODO: Add other(s) to serviceList here
 
+	RedisConfig := RedisConfig{
+		Address: cfg.RedisAddress,
+	}
+
 	// Get Redis client
-	redisClient, err := serviceList.GetRedisClient(ctx, cfg.RedisAddress)
+	redisClient, err := serviceList.GetRedisClient(ctx, RedisConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise dis-redis", err)
 		return nil, err
