@@ -3,9 +3,9 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -22,15 +22,16 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(ctx, "getRedirect endpoint: key not base64", err, logData)
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	redirect, err := api.RedisClient.GetValue(ctx, decodedKey)
 	if err != nil {
-		if errors.Is(err, fmt.Errorf("key %v not found", redirectID)) {
+		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			log.Error(ctx, "getRedirect endpoint: key not found", err, logData)
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			log.Error(ctx, "getRedirect endpoint: api.Redis.GetValue returned an error", err, logData)
+			log.Error(ctx, "getRedirect endpoint: api.getRedirect returned an error", err, logData)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
