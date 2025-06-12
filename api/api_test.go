@@ -34,3 +34,7 @@ func hasRoute(r *mux.Router, path, method string) bool {
 	match := &mux.RouteMatch{}
 	return r.Match(req, match)
 }
+
+func setupAPI(redirect api.RedisClient) *api.RedirectAPI {
+	return api.Setup(context.Background(), mux.NewRouter(), redirect)
+}
