@@ -3,20 +3,19 @@ package sdk
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
 	apiError "github.com/ONSdigital/dis-redirect-api/sdk/go/errors"
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
 const (
-	service = "dis-redirect-api"
+	service          = "dis-redirect-api"
+	RedirectEndpoint = "%s/redirects/%s"
 )
 
 type Client struct {
@@ -51,27 +50,6 @@ func (cli *Client) Health() *healthcheck.Client {
 // Checker calls redirect api health endpoint and returns a check object to the caller
 func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error {
 	return cli.hcCli.Checker(ctx, check)
-}
-
-// TODO: remove GetHelloWorld
-// GetHelloWorld gets the HelloWorld endpoint
-func (cli *Client) GetHelloWorld(ctx context.Context, options Options) (*api.HelloResponse, apiError.Error) {
-	path := fmt.Sprintf("%s/hello", cli.hcCli.URL)
-
-	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, nil)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	var response api.HelloResponse
-
-	if err := json.Unmarshal(respInfo.Body, &response); err != nil {
-		return nil, apiError.StatusError{
-			Err: fmt.Errorf("failed to unmarshal hello response - error is: %v", err),
-		}
-	}
-
-	return &response, nil
 }
 
 type ResponseInfo struct {
