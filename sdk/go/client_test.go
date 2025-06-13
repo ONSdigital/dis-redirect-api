@@ -1,11 +1,8 @@
 package sdk
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -20,17 +17,16 @@ import (
 const testHost = "http://localhost:23900"
 
 var (
-	initialTestState = healthcheck.CreateCheckState(service)
-
-	helloWorldResponse = api.HelloResponse{
-		Message: "hello there",
+	getRedirectResponse = api.RedirectResponse{
+		Value: "new-path",
 	}
+	initialTestState  = healthcheck.CreateCheckState(service)
+	existingBase64Key = "Y29va2llLXNhdWNl"
+	ctx               = context.Background()
 )
 
 func TestHealthCheckerClient(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	timePriorHealthCheck := time.Now().UTC()
 	path := "/health"

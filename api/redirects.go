@@ -11,6 +11,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// RedirectResponse represents response for a redirect
+type RedirectResponse struct {
+	Value string `json:"value,omitempty"`
+}
+
 // getRedirect gets the value of a key from redis
 func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
