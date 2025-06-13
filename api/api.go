@@ -20,8 +20,6 @@ func Setup(ctx context.Context, r *mux.Router, redisClient RedisClient) *Redirec
 		RedisClient: redisClient,
 	}
 
-	// TODO: remove hello world example handler route
-	r.HandleFunc("/hello", HelloHandler(ctx)).Methods("GET")
 	api.get("/redirects/{id}", api.getRedirect)
 	return api
 }

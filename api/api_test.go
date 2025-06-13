@@ -20,10 +20,7 @@ func TestSetup(t *testing.T) {
 
 		redirectAPI := api.Setup(ctx, r, mockRedis)
 
-		// TODO: remove hello world example handler route test case
 		Convey("When created the following routes should have been added", func() {
-			// Replace the check below with any newly added api endpoints
-			So(hasRoute(redirectAPI.Router, "/hello", "GET"), ShouldBeTrue)
 			So(hasRoute(redirectAPI.Router, "/redirects/{id}", "GET"), ShouldBeTrue)
 		})
 	})
