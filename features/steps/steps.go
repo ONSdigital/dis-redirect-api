@@ -32,12 +32,12 @@ type Check struct {
 }
 
 func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^the redirect api is running$`, c.theRedirectApiIsRunning)
+	ctx.Step(`^the redirect api is running$`, c.theRedirectAPIIsRunning)
 	ctx.Step(`^I should receive an empty response$`, c.iShouldReceiveAnEmptyResponse)
 	ctx.Step(`^I should receive the following health JSON response:$`, c.iShouldReceiveTheFollowingHealthJSONResponse)
 }
 
-func (c *RedirectComponent) theRedirectApiIsRunning() {
+func (c *RedirectComponent) theRedirectAPIIsRunning() {
 	assert.Equal(c, true, c.ServiceRunning)
 }
 

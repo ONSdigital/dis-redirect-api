@@ -50,8 +50,9 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(redirectResponse)
-
+	if _, err = w.Write(redirectResponse); err != nil {
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
+	}
 }
 
 // decodeBase64 returns the original string of a base64 encoded string
