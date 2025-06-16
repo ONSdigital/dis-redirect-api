@@ -15,7 +15,7 @@ import (
 
 var (
 	baseURL           = "http://localhost:29900/redirects/"
-	existingBase64Key = "Y29va2llLXNhdWNl"
+	existingBase64Key = "ZWNvbm9teS9vbGQtcGF0aA=="
 )
 
 func TestGetRedirectEndpoint(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGetRedirectReturns500(t *testing.T) {
 	Convey("Given a failing Redirect handler", t, func() {
 		redisClientMock := &apimock.RedisClientMock{
 			GetValueFunc: func(ctx context.Context, key string) (string, error) {
-				return "", errors.New("getRedirect endpoint: api.getRedirect returned an error")
+				return "", errors.New("redis returned an error")
 			},
 		}
 

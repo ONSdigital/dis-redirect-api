@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
 // RedirectResponse represents response for a redirect
 type RedirectResponse struct {
+	Key   string `json:"key,omitempty"`
 	Value string `json:"value,omitempty"`
 }
 
@@ -21,44 +21,45 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	redirectID := vars["id"]
-	logData := log.Data{"redirect_id": redirectID}
 
 	decodedKey, err := decodeBase64(redirectID)
 	if err != nil {
-		log.Error(ctx, "getRedirect endpoint: key not base64", err, logData)
-		w.WriteHeader(http.StatusBadRequest)
+		api.handleError(ctx, w, err, http.StatusBadRequest)
 		return
 	}
 
 	redirect, err := api.RedisClient.GetValue(ctx, decodedKey)
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
-			log.Error(ctx, "getRedirect endpoint: key not found", err, logData)
-			w.WriteHeader(http.StatusNotFound)
+			api.handleError(ctx, w, err, http.StatusNotFound)
 		} else {
-			log.Error(ctx, "getRedirect endpoint: api.getRedirect returned an error", err, logData)
-			w.WriteHeader(http.StatusInternalServerError)
+			api.handleError(ctx, w, ErrRedis, http.StatusInternalServerError)
 		}
 		return
 	}
 
-	b, err := json.Marshal(redirect)
+	responseBody := RedirectResponse{
+		Key:   decodedKey,
+		Value: redirect,
+	}
+
+	redirectResponse, err := json.Marshal(responseBody)
 	if err != nil {
-		log.Error(ctx, "error returned from json marshal", err, logData)
-		w.WriteHeader(http.StatusInternalServerError)
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
+	w.Write(redirectResponse)
+
 }
 
 // decodeBase64 returns the original string of a base64 encoded string
-func decodeBase64(encode string) (string, error) {
-	decode, err := base64.StdEncoding.DecodeString(encode)
+func decodeBase64(encodedKey string) (string, error) {
+	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("key %s not base64", encodedKey)
 	}
-	return string(decode), nil
+	return string(decodedKey), nil
 }
