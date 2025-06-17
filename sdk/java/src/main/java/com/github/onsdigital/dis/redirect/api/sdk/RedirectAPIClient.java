@@ -1,12 +1,12 @@
-package com.github.onsdigital.dis.redirect.api.client;
+package com.github.onsdigital.dis.redirect.api.sdk;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.onsdigital.dis.redirect.api.client.model.HelloWorld;
-import com.github.onsdigital.dis.redirect.api.client.exception.RedirectAPIException;
+import com.github.onsdigital.dis.redirect.api.sdk.model.HelloWorld;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;

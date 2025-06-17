@@ -1,4 +1,4 @@
-package com.github.onsdigital.dis.redirect.api.client.exception;
+package com.github.onsdigital.dis.redirect.api.sdk.exception;
 
 import org.apache.http.HttpStatus;
 

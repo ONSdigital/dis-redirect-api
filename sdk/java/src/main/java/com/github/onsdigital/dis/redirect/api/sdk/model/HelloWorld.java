@@ -1,4 +1,4 @@
-package com.github.onsdigital.dis.redirect.api.client.model;
+package com.github.onsdigital.dis.redirect.api.sdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

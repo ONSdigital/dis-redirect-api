@@ -1,10 +1,10 @@
-package com.github.onsdigital.dis.redirect.api.client;
+package com.github.onsdigital.dis.redirect.api.sdk;
 
 import java.io.Closeable;
 import java.io.IOException;
 
-import com.github.onsdigital.dis.redirect.api.client.exception.RedirectAPIException;
-import com.github.onsdigital.dis.redirect.api.client.model.HelloWorld;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
+import com.github.onsdigital.dis.redirect.api.sdk.model.HelloWorld;
 
 public interface RedirectClient extends Closeable {
     /**

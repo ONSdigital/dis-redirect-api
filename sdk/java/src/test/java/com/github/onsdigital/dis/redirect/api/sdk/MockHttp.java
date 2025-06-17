@@ -1,4 +1,4 @@
-package com.github.onsdigital.dis.redirect.api.client;
+package com.github.onsdigital.dis.redirect.api.sdk;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

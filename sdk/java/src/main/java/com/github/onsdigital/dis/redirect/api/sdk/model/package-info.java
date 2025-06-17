@@ -3,5 +3,5 @@
  * dis-redirect-api.
  *
  */
-package com.github.onsdigital.dis.redirect.api.client.model;
+package com.github.onsdigital.dis.redirect.api.sdk.model;
 
