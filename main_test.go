@@ -8,6 +8,7 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/features/steps"
 	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 )
@@ -15,34 +16,50 @@ import (
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	MongoFeature *componenttest.MongoFeature
+	RedisFeature *componenttest.RedisFeature
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	component, err := steps.NewComponent()
+	f.RedisFeature = componenttest.NewRedisFeature()
+	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature)
 	if err != nil {
-		panic(err)
+		log.Error(context.Background(), "failed to create redirect api component", err)
+		os.Exit(1)
 	}
 
+	apiFeature := redirectAPIComponent.InitAPIFeature()
+
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		component.Reset()
+		if f.RedisFeature == nil {
+			f.RedisFeature = componenttest.NewRedisFeature()
+		}
+		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if closeErr := component.Close(); closeErr != nil {
-			panic(closeErr)
+		if closeErr := f.RedisFeature.Close(); closeErr != nil {
+			log.Error(context.Background(), "error occured while closing the RedisFeature", closeErr)
+			os.Exit(1)
 		}
+
+		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
-	component.RegisterSteps(ctx)
+	apiFeature.RegisterSteps(ctx)
+	f.RedisFeature.RegisterSteps(ctx)
+	redirectAPIComponent.RegisterSteps(ctx)
 }
 
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {
+	})
 
+	ctx.AfterSuite(func() {
+	})
 }
 
 func TestComponent(t *testing.T) {

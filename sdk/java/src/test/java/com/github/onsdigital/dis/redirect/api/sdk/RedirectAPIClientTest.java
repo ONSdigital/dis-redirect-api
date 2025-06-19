@@ -1,24 +1,23 @@
 package com.github.onsdigital.dis.redirect.api.sdk;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.onsdigital.dis.redirect.api.sdk.model.HelloWorld;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFound;
+import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
+import com.github.onsdigital.dis.redirect.api.sdk.model.RedirectResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.http.HttpStatus;
@@ -38,9 +37,9 @@ class RedirectAPIClientTest {
     private static final String REDIRECT_API_URL = "http://redirect-api:1234";
 
     /**
-     * Auth header for testing.
+     * Base64 redirect ID for testing
      */
-    private static final String SERVICE_TOKEN_HEADER_NAME = "Authorization";
+    private static final String redirectID = "ZWNvbm9teS9vbGQtcGF0aA==";
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -53,60 +52,84 @@ class RedirectAPIClientTest {
         // When a new RedirectAPIClient is created
         // Then the expected exception is thrown
         assertThrows(URISyntaxException.class,
-                () -> new RedirectAPIClient(
-                        invalidURI, SERVICE_AUTH_TOKEN, mockHttpClient));
+                () -> new RedirectAPIClient(invalidURI, SERVICE_AUTH_TOKEN, mockHttpClient));
     }
 
     @Test
-    void testRedirectAPIGetHelloWorld() throws Exception {
+    public void testRedirectAPI_getRedirect() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
 
-        // Given a mock helloworld response from the redirect API
-        CloseableHttpResponse mockHttpResponse = MockHttp.response(
-                HttpStatus.SC_OK);
+        // Given a mock redirect response from the redirect API
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_OK);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
-        when(mockHttpClient.execute(
-                any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        RedirectResponse mockRedirectResponse = mockRedirectResponse(mockHttpResponse);
+        Redirect expecteRedirect = mockRedirectResponse.getNext();
 
-        HelloWorld mockHelloWorldResponse = mockHelloWorldResponse(
-                mockHttpResponse);
+        // When getRedirect is called
+        Redirect actualRedirect = redirectAPIClient.getRedirect(redirectID);
 
-        // When getHelloWorld is called
-        HelloWorld actualHelloWorld = redirectAPIClient.getHelloWorld();
+        assertNotNull(actualRedirect);
 
-        assertNotNull(actualHelloWorld);
-
-        HttpRequestBase httpRequest = captureHttpRequest(mockHttpClient);
-
-        // Then no query params are in the URI
-        assertNull(httpRequest.getURI().getQuery());
-
-        // Then the request should contain the service token header
-        String actualServiceToken = httpRequest.getFirstHeader(
-                SERVICE_TOKEN_HEADER_NAME).getValue();
-        assertEquals(SERVICE_AUTH_TOKEN, actualServiceToken);
-
-        // Then the response should be whats returned from the redirect API
-        assertEquals(mockHelloWorldResponse.getMessage(),
-                actualHelloWorld.getMessage());
+        // Then the response should be whats returned frpm the redirect API
+        assertEquals(expecteRedirect.getId(), actualRedirect.getId());
     }
 
     @Test
-    void testRedirectAPIGetHellowWorldInternalError() throws Exception {
+    void testRedirectAPI_getRedirect_badRequest() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
-        RedirectClient client = getRedirectClient(mockHttpClient);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
+
+        // Given a request to the redirect API that returns a 404
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+
+        // When getHelloWorld is called
+        // Then the expected exception is thrown
+        assertThrows(BadRequestException.class,
+                () -> redirectAPIClient.getRedirect(redirectID));
+    }
+
+    @Test
+    void testRedirectAPI_getRedirect_redirectNotFound() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
+
+        // Given a request to the redirect API that returns a 404
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_NOT_FOUND);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+
+        // When getHelloWorld is called
+        // Then the expected exception is thrown
+        assertThrows(RedirectNotFound.class,
+                () -> redirectAPIClient.getRedirect(redirectID));
+    }
+
+    @Test
+    void testRedirectAPI_getRedirect_internalError() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
 
         // Given a request to the redirect API that returns a 500
-        CloseableHttpResponse mockHttpResponse = MockHttp.response(
-                HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(mockHttpClient.execute(
-                any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getHelloWorld is called
         // Then the expected exception is thrown
         assertThrows(RedirectAPIException.class,
-                () -> client.getHelloWorld());
+                () -> redirectAPIClient.getRedirect(redirectID));
+    }
+
+    private RedirectResponse mockRedirectResponse(CloseableHttpResponse mockHttpResponse)
+            throws JsonProcessingException, UnsupportedEncodingException {
+        RedirectResponse responseBody = new RedirectResponse();
+        responseBody.setId(redirectID);
+        responseBody.setNext(new Redirect());
+
+        MockHttp.responseBody(mockHttpResponse, responseBody);
+
+        return responseBody;
     }
 
     private RedirectClient getRedirectClient(
@@ -115,24 +138,4 @@ class RedirectAPIClientTest {
         return new RedirectAPIClient(
                 REDIRECT_API_URL, SERVICE_AUTH_TOKEN, mockHttpClient);
     }
-
-    private HttpRequestBase captureHttpRequest(
-            final CloseableHttpClient mockHttpClient)
-            throws IOException {
-        ArgumentCaptor<HttpRequestBase> requestCaptor = ArgumentCaptor.forClass(
-                HttpRequestBase.class);
-        verify(mockHttpClient).execute(requestCaptor.capture());
-        return requestCaptor.getValue();
-    }
-
-    private HelloWorld mockHelloWorldResponse(
-            final CloseableHttpResponse mockHttpResponse)
-            throws JsonProcessingException, UnsupportedEncodingException {
-        HelloWorld responseBody = new HelloWorld();
-        responseBody.setMessage("hello");
-        MockHttp.responseBody(mockHttpResponse, responseBody);
-
-        return responseBody;
-    }
-
 }

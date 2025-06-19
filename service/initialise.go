@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -62,7 +63,7 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 }
 
 // GetRedisClient creates a Redis client and sets the Redis flag to true
-func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Config) (RedisClient, error) {
+func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 	redis, err := e.Init.DoGetRedisClient(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Co
 }
 
 // DoGetRedisClient initialises a dis-redis client
-func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (RedisClient, error) {
+func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
 	redisClient, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
 		Address: cfg.RedisAddress,
 	})

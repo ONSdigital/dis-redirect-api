@@ -3,17 +3,21 @@ package com.github.onsdigital.dis.redirect.api.sdk;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Base64;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.onsdigital.dis.redirect.api.sdk.model.HelloWorld;
+import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
+import com.github.onsdigital.dis.redirect.api.sdk.model.RedirectResponse;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFound;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-
+import org.apache.http.util.Args;
 import org.apache.http.util.EntityUtils;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -57,8 +61,7 @@ public class RedirectAPIClient implements RedirectClient {
      * @param httpClient       The HTTP client to use internally
      */
     public RedirectAPIClient(final String redirectAPIURL,
-            final String serviceAuthToken,
-            final CloseableHttpClient httpClient)
+            final String serviceAuthToken, final CloseableHttpClient httpClient)
             throws URISyntaxException {
 
         this.redirectAPIUri = new URI(redirectAPIURL);
@@ -73,10 +76,8 @@ public class RedirectAPIClient implements RedirectClient {
      * @param serviceAuthToken The authentication token for the redirect API
      * @throws URISyntaxException
      */
-    public RedirectAPIClient(
-            final String redirectAPIURL,
-            final String serviceAuthToken)
-            throws URISyntaxException {
+    public RedirectAPIClient(final String redirectAPIURL,
+            final String serviceAuthToken) throws URISyntaxException {
         this(redirectAPIURL, serviceAuthToken, createDefaultHttpClient());
     }
 
@@ -85,52 +86,80 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     /**
-     * Get Hello World.
-     * TODO: Remove this.
+     * Get the redirect for the given redirect ID.
      *
-     * @return An {@link HelloWorld} object containing a message
+     * @param redirectID
+     * @return throws an exception to indicate an error
      * @throws IOException
+     * @throws BadRequestException
+     * @throws RedirectNotFound
      * @throws RedirectAPIException
      */
     @Override
-    public HelloWorld getHelloWorld() throws IOException, RedirectAPIException {
+    public Redirect getRedirect(final String redirectID) throws IOException,
+            BadRequestException, RedirectNotFound, RedirectAPIException {
 
-        StringBuilder pathBuilder = new StringBuilder("/hello");
+        validateRedirectID(redirectID);
 
-        URI uri = redirectAPIUri.resolve(pathBuilder.toString());
+        String path = "/redirects/" + redirectID;
+        URI uri = redirectAPIUri.resolve(path);
 
         HttpGet req = new HttpGet(uri);
         req.addHeader(SERVICE_TOKEN_HEADER_NAME, authToken);
 
         try (CloseableHttpResponse resp = executeRequest(req)) {
-            int statusCode = resp.getStatusLine().getStatusCode();
-
-            switch (statusCode) {
-                case HttpStatus.SC_OK:
-                    return parseResponseBody(resp, HelloWorld.class);
-                default:
-                    throw new RedirectAPIException(formatErrResponse(
-                            req, resp, HttpStatus.SC_OK), statusCode);
-            }
+            validateResponseCode(req, resp);
+            RedirectResponse redirectResponse = parseResponseBody(resp,
+                    RedirectResponse.class);
+            return redirectResponse.getNext();
         }
     }
 
-    private <T> T parseResponseBody(
-            final CloseableHttpResponse response, final Class<T> type)
-            throws IOException {
+    private void validateRedirectID(final String redirectID) {
+        Args.check(isNotEmpty(redirectID), "a redirect id must be provided.");
+        Args.check(isBase64(redirectID), "redirect id must be base 64");
+    }
+
+    private void validateResponseCode(final HttpRequestBase httpRequest,
+            final CloseableHttpResponse response) throws IOException,
+            BadRequestException, RedirectNotFound, RedirectAPIException {
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        switch (statusCode) {
+        case HttpStatus.SC_OK:
+            return;
+        case HttpStatus.SC_BAD_REQUEST:
+            throw new BadRequestException(formatErrResponse(httpRequest,
+                    response, HttpStatus.SC_BAD_REQUEST), statusCode);
+        case HttpStatus.SC_NOT_FOUND:
+            throw new RedirectNotFound(formatErrResponse(httpRequest, response,
+                    HttpStatus.SC_NOT_FOUND), statusCode);
+        default:
+            throw new RedirectAPIException(formatErrResponse(httpRequest,
+                    response, HttpStatus.SC_INTERNAL_SERVER_ERROR), statusCode);
+        }
+    }
+
+    private static boolean isNotEmpty(final String str) {
+        return str != null && str.length() > 0;
+    }
+
+    private static boolean isBase64(final String str) {
+        return Base64.getDecoder().decode(str) != null;
+    }
+
+    private <T> T parseResponseBody(final CloseableHttpResponse response,
+            final Class<T> type) throws IOException {
         HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity);
         return JSON.readValue(responseString, type);
     }
 
-    private String formatErrResponse(
-            final HttpRequestBase httpRequest,
-            final CloseableHttpResponse response,
-            final int expectedStatus) {
+    private String formatErrResponse(final HttpRequestBase httpRequest,
+            final CloseableHttpResponse response, final int expectedStatus) {
         return String.format(
                 "the redirect api returned a %s response for %s (expected %s)",
-                response.getStatusLine().getStatusCode(),
-                httpRequest.getURI(),
+                response.getStatusLine().getStatusCode(), httpRequest.getURI(),
                 expectedStatus);
     }
 
