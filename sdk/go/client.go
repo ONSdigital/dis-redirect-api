@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	service          = "dis-redirect-api"
-	RedirectEndpoint = "%s/redirects/%s"
+	service = "dis-redirect-api"
 )
 
 type Client struct {

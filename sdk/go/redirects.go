@@ -10,7 +10,11 @@ import (
 	apiError "github.com/ONSdigital/dis-redirect-api/sdk/go/errors"
 )
 
-// GetRedirect gets the GetRedirect endpoint
+const (
+	RedirectEndpoint = "%s/redirects/%s"
+)
+
+// GetRedirect gets the /redirects/{id} endpoint
 func (cli *Client) GetRedirect(ctx context.Context, options Options, key string) (*api.RedirectResponse, apiError.Error) {
 	path := fmt.Sprintf(RedirectEndpoint, cli.hcCli.URL, key)
 
@@ -23,7 +27,7 @@ func (cli *Client) GetRedirect(ctx context.Context, options Options, key string)
 
 	if err := json.Unmarshal(respInfo.Body, &response); err != nil {
 		return nil, apiError.StatusError{
-			Err: fmt.Errorf("failed to unmarshal hello response - error is: %v", err),
+			Err: fmt.Errorf("failed to unmarshal getRedirect response - error is: %v", err),
 		}
 	}
 

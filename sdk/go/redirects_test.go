@@ -14,11 +14,9 @@ import (
 func TestGetRedirect(t *testing.T) {
 	t.Parallel()
 
-	headers := http.Header{
-		Authorization: {"Bearer authorised-user"},
-	}
+	headers := http.Header{}
 
-	c.Convey("Given request is authorised to get redirect", t, func() {
+	c.Convey("Given a request to get redirect", t, func() {
 		body, err := json.Marshal(getRedirectResponse)
 		if err != nil {
 			t.Errorf("failed to setup test data, error: %v", err)
@@ -26,7 +24,7 @@ func TestGetRedirect(t *testing.T) {
 
 		httpClient := newMockHTTPClient(
 			&http.Response{
-				StatusCode: http.StatusCreated,
+				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(bytes.NewReader(body)),
 			},
 			nil)
@@ -47,7 +45,6 @@ func TestGetRedirect(t *testing.T) {
 						c.So(doCalls, c.ShouldHaveLength, 1)
 						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
 						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, fmt.Sprintf("/redirects/%s", existingBase64Key))
-						c.So(doCalls[0].Req.Header["Authorization"], c.ShouldResemble, []string{"Bearer authorised-user"})
 					})
 				})
 			})
