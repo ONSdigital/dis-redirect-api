@@ -2,16 +2,10 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-)
-
-// A list of error messages for Redirect API
-var (
-	ErrRedis = errors.New("redis returned an error")
 )
 
 // RedirectAPI provides a struct to wrap the api around

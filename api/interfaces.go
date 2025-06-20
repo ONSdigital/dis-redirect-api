@@ -6,7 +6,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
-//go:generate moq -out apimock/redisClient.go -pkg apimock . RedisClient
+//go:generate moq -out mock/redisClient.go -pkg mock . RedisClient
 
 // RedisClient defines the required methods for RedisClient
 type RedisClient interface {

@@ -11,7 +11,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
 	"github.com/ONSdigital/dis-redirect-api/api"
-	"github.com/ONSdigital/dis-redirect-api/api/apimock"
+	apimock "github.com/ONSdigital/dis-redirect-api/api/mock"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"

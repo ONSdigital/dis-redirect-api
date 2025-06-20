@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/gorilla/mux"
 )
 
@@ -33,7 +34,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)
 		} else {
-			api.handleError(ctx, w, ErrRedis, http.StatusInternalServerError)
+			api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -58,9 +59,9 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 // decodeBase64 returns the original string of a base64 encoded string
 func decodeBase64(encodedKey string) (string, error) {
 	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
-
 	if err != nil {
 		return "", fmt.Errorf("key %s not base64", encodedKey)
 	}
+
 	return string(decodedKey), nil
 }

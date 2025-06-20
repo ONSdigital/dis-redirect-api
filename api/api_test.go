@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dis-redirect-api/api"
-	"github.com/ONSdigital/dis-redirect-api/api/apimock"
+	apimock "github.com/ONSdigital/dis-redirect-api/api/mock"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
