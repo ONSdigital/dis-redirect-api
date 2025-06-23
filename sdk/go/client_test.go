@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
+	"github.com/ONSdigital/dis-redirect-api/models"
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
@@ -17,7 +17,7 @@ import (
 const testHost = "http://localhost:23900"
 
 var (
-	getRedirectResponse = api.RedirectResponse{
+	getRedirectResponse = models.Redirect{
 		Value: "new-path",
 	}
 	initialTestState  = healthcheck.CreateCheckState(service)

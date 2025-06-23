@@ -8,14 +8,9 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
+	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/gorilla/mux"
 )
-
-// RedirectResponse represents response for a redirect
-type RedirectResponse struct {
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
-}
 
 // getRedirect gets the value of a key from redis
 func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +24,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirect, err := api.RedisClient.GetValue(ctx, decodedKey)
+	redirect, err := api.Store.GetBundle(ctx, decodedKey)
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)
@@ -39,7 +34,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseBody := RedirectResponse{
+	responseBody := models.Redirect{
 		Key:   decodedKey,
 		Value: redirect,
 	}

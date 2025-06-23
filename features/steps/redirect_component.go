@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
+	"github.com/ONSdigital/dis-redirect-api/store"
 	disRedis "github.com/ONSdigital/dis-redis"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -118,7 +118,7 @@ func (c *RedirectComponent) DoGetHTTPServer(bindAddr string, router http.Handler
 	return c.HTTPServer
 }
 
-func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.Config) (api.RedisClient, error) {
+func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.Config) (store.Redis, error) {
 	redisCli, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
 		Address: cfg.RedisAddress,
 	})

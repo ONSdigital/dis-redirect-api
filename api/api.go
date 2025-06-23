@@ -4,21 +4,22 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dis-redirect-api/store"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
 // RedirectAPI provides a struct to wrap the api around
 type RedirectAPI struct {
-	Router      *mux.Router
-	RedisClient RedisClient
+	Router *mux.Router
+	Store  *store.Datastore
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, r *mux.Router, redisClient RedisClient) *RedirectAPI {
+func Setup(ctx context.Context, r *mux.Router, store *store.Datastore) *RedirectAPI {
 	api := &RedirectAPI{
-		Router:      r,
-		RedisClient: redisClient,
+		Router: r,
+		Store:  store,
 	}
 
 	api.get("/redirects/{id}", api.getRedirect)

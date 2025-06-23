@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
+	"github.com/ONSdigital/dis-redirect-api/store"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
@@ -17,7 +17,7 @@ import (
 type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
-	DoGetRedisClient(ctx context.Context, cfg *config.Config) (api.RedisClient, error)
+	DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.Redis, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

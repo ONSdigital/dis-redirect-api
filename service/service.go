@@ -5,6 +5,7 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
+	"github.com/ONSdigital/dis-redirect-api/store"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -19,6 +20,10 @@ type Service struct {
 	API         *api.RedirectAPI
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
+}
+
+type RedisAPIStore struct {
+	store.Redis
 }
 
 // Run the service
@@ -45,8 +50,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
+	// Get Datastore
+	datastore := store.Datastore{
+		Backend: RedisAPIStore{redisClient},
+	}
+
 	// Set up the API
-	a := api.Setup(ctx, r, redisClient)
+	a := api.Setup(ctx, r, &datastore)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -126,7 +136,7 @@ func (svc *Service) Close(ctx context.Context) error {
 }
 
 // registerCheckers adds the checkers for the provided clients to the health check object
-func registerCheckers(ctx context.Context, hc HealthChecker, redisCli api.RedisClient) (err error) {
+func registerCheckers(ctx context.Context, hc HealthChecker, redisCli store.Redis) (err error) {
 	hasErrors := false
 
 	if err = hc.AddCheck("Redis", redisCli.Checker); err != nil {
