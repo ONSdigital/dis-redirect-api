@@ -4,6 +4,8 @@ github.com/ONSdigital/dp-api-clients-go/v2 v2.266.0 h1:NQbu+x2Q7ZhrjGKvN73qVxG/n
 github.com/ONSdigital/dp-api-clients-go/v2 v2.266.0/go.mod h1:bLseTP21r8LCStUEeOdVPyqtrTomOFP/azPjKWW4deA=
 github.com/ONSdigital/dp-component-test v0.22.0 h1:VRotsZraTxAdef84kJlIjzuQ1/0YDyYC/uTB98WfQGY=
 github.com/ONSdigital/dp-component-test v0.22.0/go.mod h1:GT4g0nvVnyGQZjIf2BasCO5jPn8n8jEXqxKAOIxXNho=
+github.com/ONSdigital/dp-component-test v0.23.0 h1:alA2MCoWs8O/xQISb3HWxHfk5unZ+M4FSu1gzvaNsm0=
+github.com/ONSdigital/dp-component-test v0.23.0/go.mod h1:GT4g0nvVnyGQZjIf2BasCO5jPn8n8jEXqxKAOIxXNho=
 github.com/ONSdigital/dp-healthcheck v1.6.4 h1:FhWOuVmob36dYq7AzCdbgyf0Vk58IFitSl8y8pWJ8ck=
 github.com/ONSdigital/dp-healthcheck v1.6.4/go.mod h1:j3UNbGT4ZJg1chrRkPLE6YUVYCg1su3AAQ8frcBrvgc=
 github.com/ONSdigital/dp-mongodb-in-memory v1.8.1 h1:yCz6BfjA0bvesA0JjyBIA6nsOzNquBNS7FQP5pbnZKU=
