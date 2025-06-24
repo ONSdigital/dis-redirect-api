@@ -18,7 +18,7 @@ const testHost = "http://localhost:23900"
 
 var (
 	getRedirectResponse = models.Redirect{
-		Value: "new-path",
+		To: "new-path",
 	}
 	initialTestState  = healthcheck.CreateCheckState(service)
 	existingBase64Key = "Y29va2llLXNhdWNl"

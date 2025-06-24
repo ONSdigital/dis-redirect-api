@@ -31,8 +31,8 @@ func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 
 func TestGetRedirectEndpoint(t *testing.T) {
 	validRedirect := &models.Redirect{
-		Key:   "/economy/old-path",
-		Value: "/economy/new-path",
+		From: "/economy/old-path",
+		To:   "/economy/new-path",
 	}
 
 	Convey("Given a GET /redirects/{id} request", t, func() {
@@ -56,8 +56,8 @@ func TestGetRedirectEndpoint(t *testing.T) {
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 				So(err, ShouldBeNil)
 
-				So(response.Key, ShouldEqual, validRedirect.Key)
-				So(response.Value, ShouldEqual, validRedirect.Value)
+				So(response.From, ShouldEqual, validRedirect.From)
+				So(response.To, ShouldEqual, validRedirect.To)
 			})
 		})
 	})

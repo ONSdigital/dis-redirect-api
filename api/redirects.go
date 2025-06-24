@@ -35,8 +35,8 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseBody := models.Redirect{
-		Key:   decodedKey,
-		Value: redirect,
+		From: decodedKey,
+		To:   redirect,
 	}
 
 	redirectResponse, err := json.Marshal(responseBody)
