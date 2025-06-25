@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -36,9 +37,15 @@ class RedirectAPIClientTest {
     private static final String REDIRECT_API_URL = "http://redirect-api:1234";
 
     /**
+     * Auth header for testing.
+     */
+    private static final String SERVICE_TOKEN_HEADER_NAME = "Authorization";
+
+    /**
      * Plain redirect ID for testing
      */
     private static final String redirectID = "/economy/old-path";
+
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -130,10 +137,74 @@ class RedirectAPIClientTest {
         return responseBody;
     }
 
+    @Test
+    void testPutRedirectSuccess() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        client.putRedirect("L2Zyb20=", new Redirect("/from", "/to"));
+
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("PUT", request.getMethod());
+        assertNotNull(request.getFirstHeader("Authorization"));
+    }
+
+
+    @Test
+    void testPutRedirectFailsWithNon2xxResponse() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                RedirectAPIException.class,
+                () -> client.putRedirect("L2Zyb20=", new Redirect("/from", "/to"))
+        );
+
+        assertNotNull(exception.getMessage());
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("PUT", request.getMethod());
+    }
+
+    @Test
+    void testPutRedirectHttpClientIOException() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenThrow(new IOException("Network error"));
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        assertThrows(IOException.class, () ->
+                client.putRedirect("L2Zyb20=", new Redirect("/from", "/to")));
+    }
+
+
     private RedirectClient getRedirectClient(
             final CloseableHttpClient mockHttpClient)
             throws URISyntaxException {
         return new RedirectAPIClient(
                 REDIRECT_API_URL, SERVICE_AUTH_TOKEN, mockHttpClient);
     }
+
+    private HttpRequestBase captureHttpRequest(
+            final CloseableHttpClient mockHttpClient)
+            throws IOException {
+        ArgumentCaptor<HttpRequestBase> requestCaptor = ArgumentCaptor.forClass(
+                HttpRequestBase.class);
+        verify(mockHttpClient).execute(requestCaptor.capture());
+        return requestCaptor.getValue();
+    }
+
 }
