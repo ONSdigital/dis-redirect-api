@@ -17,10 +17,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.Args;
+
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.ContentType;
+
 import org.apache.http.util.EntityUtils;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -116,6 +121,44 @@ public class RedirectAPIClient implements RedirectClient {
             return response;
         }
     }
+
+    /**
+         * Upserts a redirect by sending a PUT request to /redirects/{id}.
+         *
+         * @param base64Id the base64 URL-encoded redirect key
+         * @param payload  the redirect payload with 'from' and 'to' fields
+         * @throws IOException            if request fails
+         * @throws RedirectAPIException   if non-2xx response returned
+         */
+        @Override
+        public void putRedirect(final String base64Id,
+        final Redirect payload)
+                throws IOException, RedirectAPIException {
+
+            URI requestUri = redirectAPIUri.resolve("/v1/redirects/" + base64Id);
+            HttpPut put = new HttpPut(requestUri);
+
+            // Add Authorization header
+            put.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
+            put.addHeader("Content-Type", "application/json");
+
+            // Serialize payload
+            String jsonPayload = JSON.writeValueAsString(payload);
+            put.setEntity(new StringEntity(
+                    jsonPayload,
+                    ContentType.APPLICATION_JSON));
+
+            try (CloseableHttpResponse response = executeRequest(put)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                if (statusCode != HttpStatus.SC_CREATED
+                        && statusCode != HttpStatus.SC_OK) {
+                    throw new RedirectAPIException(
+                            formatErrResponse(put, response, HttpStatus.SC_CREATED),
+                            statusCode);
+                }
+            }
+        }
 
     private void validateRedirectID(final String redirectID) {
         Args.check(StringUtils.isNotBlank(redirectID),

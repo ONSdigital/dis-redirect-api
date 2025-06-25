@@ -8,15 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
-
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -51,6 +51,15 @@ func TestRun(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
+		authorisationMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		hcMock := &mock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
 			StartFunc:    func(ctx context.Context) {},
@@ -73,6 +82,10 @@ func TestRun(t *testing.T) {
 			},
 		}
 
+		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+			return authorisationMiddleware, nil
+		}
+
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 			return hcMock, nil
 		}
@@ -91,9 +104,10 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising Redis returns an error", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
-				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
-				DoGetRedisClientFunc: funcDoGetRedisClientErr,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckErr,
+				DoGetRedisClientFunc:             funcDoGetRedisClientErr,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 
 			svcErrors := make(chan error, 1)
@@ -113,9 +127,10 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
-				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
-				DoGetRedisClientFunc: funcDoGetRedisClientOk,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckErr,
+				DoGetRedisClientFunc:             funcDoGetRedisClientOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -140,8 +155,9 @@ func TestRun(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
-				DoGetRedisClientFunc: funcDoGetRedisClientOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServer,
+				DoGetRedisClientFunc:             funcDoGetRedisClientOk,
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
@@ -164,9 +180,10 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that all dependencies are successfully initialised", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
-				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-				DoGetRedisClientFunc: funcDoGetRedisClientOk,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServer,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetRedisClientFunc:             funcDoGetRedisClientOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -197,9 +214,10 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-				DoGetHTTPServerFunc:  funcDoGetFailingHTTPSerer,
-				DoGetRedisClientFunc: funcDoGetRedisClientOk,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetHTTPServerFunc:              funcDoGetFailingHTTPSerer,
+				DoGetRedisClientFunc:             funcDoGetRedisClientOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -227,6 +245,15 @@ func TestClose(t *testing.T) {
 
 		hcStopped := false
 
+		authorisationMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &mock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -252,6 +279,9 @@ func TestClose(t *testing.T) {
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
+				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+					return authorisationMiddleware, nil
+				},
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -281,6 +311,9 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
+				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+					return authorisationMiddleware, nil
+				},
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
