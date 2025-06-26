@@ -29,6 +29,6 @@ type Storer interface {
 	dataRedis
 }
 
-func (ds *Datastore) GetBundle(ctx context.Context, redirectID string) (string, error) {
+func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string, error) {
 	return ds.Backend.GetValue(ctx, redirectID)
 }

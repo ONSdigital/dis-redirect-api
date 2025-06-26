@@ -88,7 +88,7 @@ func TestGetRedirectReturns400(t *testing.T) {
 
 func TestGetRedirectReturns404(t *testing.T) {
 	Convey("Given a GET /redirects/{id} request", t, func() {
-		Convey("When the id is invalid and encoded in base64", func() {
+		Convey("When the id is valid and encoded in base64", func() {
 			var nonExistentBase64Key = "b2xkLXBhdGg="
 			request := httptest.NewRequest(http.MethodGet, baseURL+nonExistentBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()

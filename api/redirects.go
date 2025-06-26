@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// getRedirect gets the value of a key from redis
+// getRedirect gets the value of a key from the store
 func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
@@ -24,7 +24,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirect, err := api.Store.GetBundle(ctx, decodedKey)
+	redirect, err := api.Store.GetRedirect(ctx, decodedKey)
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)

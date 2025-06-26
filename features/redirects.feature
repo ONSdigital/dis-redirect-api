@@ -1,4 +1,4 @@
-Feature: Redirect endpoint should return data and error code for various request
+Feature: Redirect endpoint
     Scenario: Return the value when the key exists in redis
         Given the key "/economy/old-path" is already set to a value of "/economy/new-path" in the Redis store
         And the redirect api is running
