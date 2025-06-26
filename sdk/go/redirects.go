@@ -26,7 +26,7 @@ func (cli *Client) GetRedirect(ctx context.Context, options Options, key string)
 	var response models.Redirect
 	if err := json.Unmarshal(respInfo.Body, &response); err != nil {
 		return nil, apiError.StatusError{
-			Err: fmt.Errorf("failed to unmarshal getRedirect response - error is: %v", err),
+			Err: fmt.Errorf("failed to unmarshal redirect response - error is: %v", err),
 		}
 	}
 
