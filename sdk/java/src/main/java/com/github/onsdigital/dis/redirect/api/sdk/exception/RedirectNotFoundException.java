@@ -4,7 +4,7 @@ import org.apache.http.HttpStatus;
 
 import lombok.Getter;
 
-public class RedirectNotFound extends Exception {
+public class RedirectNotFoundException extends Exception {
 
     /**
      * Status code of the error.
@@ -17,7 +17,8 @@ public class RedirectNotFound extends Exception {
      * @param message    A string detailing the reason for the exception
      * @param statusCode The http status code that caused the API exception
      */
-    public RedirectNotFound(final String message, final int statusCode) {
+    public RedirectNotFoundException(final String message,
+            final int statusCode) {
         super(message);
         this.code = statusCode;
     }
@@ -25,7 +26,7 @@ public class RedirectNotFound extends Exception {
     /**
      * New default constructor.
      */
-    public RedirectNotFound() {
+    public RedirectNotFoundException() {
         this.code = HttpStatus.SC_NOT_FOUND;
     }
 }

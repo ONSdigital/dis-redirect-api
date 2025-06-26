@@ -7,10 +7,9 @@ import java.util.Base64;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
-import com.github.onsdigital.dis.redirect.api.sdk.model.RedirectResponse;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
-import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFound;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -92,12 +91,13 @@ public class RedirectAPIClient implements RedirectClient {
      * @return throws an exception to indicate an error
      * @throws IOException
      * @throws BadRequestException
-     * @throws RedirectNotFound
+     * @throws RedirectNotFoundException
      * @throws RedirectAPIException
      */
     @Override
-    public Redirect getRedirect(final String redirectID) throws IOException,
-            BadRequestException, RedirectNotFound, RedirectAPIException {
+    public Redirect getRedirect(final String redirectID)
+            throws IOException, BadRequestException, RedirectNotFoundException,
+            RedirectAPIException {
 
         validateRedirectID(redirectID);
 
@@ -109,9 +109,9 @@ public class RedirectAPIClient implements RedirectClient {
 
         try (CloseableHttpResponse resp = executeRequest(req)) {
             validateResponseCode(req, resp);
-            RedirectResponse redirectResponse = parseResponseBody(resp,
-                    RedirectResponse.class);
-            return redirectResponse.getNext();
+            Redirect response = parseResponseBody(resp, Redirect.class);
+            response.setFrom(decodeBase64(redirectID));
+            return response;
         }
     }
 
@@ -121,8 +121,9 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     private void validateResponseCode(final HttpRequestBase httpRequest,
-            final CloseableHttpResponse response) throws IOException,
-            BadRequestException, RedirectNotFound, RedirectAPIException {
+            final CloseableHttpResponse response)
+            throws IOException, BadRequestException, RedirectNotFoundException,
+            RedirectAPIException {
         int statusCode = response.getStatusLine().getStatusCode();
 
         switch (statusCode) {
@@ -132,8 +133,8 @@ public class RedirectAPIClient implements RedirectClient {
             throw new BadRequestException(formatErrResponse(httpRequest,
                     response, HttpStatus.SC_BAD_REQUEST), statusCode);
         case HttpStatus.SC_NOT_FOUND:
-            throw new RedirectNotFound(formatErrResponse(httpRequest, response,
-                    HttpStatus.SC_NOT_FOUND), statusCode);
+            throw new RedirectNotFoundException(formatErrResponse(httpRequest,
+                    response, HttpStatus.SC_NOT_FOUND), statusCode);
         default:
             throw new RedirectAPIException(formatErrResponse(httpRequest,
                     response, HttpStatus.SC_INTERNAL_SERVER_ERROR), statusCode);
@@ -146,6 +147,10 @@ public class RedirectAPIClient implements RedirectClient {
 
     private static boolean isBase64(final String str) {
         return Base64.getDecoder().decode(str) != null;
+    }
+
+    private static String decodeBase64(final String str) {
+        return new String(Base64.getDecoder().decode(str));
     }
 
     private <T> T parseResponseBody(final CloseableHttpResponse response,

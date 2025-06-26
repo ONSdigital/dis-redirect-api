@@ -5,9 +5,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
-import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFound;
+import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
-import com.github.onsdigital.dis.redirect.api.sdk.model.RedirectResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,7 +38,7 @@ class RedirectAPIClientTest {
     /**
      * Base64 redirect ID for testing
      */
-    private static final String redirectID = "ZWNvbm9teS9vbGQtcGF0aA==";
+    private static final String redirectID = "L2Vjb25vbXkvb2xkLXBhdGg=";
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -64,8 +63,8 @@ class RedirectAPIClientTest {
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_OK);
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
-        RedirectResponse mockRedirectResponse = mockRedirectResponse(mockHttpResponse);
-        Redirect expecteRedirect = mockRedirectResponse.getNext();
+        Redirect mockRedirect = mockRedirect(mockHttpResponse);
+        Redirect expecteRedirect = mockRedirect;
 
         // When getRedirect is called
         Redirect actualRedirect = redirectAPIClient.getRedirect(redirectID);
@@ -73,7 +72,8 @@ class RedirectAPIClientTest {
         assertNotNull(actualRedirect);
 
         // Then the response should be whats returned frpm the redirect API
-        assertEquals(expecteRedirect.getId(), actualRedirect.getId());
+        assertEquals(expecteRedirect.getTo(), actualRedirect.getTo());
+        assertEquals(expecteRedirect.getFrom(), actualRedirect.getFrom());
     }
 
     @Test
@@ -102,7 +102,7 @@ class RedirectAPIClientTest {
 
         // When getHelloWorld is called
         // Then the expected exception is thrown
-        assertThrows(RedirectNotFound.class,
+        assertThrows(RedirectNotFoundException.class,
                 () -> redirectAPIClient.getRedirect(redirectID));
     }
 
@@ -121,11 +121,9 @@ class RedirectAPIClientTest {
                 () -> redirectAPIClient.getRedirect(redirectID));
     }
 
-    private RedirectResponse mockRedirectResponse(CloseableHttpResponse mockHttpResponse)
+    private Redirect mockRedirect(CloseableHttpResponse mockHttpResponse)
             throws JsonProcessingException, UnsupportedEncodingException {
-        RedirectResponse responseBody = new RedirectResponse();
-        responseBody.setId(redirectID);
-        responseBody.setNext(new Redirect());
+        Redirect responseBody = new Redirect("/economy/old-path","/economy/new-path");
 
         MockHttp.responseBody(mockHttpResponse, responseBody);
 
