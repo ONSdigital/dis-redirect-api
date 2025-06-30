@@ -101,7 +101,9 @@ public class RedirectAPIClient implements RedirectClient {
 
         validateRedirectID(redirectID);
 
-        String path = "/redirects/" + redirectID;
+        String encodedID = encodeToBase64(redirectID);
+
+        String path = "/v1/redirects/" + encodedID;
         URI uri = redirectAPIUri.resolve(path);
 
         HttpGet req = new HttpGet(uri);
@@ -110,14 +112,13 @@ public class RedirectAPIClient implements RedirectClient {
         try (CloseableHttpResponse resp = executeRequest(req)) {
             validateResponseCode(req, resp);
             Redirect response = parseResponseBody(resp, Redirect.class);
-            response.setFrom(decodeBase64(redirectID));
+            response.setFrom(redirectID);
             return response;
         }
     }
 
     private void validateRedirectID(final String redirectID) {
         Args.check(isNotEmpty(redirectID), "a redirect id must be provided.");
-        Args.check(isBase64(redirectID), "redirect id must be base 64");
     }
 
     private void validateResponseCode(final HttpRequestBase httpRequest,
@@ -145,12 +146,8 @@ public class RedirectAPIClient implements RedirectClient {
         return str != null && str.length() > 0;
     }
 
-    private static boolean isBase64(final String str) {
-        return Base64.getDecoder().decode(str) != null;
-    }
-
-    private static String decodeBase64(final String str) {
-        return new String(Base64.getDecoder().decode(str));
+    private static String encodeToBase64(final String str) {
+        return new String(Base64.getEncoder().encodeToString(str.getBytes()));
     }
 
     private <T> T parseResponseBody(final CloseableHttpResponse response,

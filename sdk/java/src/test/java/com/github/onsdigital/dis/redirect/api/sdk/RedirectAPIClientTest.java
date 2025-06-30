@@ -36,9 +36,9 @@ class RedirectAPIClientTest {
     private static final String REDIRECT_API_URL = "http://redirect-api:1234";
 
     /**
-     * Base64 redirect ID for testing
+     * Plain redirect ID for testing
      */
-    private static final String redirectID = "L2Vjb25vbXkvb2xkLXBhdGg=";
+    private static final String redirectID = "/economy/old-path";
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -123,7 +123,7 @@ class RedirectAPIClientTest {
 
     private Redirect mockRedirect(CloseableHttpResponse mockHttpResponse)
             throws JsonProcessingException, UnsupportedEncodingException {
-        Redirect responseBody = new Redirect("/economy/old-path","/economy/new-path");
+        Redirect responseBody = new Redirect("/economy/old-path", "/economy/new-path");
 
         MockHttp.responseBody(mockHttpResponse, responseBody);
 
