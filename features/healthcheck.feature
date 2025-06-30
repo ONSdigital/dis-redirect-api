@@ -61,11 +61,11 @@ Feature: Health endpoint
         Given redis stops running
         Given I have a healthcheck interval of 1 second
         And the redirect api is running
-        And I wait 4 seconds to pass the critical timeout
+        And I wait 6 seconds to pass the critical timeout
         And I GET "/health"
         Then the HTTP status code should be "500"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
-        When the health checks should have completed within 7 seconds
+        When the health checks should have completed within 6 seconds
         Then I should receive the following health JSON response:
         """
             {

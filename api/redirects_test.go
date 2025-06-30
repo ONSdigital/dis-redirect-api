@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	baseURL           = "http://localhost:29900/redirects/"
+	baseURL           = "http://localhost:29900/v1/redirects/"
 	existingBase64Key = "L2Vjb25vbXkvb2xkLXBhdGg="
 )
 

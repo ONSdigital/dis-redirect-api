@@ -44,7 +44,7 @@ func TestGetRedirect(t *testing.T) {
 						doCalls := httpClient.DoCalls()
 						c.So(doCalls, c.ShouldHaveLength, 1)
 						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
-						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, fmt.Sprintf("/redirects/%s", existingBase64Key))
+						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, fmt.Sprintf("/v1/redirects/%s", existingBase64Key))
 					})
 				})
 			})

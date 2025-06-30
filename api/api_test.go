@@ -16,7 +16,7 @@ func TestSetup(t *testing.T) {
 		redirectAPI := GetRedirectAPIWithMocks(*store)
 
 		Convey("When created the following routes should have been added", func() {
-			So(hasRoute(redirectAPI.Router, "/redirects/{id}", "GET"), ShouldBeTrue)
+			So(hasRoute(redirectAPI.Router, "/v1/redirects/{id}", "GET"), ShouldBeTrue)
 		})
 	})
 }
