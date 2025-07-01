@@ -85,7 +85,7 @@ class RedirectAPIClientTest {
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
-        // When getHelloWorld is called
+        // When getRedirect is called
         // Then the expected exception is thrown
         assertThrows(BadRequestException.class,
                 () -> redirectAPIClient.getRedirect(redirectID));
@@ -100,7 +100,7 @@ class RedirectAPIClientTest {
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_NOT_FOUND);
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
-        // When getHelloWorld is called
+        // When getRedirect is called
         // Then the expected exception is thrown
         assertThrows(RedirectNotFoundException.class,
                 () -> redirectAPIClient.getRedirect(redirectID));
@@ -115,7 +115,7 @@ class RedirectAPIClientTest {
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
-        // When getHelloWorld is called
+        // When getRedirect is called
         // Then the expected exception is thrown
         assertThrows(RedirectAPIException.class,
                 () -> redirectAPIClient.getRedirect(redirectID));
