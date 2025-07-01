@@ -145,3 +145,96 @@ func TestPutRedirect(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteRedirect(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	headers := http.Header{
+		Authorization: {"Bearer authorised-user"},
+	}
+
+	Convey("Given a successful 204 No Content response from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusNoContent,
+				Body:       nil,
+				Header:     nil,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L29sZC11cmw=") // base64(/old-url)
+
+			Convey("Then it succeeds with no error returned", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called with correct path and method", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, "/v1/redirects/L29sZC11cmw=")
+				So(doCalls[0].Req.Method, ShouldEqual, http.MethodDelete)
+			})
+		})
+	})
+
+	Convey("Given a 404 Not Found response from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusNotFound,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L25vdC1mb3VuZA==") // base64(/not-found)
+
+			Convey("Then a not found error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Status(), ShouldEqual, http.StatusNotFound)
+			})
+		})
+	})
+
+	Convey("Given a 500 Internal Server Error response", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusInternalServerError,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L2ZhaWx1cmU=")
+
+			Convey("Then an internal server error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Status(), ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
+
+	Convey("Given a network error occurs", t, func() {
+		netErr := errors.New("connection reset by peer")
+		httpClient := newMockHTTPClient(nil, netErr)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L25ldC1mYWls")
+
+			Convey("Then a wrapped error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "connection reset by peer")
+			})
+		})
+	})
+}
