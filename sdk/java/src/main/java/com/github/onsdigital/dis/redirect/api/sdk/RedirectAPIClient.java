@@ -13,7 +13,7 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundExce
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.Args;
@@ -118,7 +118,8 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     private void validateRedirectID(final String redirectID) {
-        Args.check(isNotEmpty(redirectID), "a redirect id must be provided.");
+        Args.check(StringUtils.isNotBlank(redirectID),
+                "a redirect id must be provided.");
     }
 
     private void validateResponseCode(final HttpRequestBase httpRequest,
@@ -140,10 +141,6 @@ public class RedirectAPIClient implements RedirectClient {
             throw new RedirectAPIException(formatErrResponse(httpRequest,
                     response, HttpStatus.SC_INTERNAL_SERVER_ERROR), statusCode);
         }
-    }
-
-    private static boolean isNotEmpty(final String str) {
-        return str != null && str.length() > 0;
     }
 
     private static String encodeToBase64(final String str) {
