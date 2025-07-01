@@ -66,6 +66,13 @@ func decodeBase64(encodedKey string) (string, error) {
 	return string(decodedKey), nil
 }
 
+// encodeBase64 returns the base64 encoded string of the original URL key string
+func encodeBase64(key string) string {
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
+
+	return encodedKey
+}
+
 // getRedirect gets the value of a key from the store
 func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -126,6 +133,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		var redirect models.Redirect
 		redirect.From = key
 		redirect.To = value
+		redirect.Id = encodeBase64(key)
 		redirectList = append(redirectList, redirect)
 	}
 
