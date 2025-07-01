@@ -36,7 +36,7 @@ func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string
 }
 
 func (ds *Datastore) GetRedirects(ctx context.Context, count int64, cursor uint64) (map[string]string, uint64, error) {
-	return ds.Backend.GetKeyValuePairs(ctx, "/", count, cursor)
+	return ds.Backend.GetKeyValuePairs(ctx, "", count, cursor)
 }
 
 func (ds *Datastore) GetTotalCount(ctx context.Context) (totalCount int, err error) {

@@ -102,9 +102,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	// convert cursor from a string to a uint64 ready to use in call to GetRedirects
 	var cursor uint64
 	var errCursor error
-	if strCursor != "0" {
-		cursor, errCursor = strconv.ParseUint(strCursor, 10, 32)
-	}
+	cursor, errCursor = strconv.ParseUint(strCursor, 10, 32)
 
 	logData = log.Data{"count": count, "cursor": cursor}
 
@@ -120,15 +118,13 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logData = log.Data{"numKeyValuePairs": len(keyValuePairs)}
+	log.Info(ctx, "The number of redirects fetched", logData)
 	var redirectList []models.Redirect
 
-	for redirectPair := range keyValuePairs {
+	for key, value := range keyValuePairs {
 		var redirect models.Redirect
-		redirectKey := redirectPair[0]
-		key := strconv.Itoa(int(redirectKey))
 		redirect.From = key
-		redirectValue := redirectPair[1]
-		value := strconv.Itoa(int(redirectValue))
 		redirect.To = value
 		redirectList = append(redirectList, redirect)
 	}
