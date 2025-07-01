@@ -8,10 +8,14 @@ import lombok.Setter;
  */
 public class Redirect {
     /** The original path to redirect from. */
-    private @Setter @Getter String from;
+    @Getter
+    @Setter
+    private String from;
 
     /** The destination path to redirect to. */
-    private @Setter @Getter String to;
+    @Getter
+    @Setter
+    private String to;
 
     /**
      * Default no-argument constructor.
