@@ -23,6 +23,7 @@ func Setup(ctx context.Context, r *mux.Router, store *store.Datastore) *Redirect
 	}
 
 	api.get("/redirects/{id}", api.getRedirect)
+	api.get("/redirects", api.getRedirects)
 	return api
 }
 
@@ -32,7 +33,7 @@ func (api *RedirectAPI) get(path string, handler http.HandlerFunc) {
 }
 
 // handleError returns the specified error message and HTTP code
-func (api *RedirectAPI) handleError(ctx context.Context, w http.ResponseWriter, err error, status int) {
-	log.Error(ctx, "request failed", err)
-	http.Error(w, err.Error(), status)
+func (api *RedirectAPI) handleError(ctx context.Context, w http.ResponseWriter, origErr, newErr error, status int, logMsg string, logData log.Data) {
+	log.Error(ctx, logMsg, origErr, logData)
+	http.Error(w, newErr.Error(), status)
 }
