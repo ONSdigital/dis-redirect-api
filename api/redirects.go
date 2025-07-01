@@ -69,8 +69,6 @@ func decodeBase64(encodedKey string) (string, error) {
 // getRedirect gets the value of a key from the store
 func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	//vars := mux.Vars(req)
-	//count := vars["count"]
 	strCount := req.URL.Query().Get("count")
 	strCursor := req.URL.Query().Get("cursor")
 
@@ -87,7 +85,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	logData := log.Data{"count": strCount, "cursor": strCursor}
 
 	// convert count from a string to an int64 ready to use in call to GetRedirects
-	numRedirects, errCount := strconv.ParseInt(strCount, 10, 32)
+	count, errCount := strconv.ParseInt(strCount, 10, 32)
 
 	// validate count
 	if errCount != nil {
@@ -95,7 +93,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if numRedirects < 0 {
+	if count < 0 {
 		errNegCount := errors.New("the count is negative")
 		api.handleError(ctx, w, errNegCount, apierrors.ErrInvalidNumRedirects, http.StatusBadRequest, "invalid path parameter - count should be a positive integer", logData)
 		return
@@ -108,7 +106,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		cursor, errCursor = strconv.ParseUint(strCursor, 10, 32)
 	}
 
-	logData = log.Data{"count": numRedirects, "cursor": cursor}
+	logData = log.Data{"count": count, "cursor": cursor}
 
 	// validate cursor
 	if errCursor != nil {
@@ -116,7 +114,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	keyValuePairs, newCursor, errRedirects := api.Store.GetRedirects(ctx, numRedirects, cursor)
+	keyValuePairs, newCursor, errRedirects := api.Store.GetRedirects(ctx, count, cursor)
 	if errRedirects != nil {
 		api.handleError(ctx, w, errRedirects, apierrors.ErrRedis, http.StatusInternalServerError, "error calling the store to get redirects", logData)
 		return
@@ -145,7 +143,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	}
 
 	responseBody := models.Redirects{
-		Count:        int(numRedirects),
+		Count:        int(count),
 		RedirectList: redirectList,
 		Cursor:       strCursor,
 		NextCursor:   nextCursor,
