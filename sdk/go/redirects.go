@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	RedirectEndpoint = "%s/redirects/%s"
+	RedirectEndpoint = "%s/v1/redirects/%s"
 )
 
 // GetRedirect gets the /redirects/{id} endpoint

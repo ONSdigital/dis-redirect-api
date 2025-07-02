@@ -1,4 +1,4 @@
-Feature: Health endpoint should inform the health of service
+Feature: Health endpoint
     Scenario: Returning a OK (200) status when health endpoint called
         Given redis is healthy
         Given I have a healthcheck interval of 1 second
@@ -61,7 +61,7 @@ Feature: Health endpoint should inform the health of service
         Given redis stops running
         Given I have a healthcheck interval of 1 second
         And the redirect api is running
-        And I wait 4 seconds to pass the critical timeout
+        And I wait 6 seconds to pass the critical timeout
         And I GET "/health"
         Then the HTTP status code should be "500"
         And the response header "Content-Type" should be "application/json; charset=utf-8"

@@ -21,12 +21,20 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	redirectID := vars["id"]
 
-	decodedKey, err := decodeBase64(redirectID)
-	if err != nil {
+	if !isValidBase64(redirectID) {
+		errInvalidBase64 := errors.New("invalid base64")
 		logData := log.Data{"redirect_id": redirectID}
-		api.handleError(ctx, w, err, err, http.StatusBadRequest, "request failed", logData)
+		api.handleError(ctx, w, errInvalidBase64, errInvalidBase64, http.StatusBadRequest, "invalid base64 id", logData)
 		return
 	}
+
+	decodedString, err := base64.URLEncoding.DecodeString(redirectID)
+	if err != nil {
+		http.Error(w, "cannot decode id", http.StatusBadRequest)
+		return
+	}
+
+	decodedKey := string(decodedString)
 
 	redirect, err := api.Store.GetRedirect(ctx, decodedKey)
 	logData := log.Data{"redirect": redirect}
@@ -56,14 +64,9 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// decodeBase64 returns the original string of a base64 encoded string
-func decodeBase64(encodedKey string) (string, error) {
-	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
-	if err != nil {
-		return "", fmt.Errorf("key %s not base64", encodedKey)
-	}
-
-	return string(decodedKey), nil
+func isValidBase64(s string) bool {
+	_, err := base64.StdEncoding.DecodeString(s)
+	return err == nil
 }
 
 // encodeBase64 returns the base64 encoded string of the original URL key string
