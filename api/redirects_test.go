@@ -159,26 +159,6 @@ func TestGetRedirectsEndpoint(t *testing.T) {
 				},
 			}
 
-			var redirectList []models.Redirect
-
-			for key, value := range keyValuePairs {
-				var redirect models.Redirect
-				redirectID := api.EncodeBase64(key)
-				redirectHref := selfBaseURL + redirectID
-				redirectSelf := models.RedirectSelf{
-					Href: redirectHref,
-					Id:   redirectID,
-				}
-				redirectLinks := models.RedirectLinks{
-					Self: redirectSelf,
-				}
-				redirect.From = key
-				redirect.To = value
-				redirect.Id = redirectID
-				redirect.Links = redirectLinks
-				redirectList = append(redirectList, redirect)
-			}
-
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 

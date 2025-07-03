@@ -95,4 +95,12 @@ issues:
       linters:
         - revive
       source: "github.com/smartystreets/goconvey/convey"
+    # Allow the redirect json to name the id field in lowercase
+    - path: models/redirect.go
+      linters:
+        - stylecheck
+    # Ignore integer overflow lint error as it cannot be avoided
+    - path: api/redirects.go
+      linters:
+        - gosec
   new: false

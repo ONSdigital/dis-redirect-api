@@ -4,13 +4,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/log.go/v2/log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/ONSdigital/dis-redirect-api/models"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
@@ -180,5 +180,4 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, err, err, http.StatusInternalServerError, "request failed", logData)
 		return
 	}
-
 }
