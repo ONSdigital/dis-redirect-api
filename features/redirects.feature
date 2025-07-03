@@ -7,8 +7,15 @@ Feature: Redirect endpoint
             """
             {
                 "from": "/economy/old-path",
-                "to": "/economy/new-path"
-            }
+                "to": "/economy/new-path",
+                "id": "",
+                "links": {
+                    "self": {
+                        "href": "",
+                        "id": ""
+                    }
+                  }
+                }
             """
 
 
