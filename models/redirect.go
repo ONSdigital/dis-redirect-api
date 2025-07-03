@@ -10,7 +10,7 @@ type Redirect struct {
 
 type Redirects struct {
 	Count        int        `json:"count"`
-	RedirectList []Redirect `json:"redirects"`
+	RedirectList []Redirect `json:"items"`
 	Cursor       string     `json:"cursor"`
 	NextCursor   string     `json:"next_cursor"`
 	TotalCount   int        `json:"total_count"`
@@ -22,7 +22,7 @@ type RedirectLinks struct {
 	Self RedirectSelf `json:"self"`
 }
 
-// RedirectSelf represents a link to the individual redirect
+// RedirectSelf represents a link to the individual redirect itself.
 type RedirectSelf struct {
 	Href string `json:"href"`
 	Id   string `json:"id"`

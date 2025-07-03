@@ -22,7 +22,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	redirectID := vars["id"]
 
 	if !isValidBase64(redirectID) {
-		errInvalidBase64 := errors.New("invalid base64")
+		errInvalidBase64 := errors.New("invalid base64 id")
 		logData := log.Data{"redirect_id": redirectID}
 		api.handleError(ctx, w, errInvalidBase64, errInvalidBase64, http.StatusBadRequest, "invalid base64 id", logData)
 		return
@@ -69,8 +69,8 @@ func isValidBase64(s string) bool {
 	return err == nil
 }
 
-// encodeBase64 returns the base64 encoded string of the original URL key string
-func encodeBase64(key string) string {
+// EncodeBase64 returns the base64 encoded string of the original URL key string
+func EncodeBase64(key string) string {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
 
 	return encodedKey
@@ -136,7 +136,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	for key, value := range keyValuePairs {
 		var redirect models.Redirect
-		redirectID := encodeBase64(key)
+		redirectID := EncodeBase64(key)
 		redirectHref := redirectBase + redirectID
 		redirectSelf := models.RedirectSelf{
 			Href: redirectHref,
