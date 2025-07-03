@@ -132,7 +132,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "The number of redirects fetched", logData)
 
 	redirectBase := "https://api.beta.ons.gov.uk/v1/redirects/"
-	var redirectList []models.Redirect
+	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
 
 	for key, value := range keyValuePairs {
 		var redirect models.Redirect
