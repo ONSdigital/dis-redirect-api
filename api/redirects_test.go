@@ -299,6 +299,23 @@ func TestGetRedirectsCursorNotAnInteger(t *testing.T) {
 	})
 }
 
+func TestGetRedirectsCursorNegative(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the cursor value given is negative", func() {
+			cursorValue := "-7"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
 func TestGetRedirectsServerError(t *testing.T) {
 	Convey("Given a GET /redirects request", t, func() {
 		Convey("When the redirects server has an internal error", func() {

@@ -118,7 +118,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	// validate cursor
 	if errCursor != nil {
-		api.handleError(ctx, w, errCursor, apierrors.ErrInvalidCursor, http.StatusBadRequest, "invalid path parameter - failed to convert cursor to uint64", logData)
+		api.handleError(ctx, w, errCursor, apierrors.ErrInvalidOrNegativeCursor, http.StatusBadRequest, "invalid path parameter - failed to convert cursor to uint64", logData)
 		return
 	}
 

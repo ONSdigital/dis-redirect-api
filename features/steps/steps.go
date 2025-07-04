@@ -18,6 +18,7 @@ func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be three or more redirects returned in a list$`, c.iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInAList)
 	ctx.Step(`^in each redirect I would expect the response to contain values that have these structures$`, c.inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
 	ctx.Step(`^the list of redirects should also contain the following values:$`, c.theListOfRedirectsShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^I would expect there to be (\d+) redirects returned in a list$`, c.iWouldExpectThereToBeRedirectsReturnedInAList)
 }
 
 func (c *RedirectComponent) theRedirectAPIIsRunning() {
@@ -90,4 +91,18 @@ func (c *RedirectComponent) checkValuesInRedirects(expectedResult map[string]str
 	assert.Equal(&c.ErrorFeature, expectedResult["cursor"], redirectsList.Cursor)
 	assert.Equal(&c.ErrorFeature, expectedResult["next_cursor"], redirectsList.NextCursor)
 	assert.Equal(&c.ErrorFeature, expectedResult["total_count"], strconv.Itoa(redirectsList.TotalCount))
+}
+
+func (c *RedirectComponent) iWouldExpectThereToBeRedirectsReturnedInAList(expectedNumRedirects int) error {
+	c.responseBody, _ = io.ReadAll(c.apiFeature.HTTPResponse.Body)
+
+	var response models.Redirects
+	err := json.Unmarshal(c.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	numRedirectsFound := len(response.RedirectList)
+	assert.True(&c.ErrorFeature, numRedirectsFound == expectedNumRedirects, "The list should contain "+strconv.Itoa(expectedNumRedirects)+" redirects but it contains "+strconv.Itoa(numRedirectsFound))
+
+	return c.ErrorFeature.StepError()
 }
