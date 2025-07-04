@@ -51,3 +51,54 @@ Feature: Redirect endpoint
             """
                 redis returned an error
             """
+
+    Scenario: Return all the redirects that exist in redis
+        Given the key "/economy/old-path1" is already set to a value of "/economy/new-path1" in the Redis store
+        And the key "/economy/old-path2" is already set to a value of "/economy/new-path2" in the Redis store
+        And the key "/economy/old-path3" is already set to a value of "/economy/new-path3" in the Redis store
+        And the redirect api is running
+        When I GET "/v1/redirects"
+        Then I should receive the following JSON response with status "200":
+            """
+            {
+              "count": 10,
+              "items": [
+                {
+                  "from": "/economy/old-path1",
+                  "to": "/economy/new-path1",
+                  "id": "L2Vjb25vbXkvb2xkLXBhdGgx",
+                  "links": {
+                    "self": {
+                      "href": "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgx",
+                      "id": "L2Vjb25vbXkvb2xkLXBhdGgx"
+                    }
+                  }
+                },
+                {
+                  "from": "/economy/old-path2",
+                  "to": "/economy/new-path2",
+                  "id": "L2Vjb25vbXkvb2xkLXBhdGgy",
+                  "links": {
+                    "self": {
+                      "href": "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgy",
+                      "id": "L2Vjb25vbXkvb2xkLXBhdGgy"
+                    }
+                  }
+                },
+                {
+                  "from": "/economy/old-path3",
+                  "to": "/economy/new-path3",
+                  "id": "L2Vjb25vbXkvb2xkLXBhdGgz",
+                  "links": {
+                    "self": {
+                      "href": "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgz",
+                      "id": "L2Vjb25vbXkvb2xkLXBhdGgz"
+                    }
+                  }
+                }
+              ],
+              "cursor": "0",
+              "next_cursor": "0",
+              "total_count": 3
+            }
+            """
