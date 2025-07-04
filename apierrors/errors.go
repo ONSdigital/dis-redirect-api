@@ -4,7 +4,8 @@ import "errors"
 
 // A list of error messages for Redirect API
 var (
-	ErrRedis               = errors.New("redis returned an error")
-	ErrInvalidNumRedirects = errors.New("the number of redirects to count was invalid")
-	ErrInvalidCursor       = errors.New("the redirects cursor was invalid")
+	ErrNegativeCount = errors.New("the count must be a positive integer")
+	ErrRedis         = errors.New("redis returned an error")
+	ErrInvalidCount  = errors.New("the count must be an integer giving the requested number of redirects")
+	ErrInvalidCursor = errors.New("the redirects cursor was invalid")
 )

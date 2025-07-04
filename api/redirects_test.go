@@ -26,6 +26,7 @@ var (
 		To:   "/economy/new-path",
 	}
 	selfBaseURL = "https://api.beta.ons.gov.uk/v1/redirects/"
+	notANumber  = "this-is-not-a-number"
 )
 
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
@@ -184,6 +185,57 @@ func TestGetRedirectsEndpoint(t *testing.T) {
 				So(response.Cursor, ShouldEqual, "0")
 				So(response.NextCursor, ShouldEqual, "0")
 				So(response.TotalCount, ShouldEqual, 12)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCountNotAnInteger(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count value given is not an integer", func() {
+			countValue := notANumber
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCountNegative(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count value given is negative", func() {
+			countValue := "-12"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCursorNotAnInteger(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the cursor value given is not an integer", func() {
+			cursorValue := notANumber
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
 			})
 		})
 	})

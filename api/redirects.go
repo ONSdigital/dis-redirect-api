@@ -98,14 +98,14 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	count, errCount := strconv.ParseInt(strCount, 10, 32)
 
 	// validate count
-	if errCount != nil {
-		api.handleError(ctx, w, errCount, apierrors.ErrInvalidNumRedirects, http.StatusBadRequest, "invalid path parameter - failed to convert count to int64", logData)
+	if count < 0 {
+		errNegCount := errors.New("the count is negative")
+		api.handleError(ctx, w, errNegCount, apierrors.ErrNegativeCount, http.StatusBadRequest, "invalid path parameter - count should be a positive integer", logData)
 		return
 	}
 
-	if count < 0 {
-		errNegCount := errors.New("the count is negative")
-		api.handleError(ctx, w, errNegCount, apierrors.ErrInvalidNumRedirects, http.StatusBadRequest, "invalid path parameter - count should be a positive integer", logData)
+	if errCount != nil {
+		api.handleError(ctx, w, errCount, apierrors.ErrInvalidCount, http.StatusBadRequest, "invalid path parameter - failed to convert count to int64", logData)
 		return
 	}
 
