@@ -59,6 +59,7 @@ require (
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rdumont/assistdog v0.0.0-20240711132531-b5b791dd7452 // indirect
 	github.com/redis/go-redis/v9 v9.9.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
