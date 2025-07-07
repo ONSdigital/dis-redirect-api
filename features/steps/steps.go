@@ -9,7 +9,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/cucumber/godog"
-	"github.com/rdumont/assistdog"
+	"github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,27 +70,40 @@ func (c *RedirectComponent) checkStructure(responseRedirect *models.Redirect) er
 }
 
 func (c *RedirectComponent) theListOfRedirectsShouldAlsoContainTheFollowingValues(table *godog.Table) error {
-	expectedResult, err := assistdog.NewDefault().ParseMap(table)
-	if err != nil {
-		return fmt.Errorf("failed to parse table: %w", err)
-	}
 	var response models.Redirects
 
-	err = json.Unmarshal(c.responseBody, &response)
+	err := json.Unmarshal(c.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	c.checkValuesInRedirects(expectedResult, response)
+	for i, row := range table.Rows {
+		if i == 0 { // Skip header row
+			continue
+		}
+		c.checkValuesInRedirects(row, response)
+	}
 
 	return c.ErrorFeature.StepError()
 }
 
-func (c *RedirectComponent) checkValuesInRedirects(expectedResult map[string]string, redirectsList models.Redirects) {
-	assert.Equal(&c.ErrorFeature, expectedResult["count"], strconv.Itoa(redirectsList.Count))
-	assert.Equal(&c.ErrorFeature, expectedResult["cursor"], redirectsList.Cursor)
-	assert.Equal(&c.ErrorFeature, expectedResult["next_cursor"], redirectsList.NextCursor)
-	assert.Equal(&c.ErrorFeature, expectedResult["total_count"], strconv.Itoa(redirectsList.TotalCount))
+func (c *RedirectComponent) checkValuesInRedirects(row *messages.PickleTableRow, redirectsList models.Redirects) {
+	strExpectedCount := row.Cells[0].Value
+	intExpectedCount, _ := strconv.Atoi(strExpectedCount)
+	intObservedCount := redirectsList.Count
+	assert.True(&c.ErrorFeature, intExpectedCount == intObservedCount, "expected count to equal "+strExpectedCount+"but it is "+strconv.Itoa(intObservedCount))
+	strExpectedCursor := row.Cells[1].Value
+	intExpectedCursor, _ := strconv.Atoi(strExpectedCursor)
+	intObservedCursor, _ := strconv.Atoi(redirectsList.Cursor)
+	assert.True(&c.ErrorFeature, intExpectedCursor == intObservedCursor, "expected cursor to equal "+strExpectedCursor+" but it is "+redirectsList.Cursor)
+	strExpectedNextCursor := row.Cells[2].Value
+	intExpectedNextCursor, _ := strconv.Atoi(strExpectedNextCursor)
+	intObservedNextCursor, _ := strconv.Atoi(redirectsList.NextCursor)
+	assert.True(&c.ErrorFeature, intExpectedNextCursor == intObservedNextCursor, "expected next cursor to equal "+strExpectedNextCursor+" but it is "+redirectsList.NextCursor)
+	strExpectedTotalCount := row.Cells[3].Value
+	intExpectedTotalCount, _ := strconv.Atoi(strExpectedTotalCount)
+	intObservedTotalCount := redirectsList.TotalCount
+	assert.True(&c.ErrorFeature, intExpectedTotalCount == intObservedTotalCount, "expected total count to equal "+strExpectedTotalCount+"but it is "+strconv.Itoa(intObservedTotalCount))
 }
 
 func (c *RedirectComponent) iWouldExpectThereToBeRedirectsReturnedInAList(expectedNumRedirects int) error {

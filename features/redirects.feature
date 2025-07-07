@@ -67,10 +67,8 @@ Feature: Redirect endpoint
             | links: self: href      | https://api.beta.ons.gov.uk/v1/redirects/{id} |
             | links: self: id        | {id}                                          |
         And the list of redirects should also contain the following values:
-            | count                  | 10                           |
-            | cursor                 | 0                            |
-            | next_cursor            | 0                            |
-            | total_count            | 3                            |
+            | count | cursor | next_cursor | total_count |
+            | 10    | 0      | 0           | 3           |
 
     Scenario: Return all the redirects that exist in redis using specific valid path parameters
         Given the key "/economy/old-path1" is already set to a value of "/economy/new-path1" in the Redis store
@@ -87,10 +85,8 @@ Feature: Redirect endpoint
             | links: self: href      | https://api.beta.ons.gov.uk/v1/redirects/{id} |
             | links: self: id        | {id}                                          |
         And the list of redirects should also contain the following values:
-            | count                  | 2                            |
-            | cursor                 | 1                            |
-            | next_cursor            | 0                            |
-            | total_count            | 3                            |
+            | count | cursor | next_cursor | total_count |
+            | 2     | 1      | 0           | 3           |
 
         Scenario: Return 400 when the count value given is not an integer
             Given redis is healthy

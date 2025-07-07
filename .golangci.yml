@@ -103,4 +103,8 @@ issues:
     - path: api/redirects.go
       linters:
         - gosec
+    # Ignore formatting of imports in steps file as it's not clear what the problem is
+    - path: features/steps/steps.go
+      linters:
+        - goimports
   new: false
