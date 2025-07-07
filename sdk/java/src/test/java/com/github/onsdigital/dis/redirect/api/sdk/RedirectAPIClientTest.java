@@ -9,6 +9,7 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -193,6 +194,76 @@ class RedirectAPIClientTest {
                 client.putRedirect("L2Zyb20=", new Redirect("/from", "/to")));
     }
 
+    @Test
+    void testDeleteRedirectSuccess() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NO_CONTENT);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        client.deleteRedirect("L2Zyb20="); // base64 of "/from"
+
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("DELETE", request.getMethod());
+        assertNotNull(request.getFirstHeader("Authorization"));
+    }
+
+    @Test
+    void testDeleteRedirectReturns404() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                RedirectAPIException.class,
+                () -> client.deleteRedirect("L2Zyb20=")
+        );
+
+        assertTrue(exception.getMessage().contains("404"));
+    }
+
+    @Test
+    void testDeleteRedirectServerError() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                RedirectAPIException.class,
+                () -> client.deleteRedirect("L2Zyb20=")
+        );
+
+        assertTrue(exception.getMessage().contains("500"));
+    }
+
+    @Test
+    void testDeleteRedirectIOException() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        when(mockHttpClient.execute(any(HttpRequestBase.class)))
+                .thenThrow(new IOException("Simulated network failure"));
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        assertThrows(IOException.class, () ->
+                client.deleteRedirect("L2Zyb20="));
+    }
 
     private RedirectClient getRedirectClient(
             final CloseableHttpClient mockHttpClient)

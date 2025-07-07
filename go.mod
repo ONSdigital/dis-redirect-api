@@ -2,8 +2,6 @@ module github.com/ONSdigital/dis-redirect-api
 
 go 1.24
 
-// replace github.com/ONSdigital/dp-component-test v0.24.0 => /Users/OluwawunmiSowunmi/Workspace/ONSDigital/dp-component-test
-
 require (
 	github.com/ONSdigital/dis-redis v0.3.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.267.0

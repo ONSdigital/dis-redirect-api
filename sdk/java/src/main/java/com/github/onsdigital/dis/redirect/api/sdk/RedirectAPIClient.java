@@ -27,6 +27,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -123,44 +124,75 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     /**
-         * Upserts a redirect by sending a PUT request to /redirects/{id}.
-         *
-         * @param base64Id the base64 URL-encoded redirect key
-         * @param payload  the redirect payload with 'from' and 'to' fields
-         * @throws IOException            if request fails
-         * @throws RedirectAPIException   if non-2xx response returned
-         */
-        @Override
-        public void putRedirect(final String base64Id,
-        final Redirect payload)
-                throws IOException, RedirectAPIException {
+     * Upserts a redirect by sending a PUT request to /redirects/{id}.
+     *
+     * @param base64Id the base64 URL-encoded redirect key
+     * @param payload  the redirect payload with 'from' and 'to' fields
+     * @throws IOException            if request fails
+     * @throws RedirectAPIException   if non-2xx response returned
+     */
+    @Override
+    public void putRedirect(final String base64Id,
+    final Redirect payload)
+            throws IOException, RedirectAPIException {
 
-            URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
-                    + base64Id);
-            HttpPut put = new HttpPut(requestUri);
+        URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
+                + base64Id);
+        HttpPut put = new HttpPut(requestUri);
 
-            // Add Authorization header
-            put.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
-            put.addHeader("Content-Type", "application/json");
+        // Add Authorization header
+        put.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
+        put.addHeader("Content-Type", "application/json");
 
-            // Serialize payload
-            String jsonPayload = JSON.writeValueAsString(payload);
-            put.setEntity(new StringEntity(
-                    jsonPayload,
-                    ContentType.APPLICATION_JSON));
+        // Serialize payload
+        String jsonPayload = JSON.writeValueAsString(payload);
+        put.setEntity(new StringEntity(
+                jsonPayload,
+                ContentType.APPLICATION_JSON));
 
-            try (CloseableHttpResponse response = executeRequest(put)) {
-                int statusCode = response.getStatusLine().getStatusCode();
+        try (CloseableHttpResponse response = executeRequest(put)) {
+            int statusCode = response.getStatusLine().getStatusCode();
 
-                if (statusCode != HttpStatus.SC_CREATED
-                        && statusCode != HttpStatus.SC_OK) {
-                    throw new RedirectAPIException(
-                            formatErrResponse(put, response,
-                            HttpStatus.SC_CREATED),
-                            statusCode);
-                }
+            if (statusCode != HttpStatus.SC_CREATED
+                    && statusCode != HttpStatus.SC_OK) {
+                throw new RedirectAPIException(
+                        formatErrResponse(put, response,
+                        HttpStatus.SC_CREATED),
+                        statusCode);
             }
         }
+    }
+
+    /**
+     * Deletes a redirect by sending a DELETE request to /redirects/{id}.
+     *
+     * @param base64Id the base64 URL-encoded redirect key
+     * @throws IOException            if the request fails
+     * @throws RedirectAPIException   if a non-204/404 response is returned
+     */
+    @Override
+    public void deleteRedirect(final String base64Id)
+            throws IOException, RedirectAPIException {
+
+        URI requestUri = redirectAPIUri.resolve("/v1/redirects/" + base64Id);
+        HttpDelete delete = new HttpDelete(requestUri);
+
+        delete.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
+
+        try (CloseableHttpResponse response = executeRequest(delete)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode != HttpStatus.SC_NO_CONTENT) {
+                throw new RedirectAPIException(
+                        formatErrResponse(delete, response,
+                        HttpStatus.SC_NO_CONTENT),
+                        statusCode
+                );
+            }
+        }
+    }
+
+
 
     private void validateRedirectID(final String redirectID) {
         Args.check(StringUtils.isNotBlank(redirectID),
