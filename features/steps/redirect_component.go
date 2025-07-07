@@ -11,8 +11,12 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	disRedis "github.com/ONSdigital/dis-redis"
-	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	permissionsSDK "github.com/ONSdigital/dp-permissions-api/sdk"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 const (
@@ -21,19 +25,20 @@ const (
 )
 
 type RedirectComponent struct {
-	componenttest.ErrorFeature
-	svcList        *service.ExternalServiceList
-	svc            *service.Service
-	errorChan      chan error
-	Config         *config.Config
-	HTTPServer     *http.Server
-	ServiceRunning bool
-	apiFeature     *componenttest.APIFeature
-	redisFeature   *componenttest.RedisFeature
-	StartTime      time.Time
+	componentTest.ErrorFeature
+	svcList                 *service.ExternalServiceList
+	svc                     *service.Service
+	errorChan               chan error
+	Config                  *config.Config
+	HTTPServer              *http.Server
+	ServiceRunning          bool
+	apiFeature              *componentTest.APIFeature
+	redisFeature            *componentTest.RedisFeature
+	StartTime               time.Time
+	AuthorisationMiddleware authorisation.Middleware
 }
 
-func NewRedirectComponent(redisFeat *componenttest.RedisFeature) (*RedirectComponent, error) {
+func NewRedirectComponent(redisFeat *componentTest.RedisFeature) (*RedirectComponent, error) {
 	c := &RedirectComponent{
 		HTTPServer:     &http.Server{ReadHeaderTimeout: 3 * time.Second},
 		errorChan:      make(chan error),
@@ -50,10 +55,14 @@ func NewRedirectComponent(redisFeat *componenttest.RedisFeature) (*RedirectCompo
 	c.redisFeature = redisFeat
 	c.Config.RedisAddress = c.redisFeature.Server.Addr()
 
+	fakePermissionsAPI := setupFakePermissionsAPI()
+	c.Config.AuthorisationConfig.PermissionsAPIURL = fakePermissionsAPI.URL()
+
 	initMock := &mock.InitialiserMock{
-		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
-		DoGetRedisClientFunc: c.DoGetRedisClientOk,
+		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
+		DoGetRedisClientFunc:             c.DoGetRedisClientOk,
+		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddlewareOk,
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
@@ -71,15 +80,14 @@ func NewRedirectComponent(redisFeat *componenttest.RedisFeature) (*RedirectCompo
 	return c, nil
 }
 
-func (c *RedirectComponent) InitAPIFeature() *componenttest.APIFeature {
-	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
+func (c *RedirectComponent) InitAPIFeature() *componentTest.APIFeature {
+	c.apiFeature = componentTest.NewAPIFeature(c.InitialiseService)
 
 	return c.apiFeature
 }
 
 func (c *RedirectComponent) Reset() *RedirectComponent {
 	c.apiFeature.Reset()
-
 	return c
 }
 
@@ -124,4 +132,44 @@ func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.
 	})
 
 	return redisCli, err
+}
+
+func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.AuthorisationMiddleware = middleware
+	return c.AuthorisationMiddleware, nil
+}
+
+func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
+	fakePermissionsAPI := authorisationtest.NewFakePermissionsAPI()
+	bundle := getPermissionsBundle()
+	fakePermissionsAPI.Reset()
+	if err := fakePermissionsAPI.UpdatePermissionsBundleResponse(bundle); err != nil {
+		log.Error(context.Background(), "failed to update permissions bundle response", err)
+	}
+	return fakePermissionsAPI
+}
+
+func getPermissionsBundle() *permissionsSDK.Bundle {
+	return &permissionsSDK.Bundle{
+		"legacy:edit": {
+			"groups/role-admin": {
+				{
+					ID: "1",
+				},
+			},
+		},
+		"legacy:delete": {
+			"groups/role-admin": {
+				{
+					ID: "1",
+				},
+			},
+		},
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/store"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"sync"
+	"time"
 )
 
 // Ensure, that RedisMock does implement store.Redis.
@@ -23,8 +24,14 @@ var _ store.Redis = &RedisMock{}
 //			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
 //				panic("mock out the Checker method")
 //			},
+//			DeleteValueFunc: func(ctx context.Context, key string) error {
+//				panic("mock out the DeleteValue method")
+//			},
 //			GetValueFunc: func(ctx context.Context, key string) (string, error) {
 //				panic("mock out the GetValue method")
+//			},
+//			SetValueFunc: func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+//				panic("mock out the SetValue method")
 //			},
 //		}
 //
@@ -36,8 +43,14 @@ type RedisMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error
 
+	// DeleteValueFunc mocks the DeleteValue method.
+	DeleteValueFunc func(ctx context.Context, key string) error
+
 	// GetValueFunc mocks the GetValue method.
 	GetValueFunc func(ctx context.Context, key string) (string, error)
+
+	// SetValueFunc mocks the SetValue method.
+	SetValueFunc func(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -48,6 +61,13 @@ type RedisMock struct {
 			// CheckState is the checkState argument value.
 			CheckState *healthcheck.CheckState
 		}
+		// DeleteValue holds details about calls to the DeleteValue method.
+		DeleteValue []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
 		// GetValue holds details about calls to the GetValue method.
 		GetValue []struct {
 			// Ctx is the ctx argument value.
@@ -55,9 +75,22 @@ type RedisMock struct {
 			// Key is the key argument value.
 			Key string
 		}
+		// SetValue holds details about calls to the SetValue method.
+		SetValue []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+			// Value is the value argument value.
+			Value interface{}
+			// Expiration is the expiration argument value.
+			Expiration time.Duration
+		}
 	}
-	lockChecker  sync.RWMutex
-	lockGetValue sync.RWMutex
+	lockChecker     sync.RWMutex
+	lockDeleteValue sync.RWMutex
+	lockGetValue    sync.RWMutex
+	lockSetValue    sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -96,6 +129,42 @@ func (mock *RedisMock) CheckerCalls() []struct {
 	return calls
 }
 
+// DeleteValue calls DeleteValueFunc.
+func (mock *RedisMock) DeleteValue(ctx context.Context, key string) error {
+	if mock.DeleteValueFunc == nil {
+		panic("RedisMock.DeleteValueFunc: method is nil but Redis.DeleteValue was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockDeleteValue.Lock()
+	mock.calls.DeleteValue = append(mock.calls.DeleteValue, callInfo)
+	mock.lockDeleteValue.Unlock()
+	return mock.DeleteValueFunc(ctx, key)
+}
+
+// DeleteValueCalls gets all the calls that were made to DeleteValue.
+// Check the length with:
+//
+//	len(mockedRedis.DeleteValueCalls())
+func (mock *RedisMock) DeleteValueCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockDeleteValue.RLock()
+	calls = mock.calls.DeleteValue
+	mock.lockDeleteValue.RUnlock()
+	return calls
+}
+
 // GetValue calls GetValueFunc.
 func (mock *RedisMock) GetValue(ctx context.Context, key string) (string, error) {
 	if mock.GetValueFunc == nil {
@@ -129,5 +198,49 @@ func (mock *RedisMock) GetValueCalls() []struct {
 	mock.lockGetValue.RLock()
 	calls = mock.calls.GetValue
 	mock.lockGetValue.RUnlock()
+	return calls
+}
+
+// SetValue calls SetValueFunc.
+func (mock *RedisMock) SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	if mock.SetValueFunc == nil {
+		panic("RedisMock.SetValueFunc: method is nil but Redis.SetValue was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		Key        string
+		Value      interface{}
+		Expiration time.Duration
+	}{
+		Ctx:        ctx,
+		Key:        key,
+		Value:      value,
+		Expiration: expiration,
+	}
+	mock.lockSetValue.Lock()
+	mock.calls.SetValue = append(mock.calls.SetValue, callInfo)
+	mock.lockSetValue.Unlock()
+	return mock.SetValueFunc(ctx, key, value, expiration)
+}
+
+// SetValueCalls gets all the calls that were made to SetValue.
+// Check the length with:
+//
+//	len(mockedRedis.SetValueCalls())
+func (mock *RedisMock) SetValueCalls() []struct {
+	Ctx        context.Context
+	Key        string
+	Value      interface{}
+	Expiration time.Duration
+} {
+	var calls []struct {
+		Ctx        context.Context
+		Key        string
+		Value      interface{}
+		Expiration time.Duration
+	}
+	mock.lockSetValue.RLock()
+	calls = mock.calls.SetValue
+	mock.lockSetValue.RUnlock()
 	return calls
 }
