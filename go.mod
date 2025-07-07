@@ -25,7 +25,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/chromedp/cdproto v0.0.0-20250706212322-41fb261d0659 // indirect
+	github.com/chromedp/cdproto v0.0.0-20250630014756-b7288190f53c // indirect
 	github.com/chromedp/chromedp v0.13.7 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cucumber/gherkin/go/v26 v26.2.0 // indirect
@@ -34,7 +34,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20250626171732-1a886bd29d1b // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -93,6 +92,3 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Required to mitigate [CVE-2025-27144] CWE-770: Allocation of Resources Without Limits or Throttling
-tool github.com/go-jose/go-jose/v4
