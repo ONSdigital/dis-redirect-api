@@ -1,3 +1,3 @@
-# CVE-2021-3121 # Ignored Improper Validation of Array Index due to all dependencies being up to date
-# CVE-2022-21698 # Ignored Uncontrolled Resource Consumption ('Resource Exhaustion') due to all dependencies being up to date
-# CVE-2023-45142 # Ignored Allocation of Resources Without Limits or Throttling due to all dependencies being up to date
+CVE-2021-3121 # Ignored Improper Validation of Array Index due to all dependencies being up to date
+CVE-2022-21698 # Ignored Uncontrolled Resource Consumption ('Resource Exhaustion') due to all dependencies being up to date
+CVE-2023-45142 # Ignored Allocation of Resources Without Limits or Throttling due to all dependencies being up to date
