@@ -135,7 +135,8 @@ public class RedirectAPIClient implements RedirectClient {
         final Redirect payload)
                 throws IOException, RedirectAPIException {
 
-            URI requestUri = redirectAPIUri.resolve("/v1/redirects/" + base64Id);
+            URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
+                    + base64Id);
             HttpPut put = new HttpPut(requestUri);
 
             // Add Authorization header
@@ -154,7 +155,8 @@ public class RedirectAPIClient implements RedirectClient {
                 if (statusCode != HttpStatus.SC_CREATED
                         && statusCode != HttpStatus.SC_OK) {
                     throw new RedirectAPIException(
-                            formatErrResponse(put, response, HttpStatus.SC_CREATED),
+                            formatErrResponse(put, response,
+                            HttpStatus.SC_CREATED),
                             statusCode);
                 }
             }

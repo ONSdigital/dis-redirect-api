@@ -2,6 +2,8 @@ module github.com/ONSdigital/dis-redirect-api
 
 go 1.24
 
+// replace github.com/ONSdigital/dp-component-test v0.24.0 => /Users/OluwawunmiSowunmi/Workspace/ONSDigital/dp-component-test
+
 require (
 	github.com/ONSdigital/dis-redis v0.3.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.267.0
@@ -10,13 +12,11 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-net/v3 v3.3.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
-	github.com/ONSdigital/dp-permissions-api v1.0.0
 	github.com/ONSdigital/log.go/v2 v2.4.5
 	github.com/cucumber/godog v0.15.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.11.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.62.0
@@ -24,6 +24,7 @@ require (
 
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.8.1 // indirect
+	github.com/ONSdigital/dp-permissions-api v1.0.0 // indirect
 	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -60,6 +61,7 @@ require (
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/redis/go-redis/v9 v9.11.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
