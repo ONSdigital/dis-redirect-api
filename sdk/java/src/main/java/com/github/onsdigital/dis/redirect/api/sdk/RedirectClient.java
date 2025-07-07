@@ -36,7 +36,8 @@ public interface RedirectClient extends Closeable {
        * @param payload  the {@link Redirect} object containing the source
        *                 and target paths
        * @throws IOException          if an I/O error occurs during the request
-       * @throws RedirectAPIException if the API returns an unexpected status code
+       * @throws RedirectAPIException if the API returns an unexpected status
+       *                 code
        */
       void putRedirect(String base64Id, Redirect payload) throws IOException,
            RedirectAPIException;

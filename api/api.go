@@ -18,13 +18,12 @@ type RedirectAPI struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware) *API {
+func Setup(r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware) *RedirectAPI {
 	api := &RedirectAPI{
 		Router:         r,
 		Store:          dataStore,
 		authMiddleware: auth,
 	}
-
 
 	api.get("/v1/redirects/{id}", api.getRedirect)
 

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"testing"
 
+	"github.com/ONSdigital/dis-redirect-api/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -126,7 +128,7 @@ func TestPutRedirect(t *testing.T) {
 		httpClient := newMockHTTPClient(nil, clientErr)
 
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
-		redirect := api.Redirect{From: "/error", To: "/nowhere"}
+		redirect := models.Redirect{From: "/error", To: "/nowhere"}
 
 		Convey("When PutRedirect is called", func() {
 			err := redirectAPIClient.PutRedirect(ctx, Options{Headers: headers}, "L2Vycm9y", redirect)
