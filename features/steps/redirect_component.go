@@ -8,15 +8,11 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
-	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
-	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	permissionsSDK "github.com/ONSdigital/dp-permissions-api/sdk"
-	"github.com/ONSdigital/log.go/v2/log"
 )
 
 const (
@@ -34,50 +30,18 @@ type RedirectComponent struct {
 	ServiceRunning          bool
 	apiFeature              *componentTest.APIFeature
 	redisFeature            *componentTest.RedisFeature
+	authFeature             *componentTest.AuthorizationFeature
 	StartTime               time.Time
 	AuthorisationMiddleware authorisation.Middleware
 }
 
-func NewRedirectComponent(redisFeat *componentTest.RedisFeature) (*RedirectComponent, error) {
-	c := &RedirectComponent{
-		HTTPServer:     &http.Server{ReadHeaderTimeout: 3 * time.Second},
+func NewRedirectComponent(redisFeat *componentTest.RedisFeature, authFeat *componentTest.AuthorizationFeature) (*RedirectComponent, error) {
+	return &RedirectComponent{
+		redisFeature:   redisFeat,
+		authFeature:    authFeat, // keep this if needed
 		errorChan:      make(chan error),
 		ServiceRunning: false,
-	}
-
-	var err error
-
-	c.Config, err = config.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	c.redisFeature = redisFeat
-	c.Config.RedisAddress = c.redisFeature.Server.Addr()
-
-	fakePermissionsAPI := setupFakePermissionsAPI()
-	c.Config.AuthorisationConfig.PermissionsAPIURL = fakePermissionsAPI.URL()
-
-	initMock := &mock.InitialiserMock{
-		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
-		DoGetRedisClientFunc:             c.DoGetRedisClientOk,
-		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddlewareOk,
-	}
-
-	c.Config.HealthCheckInterval = 1 * time.Second
-	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
-	c.svcList = service.NewServiceList(initMock)
-
-	c.Config.BindAddr = "localhost:0"
-	c.StartTime = time.Now()
-	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
-	if err != nil {
-		return nil, err
-	}
-	c.ServiceRunning = true
-
-	return c, nil
+	}, nil
 }
 
 func (c *RedirectComponent) InitAPIFeature() *componentTest.APIFeature {
@@ -143,33 +107,4 @@ func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, 
 
 	c.AuthorisationMiddleware = middleware
 	return c.AuthorisationMiddleware, nil
-}
-
-func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
-	fakePermissionsAPI := authorisationtest.NewFakePermissionsAPI()
-	bundle := getPermissionsBundle()
-	fakePermissionsAPI.Reset()
-	if err := fakePermissionsAPI.UpdatePermissionsBundleResponse(bundle); err != nil {
-		log.Error(context.Background(), "failed to update permissions bundle response", err)
-	}
-	return fakePermissionsAPI
-}
-
-func getPermissionsBundle() *permissionsSDK.Bundle {
-	return &permissionsSDK.Bundle{
-		"legacy:edit": {
-			"groups/role-admin": {
-				{
-					ID: "1",
-				},
-			},
-		},
-		"legacy:delete": {
-			"groups/role-admin": {
-				{
-					ID: "1",
-				},
-			},
-		},
-	}
 }

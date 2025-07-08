@@ -2,7 +2,7 @@ module github.com/ONSdigital/dis-redirect-api
 
 go 1.24
 
-// replace github.com/ONSdigital/dp-component-test v0.24.0 => /Users/OluwawunmiSowunmi/Workspace/ONSDigital/dp-component-test
+replace github.com/ONSdigital/dp-component-test v0.24.0 => /Users/OluwawunmiSowunmi/Workspace/ONSDigital/dp-component-test
 
 require (
 	github.com/ONSdigital/dis-redis v0.3.0
@@ -18,7 +18,6 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.8.1
-	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.62.0
 )
 
@@ -65,6 +64,7 @@ require (
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

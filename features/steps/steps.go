@@ -1,28 +1,60 @@
 package steps
 
 import (
-	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
+	"context"
+	"fmt"
+	"github.com/ONSdigital/dis-redirect-api/config"
+	"github.com/ONSdigital/dis-redirect-api/service"
+	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/cucumber/godog"
-	"github.com/stretchr/testify/assert"
+	"net/http"
+	"time"
 )
 
 func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	c.apiFeature.RegisterSteps(ctx)
-	ctx.Step(`^I am an admin user$`, c.adminJWTToken)
-	ctx.Step(`^I am not authenticated$`, c.iAmNotAuthenticated)
 	ctx.Step(`^the redirect api is running$`, c.theRedirectAPIIsRunning)
 }
 
-func (c *RedirectComponent) theRedirectAPIIsRunning() {
-	assert.Equal(c, true, c.ServiceRunning)
-}
+func (c *RedirectComponent) theRedirectAPIIsRunning() error {
+	if c.ServiceRunning {
+		return nil // already started
+	}
 
-func (c *RedirectComponent) adminJWTToken() error {
-	err := c.apiFeature.ISetTheHeaderTo("Authorization", authorisationtest.AdminJWTToken)
-	return err
-}
+	var err error
 
-func (c *RedirectComponent) iAmNotAuthenticated() error {
-	err := c.apiFeature.ISetTheHeaderTo("Authorization", "")
-	return err
+	// Register permissions bundle handler before starting the service
+	if err := c.authFeature.RegisterDefaultPermissionsBundle(); err != nil {
+		return fmt.Errorf("failed to register permissions bundle: %w", err)
+	}
+
+	c.Config, err = config.Get()
+	if err != nil {
+		return err
+	}
+
+	c.Config.RedisAddress = c.redisFeature.Server.Addr()
+	c.Config.AuthorisationConfig.PermissionsAPIURL = c.authFeature.FakePermissionsAPI.URL()
+
+	initMock := &mock.InitialiserMock{
+		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
+		DoGetRedisClientFunc:             c.DoGetRedisClientOk,
+		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddlewareOk,
+	}
+
+	c.Config.HealthCheckInterval = 1 * time.Second
+	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
+	c.Config.BindAddr = "localhost:0"
+	c.StartTime = time.Now()
+	c.svcList = service.NewServiceList(initMock)
+
+	c.HTTPServer = &http.Server{ReadHeaderTimeout: 3 * time.Second}
+	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
+	if err != nil {
+		return err
+	}
+
+	c.ServiceRunning = true
+	return nil
 }
