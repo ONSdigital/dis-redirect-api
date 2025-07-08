@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
 	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
+	AuthorisationConfig        *authorisation.Config
 }
 
 var cfg *Config
@@ -38,6 +40,7 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisAddress:               "localhost:6379",
+		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/store"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"sync"
+	"time"
 )
 
 // Ensure, that RedisMock does implement store.Redis.
@@ -26,6 +27,9 @@ var _ store.Redis = &RedisMock{}
 //			GetValueFunc: func(ctx context.Context, key string) (string, error) {
 //				panic("mock out the GetValue method")
 //			},
+//			SetValueFunc: func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+//				panic("mock out the SetValue method")
+//			},
 //		}
 //
 //		// use mockedRedis in code that requires store.Redis
@@ -38,6 +42,9 @@ type RedisMock struct {
 
 	// GetValueFunc mocks the GetValue method.
 	GetValueFunc func(ctx context.Context, key string) (string, error)
+
+	// SetValueFunc mocks the SetValue method.
+	SetValueFunc func(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -55,9 +62,21 @@ type RedisMock struct {
 			// Key is the key argument value.
 			Key string
 		}
+		// SetValue holds details about calls to the SetValue method.
+		SetValue []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+			// Value is the value argument value.
+			Value interface{}
+			// Expiration is the expiration argument value.
+			Expiration time.Duration
+		}
 	}
 	lockChecker  sync.RWMutex
 	lockGetValue sync.RWMutex
+	lockSetValue sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -129,5 +148,49 @@ func (mock *RedisMock) GetValueCalls() []struct {
 	mock.lockGetValue.RLock()
 	calls = mock.calls.GetValue
 	mock.lockGetValue.RUnlock()
+	return calls
+}
+
+// SetValue calls SetValueFunc.
+func (mock *RedisMock) SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	if mock.SetValueFunc == nil {
+		panic("RedisMock.SetValueFunc: method is nil but Redis.SetValue was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		Key        string
+		Value      interface{}
+		Expiration time.Duration
+	}{
+		Ctx:        ctx,
+		Key:        key,
+		Value:      value,
+		Expiration: expiration,
+	}
+	mock.lockSetValue.Lock()
+	mock.calls.SetValue = append(mock.calls.SetValue, callInfo)
+	mock.lockSetValue.Unlock()
+	return mock.SetValueFunc(ctx, key, value, expiration)
+}
+
+// SetValueCalls gets all the calls that were made to SetValue.
+// Check the length with:
+//
+//	len(mockedRedis.SetValueCalls())
+func (mock *RedisMock) SetValueCalls() []struct {
+	Ctx        context.Context
+	Key        string
+	Value      interface{}
+	Expiration time.Duration
+} {
+	var calls []struct {
+		Ctx        context.Context
+		Key        string
+		Value      interface{}
+		Expiration time.Duration
+	}
+	mock.lockSetValue.RLock()
+	calls = mock.calls.SetValue
+	mock.lockSetValue.RUnlock()
 	return calls
 }

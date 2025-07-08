@@ -32,3 +32,27 @@ func (cli *Client) GetRedirect(ctx context.Context, options Options, key string)
 
 	return &response, nil
 }
+
+// PutRedirect updates a redirect via the /redirects/{id} endpoint
+func (cli *Client) PutRedirect(
+	ctx context.Context,
+	options Options,
+	id string,
+	payload models.Redirect,
+) apiError.Error {
+	path := fmt.Sprintf(RedirectEndpoint, cli.hcCli.URL, id)
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return apiError.StatusError{
+			Err: fmt.Errorf("failed to marshal redirect payload - error is: %v", err),
+		}
+	}
+
+	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodPut, options.Headers, bodyBytes)
+	if apiErr != nil {
+		return apiErr
+	}
+
+	return nil
+}

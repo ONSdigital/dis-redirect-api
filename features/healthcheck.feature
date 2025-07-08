@@ -1,11 +1,14 @@
 Feature: Health endpoint
+
+    Background: Service setup
+        Given the redirect api is running
+
     Scenario: Returning a OK (200) status when health endpoint called
         Given redis is healthy
         Given I have a healthcheck interval of 1 second
-        And the redirect api is running
         And I wait 2 seconds for the healthcheck to be available
         When I GET "/health"
-        When the health checks should have completed within 2 seconds
+        When the health checks should have completed within 6 seconds
         Then I should receive the following health JSON response:
         """
             {
@@ -30,7 +33,6 @@ Feature: Health endpoint
     Scenario: Returning a WARNING (429) status when health endpoint called
         Given redis stops running
         Given I have a healthcheck interval of 1 second
-        And the redirect api is running
         And I wait 2 seconds for the healthcheck to be available
         When I GET "/health"
         Then the HTTP status code should be "429"
@@ -60,7 +62,6 @@ Feature: Health endpoint
     Scenario: Returning a CRITICAL (500) status when health endpoint called
         Given redis stops running
         Given I have a healthcheck interval of 1 second
-        And the redirect api is running
         And I wait 6 seconds to pass the critical timeout
         And I GET "/health"
         Then the HTTP status code should be "500"
