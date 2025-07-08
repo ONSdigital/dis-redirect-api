@@ -12,54 +12,7 @@ import (
 	c "github.com/smartystreets/goconvey/convey"
 )
 
-var (
-	//redirect1Self = models.RedirectSelf{
-	//	Href: "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgx",
-	//	Id:   "L2Vjb25vbXkvb2xkLXBhdGgx",
-	//}
-	//redirect1Links = models.RedirectLinks{
-	//	Self: redirect1Self,
-	//}
-	//redirect1 = models.Redirect{
-	//	From:  "/economy/old-path1",
-	//	To:    "/economy/new-path1",
-	//	Id:    "L2Vjb25vbXkvb2xkLXBhdGgx",
-	//	Links: redirect1Links,
-	//}
-	//redirect2Self = models.RedirectSelf{
-	//	Href: "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgy",
-	//	Id:   "L2Vjb25vbXkvb2xkLXBhdGgy",
-	//}
-	//redirect2Links = models.RedirectLinks{
-	//	Self: redirect2Self,
-	//}
-	//redirect2 = models.Redirect{
-	//	From:  "/economy/old-path2",
-	//	To:    "/economy/new-path2",
-	//	Id:    "L2Vjb25vbXkvb2xkLXBhdGgy",
-	//	Links: redirect2Links,
-	//}
-	//redirect3Self = models.RedirectSelf{
-	//	Href: "https://api.beta.ons.gov.uk/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgz",
-	//	Id:   "L2Vjb25vbXkvb2xkLXBhdGgz",
-	//}
-	//redirect3Links = models.RedirectLinks{
-	//	Self: redirect3Self,
-	//}
-	//redirect3 = models.Redirect{
-	//	From:  "/economy/old-path3",
-	//	To:    "/economy/new-path3",
-	//	Id:    "L2Vjb25vbXkvb2xkLXBhdGgz",
-	//	Links: redirect3Links,
-	//}
-	redirectList         = make([]models.Redirect, 0, 2)
-	getRedirectsResponse = models.Redirects{
-		Count:        10,
-		RedirectList: redirectList,
-		Cursor:       "0",
-		TotalCount:   3,
-	}
-)
+var getRedirectsResponse = models.Redirects{}
 
 func TestGetRedirect(t *testing.T) {
 	t.Parallel()
@@ -122,7 +75,7 @@ func TestGetRedirects(t *testing.T) {
 
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
 
-		c.Convey("When GetRedirect is called", func() {
+		c.Convey("When GetRedirects is called using the default values of count and cursor", func() {
 			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "", "")
 
 			c.Convey("Then the expected response body is returned", func() {
@@ -136,6 +89,71 @@ func TestGetRedirects(t *testing.T) {
 						c.So(doCalls, c.ShouldHaveLength, 1)
 						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
 						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, "/v1/redirects")
+						c.So(doCalls[0].Req.URL.Query().Get("count"), c.ShouldEqual, "")
+						c.So(doCalls[0].Req.URL.Query().Get("cursor"), c.ShouldEqual, "")
+					})
+				})
+			})
+		})
+
+		c.Convey("When GetRedirects is called using specific values of count and cursor", func() {
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "2", "1")
+
+			c.Convey("Then the expected response body is returned", func() {
+				c.So(*resp, c.ShouldResemble, getRedirectsResponse)
+
+				c.Convey("And no error is returned", func() {
+					c.So(err, c.ShouldBeNil)
+
+					c.Convey("And client.Do should be called once with the expected parameters", func() {
+						doCalls := httpClient.DoCalls()
+						c.So(doCalls, c.ShouldHaveLength, 1)
+						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
+						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, "/v1/redirects")
+						c.So(doCalls[0].Req.URL.Query().Get("count"), c.ShouldEqual, "2")
+						c.So(doCalls[0].Req.URL.Query().Get("cursor"), c.ShouldEqual, "1")
+					})
+				})
+			})
+		})
+
+		c.Convey("When GetRedirects is called using a specific value of count only", func() {
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "3", "")
+
+			c.Convey("Then the expected response body is returned", func() {
+				c.So(*resp, c.ShouldResemble, getRedirectsResponse)
+
+				c.Convey("And no error is returned", func() {
+					c.So(err, c.ShouldBeNil)
+
+					c.Convey("And client.Do should be called once with the expected parameters", func() {
+						doCalls := httpClient.DoCalls()
+						c.So(doCalls, c.ShouldHaveLength, 1)
+						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
+						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, "/v1/redirects")
+						c.So(doCalls[0].Req.URL.Query().Get("count"), c.ShouldEqual, "3")
+						c.So(doCalls[0].Req.URL.Query().Get("cursor"), c.ShouldEqual, "")
+					})
+				})
+			})
+		})
+
+		c.Convey("When GetRedirects is called using a specific value of cursor only", func() {
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "", "2")
+
+			c.Convey("Then the expected response body is returned", func() {
+				c.So(*resp, c.ShouldResemble, getRedirectsResponse)
+
+				c.Convey("And no error is returned", func() {
+					c.So(err, c.ShouldBeNil)
+
+					c.Convey("And client.Do should be called once with the expected parameters", func() {
+						doCalls := httpClient.DoCalls()
+						c.So(doCalls, c.ShouldHaveLength, 1)
+						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
+						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, "/v1/redirects")
+						c.So(doCalls[0].Req.URL.Query().Get("count"), c.ShouldEqual, "")
+						c.So(doCalls[0].Req.URL.Query().Get("cursor"), c.ShouldEqual, "2")
 					})
 				})
 			})
