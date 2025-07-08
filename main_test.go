@@ -16,12 +16,14 @@ import (
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	RedisFeature *componentTest.RedisFeature
+	RedisFeature         *componentTest.RedisFeature
+	AuthorizationFeature *componentTest.AuthorizationFeature
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	f.RedisFeature = componentTest.NewRedisFeature()
-	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature)
+	f.AuthorizationFeature = componentTest.NewAuthorizationFeature()
+	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature, f.AuthorizationFeature)
 	if err != nil {
 		log.Error(context.Background(), "failed to create redirect api component", err)
 		os.Exit(1)
@@ -33,6 +35,8 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 		if f.RedisFeature == nil {
 			f.RedisFeature = componentTest.NewRedisFeature()
 		}
+
+		f.AuthorizationFeature.Reset()
 		apiFeature.Reset()
 
 		return ctx, nil
@@ -44,12 +48,14 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 			os.Exit(1)
 		}
 
+		f.AuthorizationFeature.Reset()
 		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
 	f.RedisFeature.RegisterSteps(ctx)
+	f.AuthorizationFeature.RegisterSteps(ctx)
 	redirectAPIComponent.RegisterSteps(ctx)
 }
 
