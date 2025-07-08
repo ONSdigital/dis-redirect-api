@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -34,6 +35,13 @@ var (
 	economyBulletin3 = "/economy/mybulletin3"
 	financeBulletin3 = "/finance/mybulletin3"
 )
+
+// encodeBase64 returns the base64 encoded string of the original URL key string
+func encodeBase64(key string) string {
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
+
+	return encodedKey
+}
 
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	ctx := context.Background()
@@ -179,7 +187,7 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 				respRedirectList := response.RedirectList
 				respItem1 := respRedirectList[0]
 				respItem1From := respItem1.From
-				expectedID := api.EncodeBase64(respItem1From)
+				expectedID := encodeBase64(respItem1From)
 
 				So(response.Count, ShouldEqual, 10)
 				So(len(respRedirectList), ShouldEqual, 10)
@@ -231,7 +239,7 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 				respRedirectList := response.RedirectList
 				respItem1 := respRedirectList[0]
 				respItem1From := respItem1.From
-				expectedID := api.EncodeBase64(respItem1From)
+				expectedID := encodeBase64(respItem1From)
 
 				So(response.Count, ShouldEqual, 3)
 				So(len(respRedirectList), ShouldEqual, 3)

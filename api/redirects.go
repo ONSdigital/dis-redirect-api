@@ -73,14 +73,14 @@ func isValidBase64(s string) bool {
 	return err == nil
 }
 
-// EncodeBase64 returns the base64 encoded string of the original URL key string
-func EncodeBase64(key string) string {
+// encodeBase64 returns the base64 encoded string of the original URL key string
+func encodeBase64(key string) string {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
 
 	return encodedKey
 }
 
-// getRedirect gets the value of a key from the store
+// getRedirects gets a paged list of redirects from the store
 func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	strCount := req.URL.Query().Get("count")
@@ -144,7 +144,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	for key, value := range keyValuePairs {
 		var redirect models.Redirect
-		redirectID := EncodeBase64(key)
+		redirectID := encodeBase64(key)
 		redirectHref := redirectBase + redirectID
 		redirectSelf := models.RedirectSelf{
 			Href: redirectHref,

@@ -8,6 +8,7 @@ type Redirect struct {
 	Links RedirectLinks `json:"links"`
 }
 
+// Redirects represents response body when retrieving a list of redirects
 type Redirects struct {
 	Count        int        `json:"count"`
 	RedirectList []Redirect `json:"items"`

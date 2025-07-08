@@ -1,12 +1,12 @@
 package steps
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
 
-	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages/go/v21"
@@ -61,7 +61,7 @@ func (c *RedirectComponent) checkStructure(responseRedirect *models.Redirect) er
 	from := responseRedirect.From
 	assert.NotEmpty(&c.ErrorFeature, from)
 	assert.NotEmpty(&c.ErrorFeature, responseRedirect.To)
-	encodedFrom := api.EncodeBase64(from)
+	encodedFrom := base64.StdEncoding.EncodeToString([]byte(from))
 	assert.Equal(&c.ErrorFeature, encodedFrom, responseRedirect.Id)
 	expectedSelfHref := "https://api.beta.ons.gov.uk/v1/redirects/" + encodedFrom
 	assert.Equal(&c.ErrorFeature, expectedSelfHref, responseRedirect.Links.Self.Href)
