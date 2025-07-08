@@ -23,6 +23,7 @@ func Setup(ctx context.Context, r *mux.Router, store *store.Datastore) *Redirect
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)
+	api.get("/v1/redirects", api.getRedirects)
 	return api
 }
 

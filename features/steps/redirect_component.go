@@ -31,6 +31,7 @@ type RedirectComponent struct {
 	apiFeature     *componenttest.APIFeature
 	redisFeature   *componenttest.RedisFeature
 	StartTime      time.Time
+	responseBody   []byte
 }
 
 func NewRedirectComponent(redisFeat *componenttest.RedisFeature) (*RedirectComponent, error) {
