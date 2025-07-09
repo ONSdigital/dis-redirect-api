@@ -197,6 +197,15 @@ public class RedirectAPIClient implements RedirectClient {
         String path = "/v1/redirects";
         URI uri = redirectAPIUri.resolve(path);
 
+        if (count != "") {
+            path = path + "?count=" + count;
+            if (cursor != "") {
+                path = path + "&cursor=" + cursor;
+            }
+        } else if (cursor != "") {
+            path = path + "?cursor=" + cursor;
+        }
+
         HttpGet req = new HttpGet(uri);
         req.addHeader(SERVICE_TOKEN_HEADER_NAME, authToken);
 
