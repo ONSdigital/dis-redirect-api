@@ -76,6 +76,7 @@ func TestComponent(t *testing.T) {
 			Format: "pretty",
 			Paths:  flag.Args(),
 			Strict: true,
+			Tags:   "@ServiceAuth",
 		}
 
 		f := &ComponentTest{}
