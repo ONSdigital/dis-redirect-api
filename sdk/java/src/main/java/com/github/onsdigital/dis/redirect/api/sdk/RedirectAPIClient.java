@@ -7,6 +7,7 @@ import java.util.Base64;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
+import com.github.onsdigital.dis.redirect.api.sdk.model.Redirects;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
@@ -175,5 +176,34 @@ public class RedirectAPIClient implements RedirectClient {
     @Override
     public void close() throws IOException {
         client.close();
+    }
+
+    /**
+     * Get a redirects object containing the requested number of
+     * redirect objects in a list.
+     *
+     * @param count - the number of redirect objects requested
+     * @param cursor - the location, in the store, to start counting from
+     * @return throws an exception to indicate an error
+     * @throws IOException
+     * @throws BadRequestException
+     * @throws RedirectAPIException
+     * @throws RedirectNotFoundException
+     */
+    @Override
+    public Redirects getRedirects(final String count, final String cursor)
+            throws IOException, BadRequestException, RedirectAPIException,
+            RedirectNotFoundException {
+        String path = "/v1/redirects";
+        URI uri = redirectAPIUri.resolve(path);
+
+        HttpGet req = new HttpGet(uri);
+        req.addHeader(SERVICE_TOKEN_HEADER_NAME, authToken);
+
+        try (CloseableHttpResponse resp = executeRequest(req)) {
+            validateResponseCode(req, resp);
+            Redirects response = parseResponseBody(resp, Redirects.class);
+            return response;
+        }
     }
 }
