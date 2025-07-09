@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -36,6 +37,10 @@ type RedirectComponent struct {
 }
 
 func NewRedirectComponent(redisFeat *componentTest.RedisFeature, authFeat *componentTest.AuthorizationFeature) (*RedirectComponent, error) {
+	// Set ZEBEDEE_URL for service_auth - dp-authorisation takes from env config so must be set
+	// here to resolve to the fake auth service
+	os.Setenv("ZEBEDEE_URL", authFeat.FakeAuthService.ResolveURL(""))
+
 	return &RedirectComponent{
 		redisFeature:   redisFeat,
 		authFeature:    authFeat, // keep this if needed
