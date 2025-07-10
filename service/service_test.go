@@ -34,15 +34,15 @@ var (
 	errHealthcheck = errors.New("healthCheck error")
 )
 
-var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+var funcDoGetHealthcheckErr = func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 	return nil, errHealthcheck
 }
 
-var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
+var funcDoGetHTTPServerNil = func(_ string, _ http.Handler) service.HTTPServer {
 	return nil
 }
 
-var funcDoGetRedisClientErr = func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+var funcDoGetRedisClientErr = func(_ context.Context, _ *config.Config) (store.Redis, error) {
 	return nil, errRedis
 }
 
@@ -52,8 +52,8 @@ func TestRun(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		hcMock := &mock.HealthCheckerMock{
-			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
-			StartFunc:    func(ctx context.Context) {},
+			AddCheckFunc: func(_ string, _ healthcheck.Checker) error { return nil },
+			StartFunc:    func(_ context.Context) {},
 		}
 
 		serverWg := &sync.WaitGroup{}
@@ -73,19 +73,19 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+		funcDoGetHealthcheckOk := func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisClientOk := func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+		funcDoGetRedisClientOk := func(_ context.Context, _ *config.Config) (store.Redis, error) {
 			return redisMock, nil
 		}
 
-		funcDoGetHTTPServer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetHTTPServer := func(_ string, _ http.Handler) service.HTTPServer {
 			return serverMock
 		}
 
-		funcDoGetFailingHTTPSerer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetFailingHTTPSerer := func(_ string, _ http.Handler) service.HTTPServer {
 			return failingServerMock
 		}
 
@@ -135,14 +135,14 @@ func TestRun(t *testing.T) {
 		Convey("Given that Checkers cannot be registered", func() {
 			errAddCheckFail := errors.New("Error(s) registering checkers for healthcheck")
 			hcMockAddFail := &mock.HealthCheckerMock{
-				AddCheckFunc: func(name string, checker healthcheck.Checker) error { return errAddCheckFail },
-				StartFunc:    func(ctx context.Context) {},
+				AddCheckFunc: func(_ string, _ healthcheck.Checker) error { return errAddCheckFail },
+				StartFunc:    func(_ context.Context) {},
 			}
 
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
 				DoGetRedisClientFunc: funcDoGetRedisClientOk,
-				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
+				DoGetHealthCheckFunc: func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
 			}
@@ -229,15 +229,15 @@ func TestClose(t *testing.T) {
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &mock.HealthCheckerMock{
-			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
-			StartFunc:    func(ctx context.Context) {},
+			AddCheckFunc: func(_ string, _ healthcheck.Checker) error { return nil },
+			StartFunc:    func(_ context.Context) {},
 			StopFunc:     func() { hcStopped = true },
 		}
 
 		// server Shutdown will fail if healthcheck is not stopped
 		serverMock := &mock.HTTPServerMock{
 			ListenAndServeFunc: func() error { return nil },
-			ShutdownFunc: func(ctx context.Context) error {
+			ShutdownFunc: func(_ context.Context) error {
 				if !hcStopped {
 					return errors.New("Server stopped before healthcheck")
 				}
@@ -247,16 +247,16 @@ func TestClose(t *testing.T) {
 
 		// Redis Close will fail if healthcheck and http server are not already closed
 		redisMock := &storetest.RedisMock{
-			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+			CheckerFunc: func(_ context.Context, _ *healthcheck.CheckState) error { return nil },
 		}
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
-				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+				DoGetHTTPServerFunc: func(_ string, _ http.Handler) service.HTTPServer { return serverMock },
+				DoGetHealthCheckFunc: func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+				DoGetRedisClientFunc: func(_ context.Context, _ *config.Config) (store.Redis, error) {
 					return redisMock, nil
 				},
 			}
@@ -275,17 +275,17 @@ func TestClose(t *testing.T) {
 		Convey("If services fail to stop, the Close operation tries to close all dependencies and returns an error", func() {
 			failingserverMock := &mock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
-				ShutdownFunc: func(ctx context.Context) error {
+				ShutdownFunc: func(_ context.Context) error {
 					return errors.New("Failed to stop http server")
 				},
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
-				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+				DoGetHTTPServerFunc: func(_ string, _ http.Handler) service.HTTPServer { return failingserverMock },
+				DoGetHealthCheckFunc: func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetRedisClientFunc: func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+				DoGetRedisClientFunc: func(_ context.Context, _ *config.Config) (store.Redis, error) {
 					return redisMock, nil
 				},
 			}
@@ -306,7 +306,7 @@ func TestClose(t *testing.T) {
 			cfg.GracefulShutdownTimeout = 1 * time.Millisecond
 			timeoutServerMock := &mock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
-				ShutdownFunc: func(ctx context.Context) error {
+				ShutdownFunc: func(_ context.Context) error {
 					time.Sleep(2 * time.Millisecond)
 					return nil
 				},

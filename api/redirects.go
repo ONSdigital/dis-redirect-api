@@ -31,7 +31,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	decodedKey := string(decodedString)
 
-	redirect, err := api.Store.GetRedirect(ctx, decodedKey)
+	redirect, err := api.RedirectStore.GetRedirect(ctx, decodedKey)
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)
