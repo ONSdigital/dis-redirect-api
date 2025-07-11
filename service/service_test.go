@@ -281,7 +281,7 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
+				DoGetHTTPServerFunc: func(_ string, _ http.Handler) service.HTTPServer { return failingserverMock },
 				DoGetHealthCheckFunc: func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
