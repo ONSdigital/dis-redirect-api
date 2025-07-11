@@ -89,9 +89,9 @@ func TestHealthCheckerClient(t *testing.T) {
 
 func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 	return &dphttp.ClienterMock{
-		SetPathsWithNoRetriesFunc: func(paths []string) {
+		SetPathsWithNoRetriesFunc: func(_ []string) {
 		},
-		DoFunc: func(ctx context.Context, req *http.Request) (*http.Response, error) {
+		DoFunc: func(_ context.Context, _ *http.Request) (*http.Response, error) {
 			return r, err
 		},
 		GetPathsWithNoRetriesFunc: func() []string {
