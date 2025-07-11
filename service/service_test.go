@@ -34,15 +34,15 @@ var (
 	errHealthcheck = errors.New("healthCheck error")
 )
 
-var funcDoGetHealthcheckErr = func(_ *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+var funcDoGetHealthcheckErr = func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 	return nil, errHealthcheck
 }
 
-var funcDoGetHTTPServerNil = func(_ string, router http.Handler) service.HTTPServer {
+var funcDoGetHTTPServerNil = func(_ string, _ http.Handler) service.HTTPServer {
 	return nil
 }
 
-var funcDoGetRedisClientErr = func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+var funcDoGetRedisClientErr = func(_ context.Context, _ *config.Config) (store.Redis, error) {
 	return nil, errRedis
 }
 
@@ -52,8 +52,8 @@ func TestRun(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		hcMock := &mock.HealthCheckerMock{
-			AddCheckFunc: func(_ string, checker healthcheck.Checker) error { return nil },
-			StartFunc:    func(ctx context.Context) {},
+			AddCheckFunc: func(_ string, _ healthcheck.Checker) error { return nil },
+			StartFunc:    func(_ context.Context) {},
 		}
 
 		serverWg := &sync.WaitGroup{}
@@ -73,19 +73,19 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		funcDoGetHealthcheckOk := func(_ *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+		funcDoGetHealthcheckOk := func(_ *config.Config, _, _, _ string) (service.HealthChecker, error) {
 			return hcMock, nil
 		}
 
-		funcDoGetRedisClientOk := func(ctx context.Context, cfg *config.Config) (store.Redis, error) {
+		funcDoGetRedisClientOk := func(_ context.Context, _ *config.Config) (store.Redis, error) {
 			return redisMock, nil
 		}
 
-		funcDoGetHTTPServer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetHTTPServer := func(_ string, _ http.Handler) service.HTTPServer {
 			return serverMock
 		}
 
-		funcDoGetFailingHTTPSerer := func(_ string, router http.Handler) service.HTTPServer {
+		funcDoGetFailingHTTPSerer := func(_ string, _ http.Handler) service.HTTPServer {
 			return failingServerMock
 		}
 
