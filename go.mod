@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-redirect-api
 
-go 1.24
+go 1.24.4
 
 require (
 	github.com/ONSdigital/dis-redis v0.3.0
