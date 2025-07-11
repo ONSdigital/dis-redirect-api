@@ -70,7 +70,7 @@ func TestGetRedirectReturns400(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(ctx context.Context, key string) (string, error) {
+				GetValueFunc: func(_ context.Context, _ string) (string, error) {
 					return "", errors.New("key some-string not base64")
 				},
 			}
@@ -93,7 +93,7 @@ func TestGetRedirectReturns404(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(ctx context.Context, key string) (string, error) {
+				GetValueFunc: func(_ context.Context, _ string) (string, error) {
 					return "", errors.New("key old-path not found")
 				},
 			}
@@ -115,7 +115,7 @@ func TestGetRedirectReturns500(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(ctx context.Context, key string) (string, error) {
+				GetValueFunc: func(_ context.Context, _ string) (string, error) {
 					return "", apierrors.ErrRedis
 				},
 			}
