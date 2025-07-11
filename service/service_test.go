@@ -34,11 +34,11 @@ var (
 	errHealthcheck = errors.New("healthCheck error")
 )
 
-var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+var funcDoGetHealthcheckErr = func(_ *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 	return nil, errHealthcheck
 }
 
-var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
+var funcDoGetHTTPServerNil = func(_ string, router http.Handler) service.HTTPServer {
 	return nil
 }
 
@@ -52,7 +52,7 @@ func TestRun(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		hcMock := &mock.HealthCheckerMock{
-			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
+			AddCheckFunc: func(_ string, checker healthcheck.Checker) error { return nil },
 			StartFunc:    func(ctx context.Context) {},
 		}
 
@@ -73,7 +73,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+		funcDoGetHealthcheckOk := func(_ *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 			return hcMock, nil
 		}
 
@@ -85,7 +85,7 @@ func TestRun(t *testing.T) {
 			return serverMock
 		}
 
-		funcDoGetFailingHTTPSerer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetFailingHTTPSerer := func(_ string, router http.Handler) service.HTTPServer {
 			return failingServerMock
 		}
 

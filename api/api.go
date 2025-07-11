@@ -16,7 +16,7 @@ type RedirectAPI struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, r *mux.Router, redirectStore *store.Datastore) *RedirectAPI {
+func Setup(_ context.Context, r *mux.Router, redirectStore *store.Datastore) *RedirectAPI {
 	api := &RedirectAPI{
 		Router:        r,
 		RedirectStore: redirectStore,

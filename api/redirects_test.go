@@ -41,7 +41,7 @@ func TestGetRedirectEndpoint(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(ctx context.Context, key string) (string, error) {
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
 					return "/economy/new-path", nil
 				},
 			}
