@@ -11,15 +11,15 @@ import (
 
 // RedirectAPI provides a struct to wrap the api around
 type RedirectAPI struct {
-	Router *mux.Router
-	Store  *store.Datastore
+	Router        *mux.Router
+	RedirectStore *store.Datastore
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, r *mux.Router, store *store.Datastore) *RedirectAPI {
+func Setup(r *mux.Router, redirectStore *store.Datastore) *RedirectAPI {
 	api := &RedirectAPI{
-		Router: r,
-		Store:  store,
+		Router:        r,
+		RedirectStore: redirectStore,
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)

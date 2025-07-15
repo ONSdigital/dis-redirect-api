@@ -29,7 +29,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 
 	apiFeature := redirectAPIComponent.InitAPIFeature()
 
-	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	ctx.Before(func(ctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		if f.RedisFeature == nil {
 			f.RedisFeature = componenttest.NewRedisFeature()
 		}
@@ -38,7 +38,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 		return ctx, nil
 	})
 
-	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+	ctx.After(func(ctx context.Context, _ *godog.Scenario, _ error) (context.Context, error) {
 		if closeErr := f.RedisFeature.Close(); closeErr != nil {
 			log.Error(context.Background(), "error occured while closing the RedisFeature", closeErr)
 			os.Exit(1)

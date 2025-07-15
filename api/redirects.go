@@ -37,7 +37,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	decodedKey := string(decodedString)
 
-	redirect, err := api.Store.GetRedirect(ctx, decodedKey)
+	redirect, err := api.RedirectStore.GetRedirect(ctx, decodedKey)
 	logData := log.Data{"redirect": redirect}
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
@@ -129,7 +129,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	keyValuePairs, newCursor, errRedirects := api.Store.GetRedirects(ctx, count, cursor)
+	keyValuePairs, newCursor, errRedirects := api.RedirectStore.GetRedirects(ctx, count, cursor)
 	if errRedirects != nil {
 		log.Error(ctx, "error calling the store to get redirects", errRedirects, logData)
 		api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
@@ -160,10 +160,10 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirectList = append(redirectList, redirect)
 	}
 
-	nextCursor := strconv.Itoa(int(newCursor))
+	nextCursor := strconv.FormatUint(newCursor, 10)
 
 	// To get the TotalCount we need to get the total number of redirects available in redis
-	totalCount, errTotalCount := api.Store.GetTotalCount(ctx)
+	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)
 	if errTotalCount != nil {
 		log.Error(ctx, "failed to get total count of redirects", errTotalCount, logData)
 		api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)

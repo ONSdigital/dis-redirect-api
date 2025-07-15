@@ -12,8 +12,8 @@ import (
 
 func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
-		store := &store.Datastore{}
-		redirectAPI := GetRedirectAPIWithMocks(*store)
+		redirectStore := &store.Datastore{}
+		redirectAPI := GetRedirectAPIWithMocks(*redirectStore)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(redirectAPI.Router, "/v1/redirects/{id}", "GET"), ShouldBeTrue)
