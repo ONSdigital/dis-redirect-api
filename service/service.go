@@ -56,7 +56,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Set up the API
-	a := api.Setup(ctx, r, &datastore)
+	a := api.Setup(r, &datastore)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
