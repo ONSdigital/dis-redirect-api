@@ -75,32 +75,15 @@ linters:
         path: _test.go
         text: dot-imports
         source: github.com/smartystreets/goconvey/convey
+      - linters:
+          # Ignore formatting of imports in steps file as it's not clear what the problem is
+          - goimports
+        path: features/steps/steps.go
+      - linters:
+          # Ignore integer overflow lint error as it cannot be avoided
+          - gosec
+        path: api/redirects.go
 issues:
-#  exclude-rules:
-#    - path: _test\.go
-#      linters:
-#        - gocyclo
-#        - errcheck
-#        - dupl
-#        - gosec
-#    # Allow dot import in test files for goconvey
-#    - path: _test.go
-#      text: "dot-imports"
-#      linters:
-#        - revive
-#      source: "github.com/smartystreets/goconvey/convey"
-#    # Allow the redirect json to name the id field in lowercase
-#    - path: models/redirect.go
-#      linters:
-#        - stylecheck
-#    # Ignore integer overflow lint error as it cannot be avoided
-#    - path: api/redirects.go
-#      linters:
-#        - gosec
-#    # Ignore formatting of imports in steps file as it's not clear what the problem is
-#    - path: features/steps/steps.go
-#      linters:
-#        - goimports
   new: false
 formatters:
   enable:
@@ -111,4 +94,3 @@ formatters:
       simplify: false
   exclusions:
     generated: lax
-

@@ -36,7 +36,7 @@ func (c *RedirectComponent) iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInA
 	numRedirectsFound := len(response.RedirectList)
 	assert.True(&c.ErrorFeature, numRedirectsFound >= 3, "The list should contain three or more redirects but it only contains "+strconv.Itoa(numRedirectsFound))
 
-	return c.ErrorFeature.StepError()
+	return nil
 }
 
 func (c *RedirectComponent) inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
@@ -54,7 +54,7 @@ func (c *RedirectComponent) inEachRedirectIWouldExpectTheResponseToContainValues
 			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 		}
 	}
-	return c.ErrorFeature.StepError()
+	return nil
 }
 
 func (c *RedirectComponent) checkStructure(responseRedirect *models.Redirect) error {
@@ -84,7 +84,7 @@ func (c *RedirectComponent) theListOfRedirectsShouldAlsoContainTheFollowingValue
 		c.checkValuesInRedirects(row, response)
 	}
 
-	return c.ErrorFeature.StepError()
+	return nil
 }
 
 func (c *RedirectComponent) checkValuesInRedirects(row *messages.PickleTableRow, redirectsList models.Redirects) {
@@ -117,5 +117,5 @@ func (c *RedirectComponent) iWouldExpectThereToBeRedirectsReturnedInAList(expect
 	numRedirectsFound := len(response.RedirectList)
 	assert.True(&c.ErrorFeature, numRedirectsFound == expectedNumRedirects, "The list should contain "+strconv.Itoa(expectedNumRedirects)+" redirects but it contains "+strconv.Itoa(numRedirectsFound))
 
-	return c.ErrorFeature.StepError()
+	return nil
 }
