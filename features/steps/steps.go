@@ -3,12 +3,13 @@ package steps
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/cucumber/godog"
-	"net/http"
-	"time"
 )
 
 func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
@@ -33,8 +34,14 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 		return err
 	}
 
+	c.FakeAPIRouter = NewFakeAPI()
+	c.FakeAPIRouter.setupDefaultAuthResponses()
+
+	// Use fakeAPI.fakeHTTP.URL() to assign to ZebedeeURL and PermissionsAPIURL
+	c.Config.AuthorisationConfig.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
+	c.Config.AuthorisationConfig.PermissionsAPIURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
+
 	c.Config.RedisAddress = c.redisFeature.Server.Addr()
-	c.Config.AuthorisationConfig.PermissionsAPIURL = c.authFeature.FakePermissionsAPI.URL()
 
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,

@@ -5,8 +5,8 @@ Feature: Upsert redirect endpoint with user auth
       And the redirect api is running
 
     Scenario: Upsert a redirect value via PUT if the key and value do not exist
-      Given I am an admin user
-      And redis is healthy
+      Given redis is healthy
+      And I am an admin user
       And redis contains no value for key "/economy/old-path"
       When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
         """
@@ -19,8 +19,8 @@ Feature: Upsert redirect endpoint with user auth
       And the key "/economy/old-path" has a value of "/economy/new-path" in the Redis store
 
     Scenario: Upsert a redirect value via PUT if the key and value already exist
-      Given I am an admin user
-      And redis is healthy
+      Given redis is healthy
+      And I am an admin user
       And the key "/economy/old-path" is already set to a value of "/economy/new-path" in the Redis store
       When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
         """
@@ -33,8 +33,8 @@ Feature: Upsert redirect endpoint with user auth
       And the key "/economy/old-path" has a value of "/economy/new-path" in the Redis store
 
     Scenario: Upsert a redirect value via PUT with invalid base64 id
-      Given I am an admin user
-      And redis is healthy
+      Given redis is healthy
+      And I am an admin user
       When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGgg=="
         """
           {
@@ -45,8 +45,8 @@ Feature: Upsert redirect endpoint with user auth
       Then the HTTP status code should be "400"
 
     Scenario: Upsert a redirect value via PUT with invalid body
-      Given I am an admin user
-      And redis is healthy
+      Given redis is healthy
+      And I am an admin user
       When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg=="
         """
           {
@@ -58,6 +58,7 @@ Feature: Upsert redirect endpoint with user auth
 
     Scenario: Upsert a redirect value via PUT without the correct permission
       Given redis is healthy
+      And I am not authenticated
       When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
         """
           {
