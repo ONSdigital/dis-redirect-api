@@ -75,14 +75,6 @@ linters:
         path: _test.go
         text: dot-imports
         source: github.com/smartystreets/goconvey/convey
-      - linters:
-          # Ignore formatting of imports in steps file as it's not clear what the problem is
-          - goimports
-        path: features/steps/steps.go
-      - linters:
-          # Ignore integer overflow lint error as it cannot be avoided
-          - gosec
-        path: api/redirects.go
 issues:
   new: false
 formatters:

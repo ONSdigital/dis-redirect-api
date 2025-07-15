@@ -160,7 +160,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirectList = append(redirectList, redirect)
 	}
 
-	nextCursor := strconv.Itoa(int(newCursor))
+	nextCursor := strconv.FormatUint(newCursor, 10)
 
 	// To get the TotalCount we need to get the total number of redirects available in redis
 	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)

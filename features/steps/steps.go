@@ -9,7 +9,7 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages/go/v21"
+	messages "github.com/cucumber/messages/go/v21"
 	"github.com/stretchr/testify/assert"
 )
 
