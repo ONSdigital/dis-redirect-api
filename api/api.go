@@ -32,6 +32,11 @@ func Setup(r *mux.Router, dataStore *store.Datastore, auth authorisation.Middlew
 		auth.Require("legacy:edit", api.UpsertRedirect),
 	)
 
+	api.delete(
+		"/v1/redirects/{id}",
+		auth.Require("legacy:delete", api.DeleteRedirect),
+	)
+
 	return api
 }
 
@@ -42,6 +47,10 @@ func (api *RedirectAPI) get(path string, handler http.HandlerFunc) {
 
 func (api *RedirectAPI) put(path string, handler http.HandlerFunc) {
 	api.Router.HandleFunc(path, handler).Methods(http.MethodPut)
+}
+
+func (api *RedirectAPI) delete(path string, handler http.HandlerFunc) {
+	api.Router.HandleFunc(path, handler).Methods(http.MethodDelete)
 }
 
 // handleError returns the specified error message and HTTP code
