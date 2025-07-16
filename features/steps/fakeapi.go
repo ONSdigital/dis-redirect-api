@@ -40,6 +40,14 @@ func (f *FakeAPI) setJSONResponseForPermissionsBundle() {
 				"groups/role-admin": [
 					{ "id": "1" }
 				]
+			},
+			"legacy:delete": {
+				"users/dis-redirect-api": [
+					{ "id": "1" }
+				],
+				"groups/role-admin": [
+					{ "id": "1" }
+				]
 			}
 		}`)
 }

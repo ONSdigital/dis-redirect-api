@@ -56,3 +56,19 @@ func (cli *Client) PutRedirect(
 
 	return nil
 }
+
+// DeleteRedirect deletes a redirect via the /redirects/{id} endpoint
+func (cli *Client) DeleteRedirect(
+	ctx context.Context,
+	options Options,
+	id string,
+) apiError.Error {
+	path := fmt.Sprintf(RedirectEndpoint, cli.hcCli.URL, id)
+
+	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodDelete, options.Headers, nil)
+	if apiErr != nil {
+		return apiErr
+	}
+
+	return nil
+}

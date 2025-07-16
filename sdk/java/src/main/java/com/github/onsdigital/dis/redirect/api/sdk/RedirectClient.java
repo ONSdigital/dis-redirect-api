@@ -22,24 +22,44 @@ public interface RedirectClient extends Closeable {
             throws IOException, BadRequestException, RedirectNotFoundException,
             RedirectAPIException;
 
-      /**
-       * Upserts a redirect by sending a PUT request to the /redirects/{id}
+    /**
+    * Upserts a redirect by sending a PUT request to the /redirects/{id}
+    * endpoint.
+    *
+    * The {@code id} must be a base64 URL-encoded version of the
+    * {@code from} path in the {@link Redirect} payload.
+    * This method will create or update the redirect mapping in the
+    * remote API.
+    *
+    * @param base64Id the base64 URL-encoded identifier representing
+    *                 the {@code from} path
+    * @param payload  the {@link Redirect} object containing the source
+    *                 and target paths
+    * @throws IOException          if an I/O error occurs during the request
+    * @throws RedirectAPIException if the API returns an unexpected status
+    *                 code
+    */
+    void putRedirect(String base64Id, Redirect payload) throws IOException,
+       RedirectAPIException;
+
+    /**
+       * Deletes a redirect by sending a DELETE request to the /redirects/{id}
        * endpoint.
        *
-       * The {@code id} must be a base64 URL-encoded version of the
-       * {@code from} path in the {@link Redirect} payload.
-       * This method will create or update the redirect mapping in the
+       * The {@code id} must be a base64 URL-encoded version of the path to
+       * delete. This method attempts to delete the redirect mapping in the
        * remote API.
        *
-       * @param base64Id the base64 URL-encoded identifier representing
-       *                 the {@code from} path
-       * @param payload  the {@link Redirect} object containing the source
-       *                 and target paths
+       * A {@code 204 No Content} status indicates successful deletion.
+       * A {@code 404 Not Found} status indicates the redirect does not exist.
+       *
+       * @param base64Id the base64 URL-encoded identifier representing the path
+       *                 to delete
        * @throws IOException          if an I/O error occurs during the request
        * @throws RedirectAPIException if the API returns an unexpected status
-       *                 code
+       *                              code
        */
-      void putRedirect(String base64Id, Redirect payload) throws IOException,
-           RedirectAPIException;
+    void deleteRedirect(String base64Id) throws IOException,
+      RedirectAPIException;
 
 }
