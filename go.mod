@@ -5,12 +5,13 @@ go 1.24
 require (
 	github.com/ONSdigital/dis-redis v0.3.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.267.0
-	github.com/ONSdigital/dp-component-test v0.24.0
+	github.com/ONSdigital/dp-component-test v0.25.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-net/v3 v3.3.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/log.go/v2 v2.4.5
 	github.com/cucumber/godog v0.15.0
+	github.com/cucumber/messages/go/v21 v21.0.1
 	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
@@ -20,21 +21,22 @@ require (
 )
 
 require (
+	github.com/ONSdigital/dp-authorisation/v2 v2.32.2 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.8.1 // indirect
+	github.com/ONSdigital/dp-permissions-api v1.1.0 // indirect
 	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/chromedp/cdproto v0.0.0-20250706212322-41fb261d0659 // indirect
+	github.com/chromedp/cdproto v0.0.0-20250713235838-3ec7dc2cfcb5 // indirect
 	github.com/chromedp/chromedp v0.13.7 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cucumber/gherkin/go/v26 v26.2.0 // indirect
-	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20250709061156-d2cd4771eb1b // indirect
+	github.com/go-json-experiment/json v0.0.0-20250714165856-be8212f5270d // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect

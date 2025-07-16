@@ -23,6 +23,7 @@ func Setup(r *mux.Router, redirectStore *store.Datastore) *RedirectAPI {
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)
+	api.get("/v1/redirects", api.getRedirects)
 	return api
 }
 
