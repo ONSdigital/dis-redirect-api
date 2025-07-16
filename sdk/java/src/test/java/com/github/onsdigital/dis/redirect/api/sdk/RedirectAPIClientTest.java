@@ -144,13 +144,7 @@ class RedirectAPIClientTest {
 
     private Redirects mockRedirects(CloseableHttpResponse mockHttpResponse)
             throws JsonProcessingException, UnsupportedEncodingException {
-//         Redirect redirect1 = new Redirect("/economy/old-path", "/economy/new-path");
-//         Redirect redirect2 = new Redirect("/economy/old-path", "/economy/new-path");
-//         Redirect redirect3 = new Redirect("/economy/old-path", "/economy/new-path");
         ArrayList<Redirect> redirectList = new ArrayList<>();
-//         redirectList.add(redirect1);
-//         redirectList.add(redirect2);
-//         redirectList.add(redirect3);
         Redirects responseBody = new Redirects(3, redirectList, "2", "0", 3);
 
         MockHttp.responseBody(mockHttpResponse, responseBody);
