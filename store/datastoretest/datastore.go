@@ -24,6 +24,9 @@ var _ store.Storer = &StorerMock{}
 //			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
 //				panic("mock out the Checker method")
 //			},
+//			DeleteValueFunc: func(ctx context.Context, key string) error {
+//				panic("mock out the DeleteValue method")
+//			},
 //			GetValueFunc: func(ctx context.Context, key string) (string, error) {
 //				panic("mock out the GetValue method")
 //			},
@@ -40,6 +43,9 @@ type StorerMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
 
+	// DeleteValueFunc mocks the DeleteValue method.
+	DeleteValueFunc func(ctx context.Context, key string) error
+
 	// GetValueFunc mocks the GetValue method.
 	GetValueFunc func(ctx context.Context, key string) (string, error)
 
@@ -54,6 +60,13 @@ type StorerMock struct {
 			Ctx context.Context
 			// State is the state argument value.
 			State *healthcheck.CheckState
+		}
+		// DeleteValue holds details about calls to the DeleteValue method.
+		DeleteValue []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
 		}
 		// GetValue holds details about calls to the GetValue method.
 		GetValue []struct {
@@ -74,9 +87,10 @@ type StorerMock struct {
 			Expiration time.Duration
 		}
 	}
-	lockChecker  sync.RWMutex
-	lockGetValue sync.RWMutex
-	lockSetValue sync.RWMutex
+	lockChecker     sync.RWMutex
+	lockDeleteValue sync.RWMutex
+	lockGetValue    sync.RWMutex
+	lockSetValue    sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -112,6 +126,42 @@ func (mock *StorerMock) CheckerCalls() []struct {
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
 	mock.lockChecker.RUnlock()
+	return calls
+}
+
+// DeleteValue calls DeleteValueFunc.
+func (mock *StorerMock) DeleteValue(ctx context.Context, key string) error {
+	if mock.DeleteValueFunc == nil {
+		panic("StorerMock.DeleteValueFunc: method is nil but Storer.DeleteValue was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockDeleteValue.Lock()
+	mock.calls.DeleteValue = append(mock.calls.DeleteValue, callInfo)
+	mock.lockDeleteValue.Unlock()
+	return mock.DeleteValueFunc(ctx, key)
+}
+
+// DeleteValueCalls gets all the calls that were made to DeleteValue.
+// Check the length with:
+//
+//	len(mockedStorer.DeleteValueCalls())
+func (mock *StorerMock) DeleteValueCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockDeleteValue.RLock()
+	calls = mock.calls.DeleteValue
+	mock.lockDeleteValue.RUnlock()
 	return calls
 }
 

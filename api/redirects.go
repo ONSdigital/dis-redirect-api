@@ -112,6 +112,43 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteRedirect handles the deletion of a redirect
+func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := mux.Vars(r)["id"]
+
+	if !isValidBase64(id) {
+		http.Error(w, "invalid base64 id", http.StatusBadRequest)
+		return
+	}
+
+	keyBytes, err := base64.URLEncoding.DecodeString(id)
+	if err != nil {
+		http.Error(w, "cannot decode id", http.StatusBadRequest)
+		return
+	}
+	key := string(keyBytes)
+
+	// Check if the key exists
+	_, err = api.Store.GetValue(ctx, key)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.Error(w, "redirect not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to check redirect existence", http.StatusInternalServerError)
+		return
+	}
+
+	// Proceed to delete
+	if err := api.Store.DeleteValue(ctx, key); err != nil {
+		http.Error(w, "failed to delete redirect", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func isValidRelativePath(path string) bool {
 	return strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "//")
 }

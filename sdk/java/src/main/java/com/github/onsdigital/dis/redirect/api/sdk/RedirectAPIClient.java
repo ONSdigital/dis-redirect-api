@@ -28,6 +28,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -155,8 +156,8 @@ public class RedirectAPIClient implements RedirectClient {
                 jsonPayload,
                 ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = executeRequest(put)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+            try (CloseableHttpResponse response = executeRequest(put)) {
+                int statusCode = response.getStatusLine().getStatusCode();
 
             if (statusCode != HttpStatus.SC_CREATED
                     && statusCode != HttpStatus.SC_OK) {
@@ -164,6 +165,45 @@ public class RedirectAPIClient implements RedirectClient {
                         formatErrResponse(put, response,
                         HttpStatus.SC_CREATED),
                         statusCode);
+            }
+        }
+    }
+
+    /**
+     * Deletes a redirect by sending a DELETE request to /redirects/{id}.
+     * The {@code fromPath} is base64 URL-encoded internally.
+     *
+     * @param fromPath the raw unencoded redirect source path
+     * @throws IOException            if the request fails
+     * @throws RedirectAPIException   if a non-204 response is returned
+     */
+    @Override
+    public void deleteRedirect(final String fromPath)
+            throws IOException, RedirectAPIException {
+
+        if (fromPath == null || fromPath.isEmpty()) {
+            throw new
+            IllegalArgumentException("'fromPath' must not be null or empty");
+        }
+
+        String base64Id = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(fromPath.getBytes(StandardCharsets.UTF_8));
+
+        URI requestUri = redirectAPIUri.resolve("/v1/redirects/" + base64Id);
+        HttpDelete delete = new HttpDelete(requestUri);
+
+        delete.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
+
+        try (CloseableHttpResponse response = executeRequest(delete)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode != HttpStatus.SC_NO_CONTENT) {
+                throw new RedirectAPIException(
+                        formatErrResponse(delete, response,
+                        HttpStatus.SC_NO_CONTENT),
+                        statusCode
+                );
             }
         }
     }

@@ -18,6 +18,7 @@ type dataRedis interface {
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
 	GetValue(ctx context.Context, key string) (string, error)
 	SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	DeleteValue(ctx context.Context, key string) error
 }
 
 // Redis represents all the required methods from Redis
@@ -41,4 +42,8 @@ func (ds *Datastore) GetValue(ctx context.Context, redirectID string) (string, e
 
 func (ds *Datastore) UpsertValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	return ds.Backend.SetValue(ctx, key, value, expiration)
+}
+
+func (ds *Datastore) DeleteValue(ctx context.Context, redirectID string) error {
+	return ds.Backend.DeleteValue(ctx, redirectID)
 }

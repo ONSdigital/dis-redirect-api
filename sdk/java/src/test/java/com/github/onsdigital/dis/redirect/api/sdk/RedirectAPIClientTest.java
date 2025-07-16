@@ -198,6 +198,85 @@ class RedirectAPIClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.putRedirect(invalid));
     }
 
+    @Test
+    void testDeleteRedirectSuccess() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NO_CONTENT);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        client.deleteRedirect("/from"); // raw path, not base64
+
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("DELETE", request.getMethod());
+
+        // Ensure URL ends with base64("/from")
+        String expectedId = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString("/from".getBytes(StandardCharsets.UTF_8));
+
+        assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
+        assertNotNull(request.getFirstHeader("Authorization"));
+    }
+
+    @Test
+    void testDeleteRedirectReturns404() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                        RedirectAPIException.class,
+                        () -> client.deleteRedirect("/from")
+                );
+
+        assertTrue(exception.getMessage().contains("404"));
+    }
+
+    @Test
+    void testDeleteRedirectServerError() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                RedirectAPIException.class,
+                () -> client.deleteRedirect("/from")
+        );
+
+        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, exception.getCode());
+    }
+
+    @Test
+    void testDeleteRedirectIOException() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        when(mockHttpClient.execute(any(HttpRequestBase.class)))
+                .thenThrow(new IOException("Simulated network failure"));
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        assertThrows(IOException.class, () ->
+                client.deleteRedirect("/from"));
+    }
+
+
     private RedirectClient getRedirectClient(
             final CloseableHttpClient mockHttpClient)
             throws URISyntaxException {
