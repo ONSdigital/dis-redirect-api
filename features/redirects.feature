@@ -88,15 +88,15 @@ Feature: Redirect endpoint
             | count | cursor | next_cursor | total_count |
             | 2     | 1      | 0           | 3           |
 
-        Scenario: Return 400 when the count value given is not an integer
-            Given redis is healthy
-            And the redirect api is running
-            When I GET "/v1/redirects?count=not-a-number"
-            Then the HTTP status code should be "400"
-            And I should receive the following response:
-            """
-                the count must be an integer giving the requested number of redirects
-            """
+    Scenario: Return 400 when the count value given is not an integer
+        Given redis is healthy
+        And the redirect api is running
+        When I GET "/v1/redirects?count=not-a-number"
+        Then the HTTP status code should be "400"
+        And I should receive the following response:
+        """
+            the count must be an integer giving the requested number of redirects
+        """
 
     Scenario: Return 400 when the count value given is negative
         Given redis is healthy
