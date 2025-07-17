@@ -31,15 +31,13 @@ public interface RedirectClient extends Closeable {
        * This method will create or update the redirect mapping in the
        * remote API.
        *
-       * @param base64Id the base64 URL-encoded identifier representing
-       *                 the {@code from} path
        * @param payload  the {@link Redirect} object containing the source
        *                 and target paths
        * @throws IOException          if an I/O error occurs during the request
        * @throws RedirectAPIException if the API returns an unexpected status
        *                 code
        */
-      void putRedirect(String base64Id, Redirect payload) throws IOException,
+      void putRedirect(Redirect payload) throws IOException,
            RedirectAPIException;
 
 }

@@ -3,6 +3,7 @@ package com.github.onsdigital.dis.redirect.api.sdk;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -123,44 +124,49 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     /**
-         * Upserts a redirect by sending a PUT request to /redirects/{id}.
-         *
-         * @param base64Id the base64 URL-encoded redirect key
-         * @param payload  the redirect payload with 'from' and 'to' fields
-         * @throws IOException            if request fails
-         * @throws RedirectAPIException   if non-2xx response returned
-         */
-        @Override
-        public void putRedirect(final String base64Id,
-        final Redirect payload)
-                throws IOException, RedirectAPIException {
+     * Upserts a redirect by sending a PUT request to /redirects/{id}.
+     *
+     * @param payload  the redirect payload with 'from' and 'to' fields
+     * @throws IOException            if request fails
+     * @throws RedirectAPIException   if non-2xx response returned
+     */
+    @Override
+    public void putRedirect(final Redirect payload)
+            throws IOException, RedirectAPIException {
 
-            URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
-                    + base64Id);
-            HttpPut put = new HttpPut(requestUri);
+        if (payload.getFrom() == null || payload.getFrom().isEmpty()) {
+        throw new IllegalArgumentException("'from' must not be null or empty");
+        }
 
-            // Add Authorization header
-            put.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
-            put.addHeader("Content-Type", "application/json");
+        String base64Id = Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(payload.getFrom().getBytes(StandardCharsets.UTF_8));
+        URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
+                + base64Id);
+        HttpPut put = new HttpPut(requestUri);
 
-            // Serialize payload
-            String jsonPayload = JSON.writeValueAsString(payload);
-            put.setEntity(new StringEntity(
-                    jsonPayload,
-                    ContentType.APPLICATION_JSON));
+        // Add Authorization header
+        put.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
+        put.addHeader("Content-Type", "application/json");
 
-            try (CloseableHttpResponse response = executeRequest(put)) {
-                int statusCode = response.getStatusLine().getStatusCode();
+        // Serialize payload
+        String jsonPayload = JSON.writeValueAsString(payload);
+        put.setEntity(new StringEntity(
+                jsonPayload,
+                ContentType.APPLICATION_JSON));
 
-                if (statusCode != HttpStatus.SC_CREATED
-                        && statusCode != HttpStatus.SC_OK) {
-                    throw new RedirectAPIException(
-                            formatErrResponse(put, response,
-                            HttpStatus.SC_CREATED),
-                            statusCode);
-                }
+        try (CloseableHttpResponse response = executeRequest(put)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode != HttpStatus.SC_CREATED
+                    && statusCode != HttpStatus.SC_OK) {
+                throw new RedirectAPIException(
+                        formatErrResponse(put, response,
+                        HttpStatus.SC_CREATED),
+                        statusCode);
             }
         }
+    }
 
     private void validateRedirectID(final String redirectID) {
         Args.check(StringUtils.isNotBlank(redirectID),
