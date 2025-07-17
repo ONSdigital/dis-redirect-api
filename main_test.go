@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dis-redirect-api/features/steps"
-	componenttest "github.com/ONSdigital/dp-component-test"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
@@ -16,12 +16,14 @@ import (
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	RedisFeature *componenttest.RedisFeature
+	RedisFeature         *componentTest.RedisFeature
+	AuthorizationFeature *componentTest.AuthorizationFeature
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	f.RedisFeature = componenttest.NewRedisFeature()
-	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature)
+	f.RedisFeature = componentTest.NewRedisFeature()
+	f.AuthorizationFeature = componentTest.NewAuthorizationFeature()
+	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature, f.AuthorizationFeature)
 	if err != nil {
 		log.Error(context.Background(), "failed to create redirect api component", err)
 		os.Exit(1)
@@ -31,8 +33,10 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 
 	ctx.Before(func(ctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		if f.RedisFeature == nil {
-			f.RedisFeature = componenttest.NewRedisFeature()
+			f.RedisFeature = componentTest.NewRedisFeature()
 		}
+
+		f.AuthorizationFeature.Reset()
 		apiFeature.Reset()
 
 		return ctx, nil
@@ -44,13 +48,14 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 			os.Exit(1)
 		}
 
+		f.AuthorizationFeature.Reset()
 		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
-	apiFeature.RegisterSteps(ctx)
 	f.RedisFeature.RegisterSteps(ctx)
+	f.AuthorizationFeature.RegisterSteps(ctx)
 	redirectAPIComponent.RegisterSteps(ctx)
 }
 
