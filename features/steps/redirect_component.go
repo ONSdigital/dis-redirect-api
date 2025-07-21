@@ -28,7 +28,6 @@ type RedirectComponent struct {
 	Config                  *config.Config
 	HTTPServer              *http.Server
 	ServiceRunning          bool
-	FakeAPIRouter           *FakeAPI
 	apiFeature              *componentTest.APIFeature
 	redisFeature            *componentTest.RedisFeature
 	authFeature             *componentTest.AuthorizationFeature

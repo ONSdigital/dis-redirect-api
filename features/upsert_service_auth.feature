@@ -1,8 +1,9 @@
 Feature: Upsert redirect endpoint with service auth
 
   Background: Service setup
-    Given service "dis-redirect-api" has the "legacy:edit" permission
+    Given service "zebedee" has the "legacy:edit" permission
     And the redirect api is running
+    And I am identified as "zebedee"
 
   Scenario: Upsert a redirect value via PUT if the key and value do not exist
     Given redis is healthy

@@ -34,14 +34,9 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 		return err
 	}
 
-	c.FakeAPIRouter = NewFakeAPI()
-	c.FakeAPIRouter.setupDefaultAuthResponses()
-
-	// Use fakeAPI.fakeHTTP.URL() to assign to ZebedeeURL and PermissionsAPIURL
-	c.Config.AuthorisationConfig.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
-	c.Config.AuthorisationConfig.PermissionsAPIURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
-
 	c.Config.RedisAddress = c.redisFeature.Server.Addr()
+	c.Config.AuthorisationConfig.ZebedeeURL = c.authFeature.FakeAuthService.ResolveURL("")
+	c.Config.AuthorisationConfig.PermissionsAPIURL = c.authFeature.FakePermissionsAPI.ResolveURL("")
 
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
@@ -63,5 +58,6 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 	}
 
 	c.ServiceRunning = true
+
 	return nil
 }
