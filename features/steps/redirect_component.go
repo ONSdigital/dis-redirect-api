@@ -100,7 +100,6 @@ func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.
 
 func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
 	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
-
 	if err != nil {
 		return nil, err
 	}

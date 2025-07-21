@@ -43,11 +43,6 @@ class RedirectAPIClientTest {
     private static final String REDIRECT_API_URL = "http://redirect-api:1234";
 
     /**
-     * Auth header for testing.
-     */
-    private static final String SERVICE_TOKEN_HEADER_NAME = "Authorization";
-
-    /**
      * Plain redirect ID for testing
      */
     private static final String redirectID = "/economy/old-path";
