@@ -12,7 +12,7 @@ as the source of truth of how each endpoint works.
 
 ```xml
     <dependency>
-      <groupId>com.github.onsdigital</groupId>
+      <groupId>com.github.onsdigital.dis-redirect-api</groupId>
       <artifactId>dis-redirect-api-sdk-java</artifactId>
       <version>${redirectSDK.version}</version>
     </dependency>
