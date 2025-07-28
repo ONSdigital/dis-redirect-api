@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -32,6 +33,7 @@ func TestConfig(t *testing.T) {
 					OTServiceName:              "dis-redirect-api",
 					OtelEnabled:                false,
 					RedisAddress:               "localhost:6379",
+					AuthorisationConfig:        authorisation.NewDefaultConfig(),
 				})
 			})
 

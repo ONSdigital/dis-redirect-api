@@ -8,10 +8,10 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
-	"github.com/ONSdigital/dis-redirect-api/service/mock"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	disRedis "github.com/ONSdigital/dis-redis"
-	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
@@ -21,66 +21,38 @@ const (
 )
 
 type RedirectComponent struct {
-	componenttest.ErrorFeature
-	svcList        *service.ExternalServiceList
-	svc            *service.Service
-	errorChan      chan error
-	Config         *config.Config
-	HTTPServer     *http.Server
-	ServiceRunning bool
-	apiFeature     *componenttest.APIFeature
-	redisFeature   *componenttest.RedisFeature
-	StartTime      time.Time
-	responseBody   []byte
+	responseBody []byte
+	componentTest.ErrorFeature
+	svcList                 *service.ExternalServiceList
+	svc                     *service.Service
+	errorChan               chan error
+	Config                  *config.Config
+	HTTPServer              *http.Server
+	ServiceRunning          bool
+	apiFeature              *componentTest.APIFeature
+	redisFeature            *componentTest.RedisFeature
+	authFeature             *componentTest.AuthorizationFeature
+	StartTime               time.Time
+	AuthorisationMiddleware authorisation.Middleware
 }
 
-func NewRedirectComponent(redisFeat *componenttest.RedisFeature) (*RedirectComponent, error) {
-	c := &RedirectComponent{
-		HTTPServer:     &http.Server{ReadHeaderTimeout: 3 * time.Second},
+func NewRedirectComponent(redisFeat *componentTest.RedisFeature, authFeat *componentTest.AuthorizationFeature) (*RedirectComponent, error) {
+	return &RedirectComponent{
+		redisFeature:   redisFeat,
+		authFeature:    authFeat, // keep this if needed
 		errorChan:      make(chan error),
 		ServiceRunning: false,
-	}
-
-	var err error
-
-	c.Config, err = config.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	c.redisFeature = redisFeat
-	c.Config.RedisAddress = c.redisFeature.Server.Addr()
-
-	initMock := &mock.InitialiserMock{
-		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
-		DoGetRedisClientFunc: c.DoGetRedisClientOk,
-	}
-
-	c.Config.HealthCheckInterval = 1 * time.Second
-	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
-	c.svcList = service.NewServiceList(initMock)
-
-	c.Config.BindAddr = "localhost:0"
-	c.StartTime = time.Now()
-	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
-	if err != nil {
-		return nil, err
-	}
-	c.ServiceRunning = true
-
-	return c, nil
+	}, nil
 }
 
-func (c *RedirectComponent) InitAPIFeature() *componenttest.APIFeature {
-	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
+func (c *RedirectComponent) InitAPIFeature() *componentTest.APIFeature {
+	c.apiFeature = componentTest.NewAPIFeature(c.InitialiseService)
 
 	return c.apiFeature
 }
 
 func (c *RedirectComponent) Reset() *RedirectComponent {
 	c.apiFeature.Reset()
-
 	return c
 }
 
@@ -125,4 +97,14 @@ func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.
 	})
 
 	return redisCli, err
+}
+
+func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	c.AuthorisationMiddleware = middleware
+	return c.AuthorisationMiddleware, nil
 }

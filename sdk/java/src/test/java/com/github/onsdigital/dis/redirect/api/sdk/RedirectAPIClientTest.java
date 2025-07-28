@@ -1,6 +1,7 @@
 package com.github.onsdigital.dis.redirect.api.sdk;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
@@ -8,18 +9,24 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -39,6 +46,7 @@ class RedirectAPIClientTest {
      * Plain redirect ID for testing
      */
     private static final String redirectID = "/economy/old-path";
+
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -130,10 +138,159 @@ class RedirectAPIClientTest {
         return responseBody;
     }
 
+    @Test
+    void putRedirectSuccessfullySendsPutRequest() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatus = mock(StatusLine.class);
+        when(mockStatus.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatus);
+        when(mockHttpClient.execute(any())).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+        Redirect redirect = new Redirect("/from-path", "/to-path");
+        client.putRedirect(redirect);
+
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("PUT", request.getMethod());
+
+        String expectedId = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString("/from-path".getBytes(StandardCharsets.UTF_8));
+
+        assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
+        assertEquals("Bearer " + SERVICE_AUTH_TOKEN, request.getFirstHeader("Authorization").getValue());
+    }
+
+    @Test
+    void putRedirectReturnsErrorOnUnexpectedStatusCode() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatus = mock(StatusLine.class);
+        when(mockStatus.getStatusCode()).thenReturn(HttpStatus.SC_BAD_GATEWAY);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatus);
+        when(mockHttpClient.execute(any())).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+        Redirect redirect = new Redirect("/bad", "/to");
+
+        RedirectAPIException ex = assertThrows(RedirectAPIException.class, () -> client.putRedirect(redirect));
+        assertEquals(HttpStatus.SC_BAD_GATEWAY, ex.getCode());
+    }
+
+    @Test
+    void putRedirectThrowsIOExceptionOnFailure() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        when(mockHttpClient.execute(any())).thenThrow(new IOException("connection fail"));
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+        Redirect redirect = new Redirect("/fail", "/to");
+
+        assertThrows(IOException.class, () -> client.putRedirect(redirect));
+    }
+
+    @Test
+    void putRedirectThrowsOnNullFromField() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        Redirect invalid = new Redirect(null, "/to");
+        assertThrows(IllegalArgumentException.class, () -> client.putRedirect(invalid));
+    }
+
+    @Test
+    void testDeleteRedirectSuccess() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NO_CONTENT);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        client.deleteRedirect("/from"); // raw path, not base64
+
+        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        assertEquals("DELETE", request.getMethod());
+
+        // Ensure URL ends with base64("/from")
+        String expectedId = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString("/from".getBytes(StandardCharsets.UTF_8));
+
+        assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
+        assertNotNull(request.getFirstHeader("Authorization"));
+    }
+
+    @Test
+    void testDeleteRedirectReturns404() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                        RedirectAPIException.class,
+                        () -> client.deleteRedirect("/from")
+                );
+
+        assertTrue(exception.getMessage().contains("404"));
+    }
+
+    @Test
+    void testDeleteRedirectServerError() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
+        StatusLine mockStatusLine = mock(StatusLine.class);
+
+        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        RedirectAPIException exception = assertThrows(
+                RedirectAPIException.class,
+                () -> client.deleteRedirect("/from")
+        );
+
+        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, exception.getCode());
+    }
+
+    @Test
+    void testDeleteRedirectIOException() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        when(mockHttpClient.execute(any(HttpRequestBase.class)))
+                .thenThrow(new IOException("Simulated network failure"));
+
+        RedirectClient client = getRedirectClient(mockHttpClient);
+
+        assertThrows(IOException.class, () ->
+                client.deleteRedirect("/from"));
+    }
+
+
     private RedirectClient getRedirectClient(
             final CloseableHttpClient mockHttpClient)
             throws URISyntaxException {
         return new RedirectAPIClient(
                 REDIRECT_API_URL, SERVICE_AUTH_TOKEN, mockHttpClient);
     }
+
+    private HttpRequestBase captureHttpRequest(
+            final CloseableHttpClient mockHttpClient)
+            throws IOException {
+        ArgumentCaptor<HttpRequestBase> requestCaptor = ArgumentCaptor.forClass(
+                HttpRequestBase.class);
+        verify(mockHttpClient).execute(requestCaptor.capture());
+        return requestCaptor.getValue();
+    }
+
 }

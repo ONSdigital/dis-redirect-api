@@ -2,13 +2,16 @@ package sdk
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"testing"
 
-	c "github.com/smartystreets/goconvey/convey"
+	"github.com/ONSdigital/dis-redirect-api/models"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGetRedirect(t *testing.T) {
@@ -16,7 +19,7 @@ func TestGetRedirect(t *testing.T) {
 
 	headers := http.Header{}
 
-	c.Convey("Given a request to get redirect", t, func() {
+	Convey("Given a request to get redirect", t, func() {
 		body, err := json.Marshal(getRedirectResponse)
 		if err != nil {
 			t.Errorf("failed to setup test data, error: %v", err)
@@ -31,22 +34,206 @@ func TestGetRedirect(t *testing.T) {
 
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
 
-		c.Convey("When GetRedirect is called", func() {
+		Convey("When GetRedirect is called", func() {
 			resp, err := redirectAPIClient.GetRedirect(ctx, Options{Headers: headers}, existingBase64Key)
 
-			c.Convey("Then the expected response body is returned", func() {
-				c.So(*resp, c.ShouldResemble, getRedirectResponse)
+			Convey("Then the expected response body is returned", func() {
+				So(*resp, ShouldResemble, getRedirectResponse)
 
-				c.Convey("And no error is returned", func() {
-					c.So(err, c.ShouldBeNil)
+				Convey("And no error is returned", func() {
+					So(err, ShouldBeNil)
 
-					c.Convey("And client.Do should be called once with the expected parameters", func() {
+					Convey("And client.Do should be called once with the expected parameters", func() {
 						doCalls := httpClient.DoCalls()
-						c.So(doCalls, c.ShouldHaveLength, 1)
-						c.So(doCalls[0].Req.Method, c.ShouldEqual, "GET")
-						c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, fmt.Sprintf("/v1/redirects/%s", existingBase64Key))
+						So(doCalls, ShouldHaveLength, 1)
+						So(doCalls[0].Req.Method, ShouldEqual, "GET")
+						So(doCalls[0].Req.URL.Path, ShouldEqual, fmt.Sprintf("/v1/redirects/%s", existingBase64Key))
 					})
 				})
+			})
+		})
+	})
+}
+
+func TestPutRedirect(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	headers := http.Header{
+		Authorization: {"Bearer authorised-user"},
+	}
+
+	Convey("Given a successful 201 Created response from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       nil,
+				Header:     nil,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		redirect := models.Redirect{
+			From: "/old-url",
+			To:   "/new-url",
+		}
+
+		Convey("When PutRedirect is called", func() {
+			err := redirectAPIClient.PutRedirect(ctx, Options{Headers: headers}, "L29sZC11cmw=", redirect) // base64(/old-url)
+
+			Convey("Then it succeeds with no errors returned", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected URL", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, "/v1/redirects/L29sZC11cmw=") // URL encoded base64
+				So(doCalls[0].Req.Method, ShouldEqual, http.MethodPut)
+			})
+		})
+	})
+
+	Convey("Given a 500 Internal Server Error from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusInternalServerError,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+		redirect := models.Redirect{From: "/broken", To: "/fail"}
+
+		Convey("When PutRedirect is called", func() {
+			err := redirectAPIClient.PutRedirect(ctx, Options{Headers: headers}, "L2Jyb2tlbg==", redirect)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Status(), ShouldEqual, http.StatusInternalServerError)
+			})
+
+			Convey("And client.Do is called with the correct path", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, "/v1/redirects/L2Jyb2tlbg==")
+			})
+		})
+	})
+
+	Convey("Given an unexpected client error occurs", t, func() {
+		clientErr := errors.New("network error")
+		httpClient := newMockHTTPClient(nil, clientErr)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+		redirect := models.Redirect{From: "/error", To: "/nowhere"}
+
+		Convey("When PutRedirect is called", func() {
+			err := redirectAPIClient.PutRedirect(ctx, Options{Headers: headers}, "L2Vycm9y", redirect)
+
+			Convey("Then a wrapped error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "network error")
+			})
+
+			Convey("And client.Do is called once", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+			})
+		})
+	})
+}
+
+func TestDeleteRedirect(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	headers := http.Header{
+		Authorization: {"Bearer authorised-user"},
+	}
+
+	Convey("Given a successful 204 No Content response from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusNoContent,
+				Body:       nil,
+				Header:     nil,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L29sZC11cmw=") // base64(/old-url)
+
+			Convey("Then it succeeds with no error returned", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called with correct path and method", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, "/v1/redirects/L29sZC11cmw=")
+				So(doCalls[0].Req.Method, ShouldEqual, http.MethodDelete)
+			})
+		})
+	})
+
+	Convey("Given a 404 Not Found response from dis-redirect-api", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusNotFound,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L25vdC1mb3VuZA==") // base64(/not-found)
+
+			Convey("Then a not found error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Status(), ShouldEqual, http.StatusNotFound)
+			})
+		})
+	})
+
+	Convey("Given a 500 Internal Server Error response", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusInternalServerError,
+			},
+			nil,
+		)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L2ZhaWx1cmU=")
+
+			Convey("Then an internal server error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Status(), ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
+
+	Convey("Given a network error occurs", t, func() {
+		netErr := errors.New("connection reset by peer")
+		httpClient := newMockHTTPClient(nil, netErr)
+
+		redirectAPIClient := newRedirectAPIClient(t, httpClient)
+
+		Convey("When DeleteRedirect is called", func() {
+			err := redirectAPIClient.DeleteRedirect(ctx, Options{Headers: headers}, "L25ldC1mYWls")
+
+			Convey("Then a wrapped error is returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "connection reset by peer")
 			})
 		})
 	})
