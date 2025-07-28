@@ -63,8 +63,8 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if _, err = w.Write(redirectResponse); err != nil {
-		log.Error(ctx, "request failed", err, logData)
-		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		log.Error(ctx, "failed to write response", err, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 	}
 }
 
@@ -101,17 +101,17 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	// convert count from a string to an int64 ready to use in call to GetRedirects
 	count, errCount := strconv.ParseInt(strCount, 10, 32)
 
+	if errCount != nil {
+		log.Error(ctx, "invalid path parameter - failed to convert count to int64", errCount, logData)
+		api.handleError(ctx, w, apierrors.ErrInvalidCount, http.StatusBadRequest)
+		return
+	}
+
 	// validate count
 	if count < 0 {
 		errNegCount := errors.New("the count is negative")
 		log.Error(ctx, "invalid path parameter - count should be a positive integer", errNegCount, logData)
 		api.handleError(ctx, w, apierrors.ErrNegativeCount, http.StatusBadRequest)
-		return
-	}
-
-	if errCount != nil {
-		log.Error(ctx, "invalid path parameter - failed to convert count to int64", errCount, logData)
-		api.handleError(ctx, w, apierrors.ErrInvalidCount, http.StatusBadRequest)
 		return
 	}
 
