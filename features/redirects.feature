@@ -49,7 +49,7 @@ Feature: Redirect endpoint
         Then the HTTP status code should be "500"
         And I should receive the following response:
             """
-                redis returned an error
+                internal error
             """
 
     Scenario: Return all the redirects that exist in redis using default path parameters
@@ -136,5 +136,5 @@ Feature: Redirect endpoint
         Then the HTTP status code should be "500"
         And I should receive the following response:
             """
-                redis returned an error
+                internal error
             """

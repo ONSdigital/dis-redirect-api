@@ -43,8 +43,8 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)
 		} else {
-			log.Error(ctx, "request failed", err, logData)
-			api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
+			log.Error(ctx, "getting redirect from redis failed", err, logData)
+			api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -57,7 +57,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	redirectResponse, err := json.Marshal(responseBody)
 	if err != nil {
 		log.Error(ctx, "request failed", err, logData)
-		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	keyValuePairs, newCursor, errRedirects := api.RedirectStore.GetRedirects(ctx, count, cursor)
 	if errRedirects != nil {
 		log.Error(ctx, "error calling the store to get redirects", errRedirects, logData)
-		api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)
 	if errTotalCount != nil {
 		log.Error(ctx, "failed to get total count of redirects", errTotalCount, logData)
-		api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
