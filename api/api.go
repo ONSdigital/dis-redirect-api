@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/store"
+	dpurl "github.com/ONSdigital/dis-redirect-api/url"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -12,17 +14,21 @@ import (
 
 // RedirectAPI provides a struct to wrap the api around
 type RedirectAPI struct {
-	Router         *mux.Router
-	RedirectStore  *store.Datastore
-	authMiddleware authorisation.Middleware
+	Router             *mux.Router
+	RedirectStore      *store.Datastore
+	authMiddleware     authorisation.Middleware
+	urlBuilder         *dpurl.Builder
+	enableURLRewriting bool
 }
 
 // Setup function sets up the api and returns an api
-func Setup(r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware) *RedirectAPI {
+func Setup(r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware, cfg *config.Config, builder *dpurl.Builder) *RedirectAPI {
 	api := &RedirectAPI{
-		Router:         r,
-		RedirectStore:  dataStore,
-		authMiddleware: auth,
+		Router:             r,
+		RedirectStore:      dataStore,
+		authMiddleware:     auth,
+		urlBuilder:         builder,
+		enableURLRewriting: cfg.EnableURLRewriting,
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)

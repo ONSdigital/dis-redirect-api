@@ -9,14 +9,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	neturl "net/url"
 	"testing"
 	"time"
 
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
+	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
+	"github.com/ONSdigital/dis-redirect-api/url"
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
@@ -30,7 +33,6 @@ var (
 		From: "/economy/old-path",
 		To:   "/economy/new-path",
 	}
-	selfBaseURL      = "https://api.beta.ons.gov.uk/v1/redirects/"
 	notANumber       = "this-is-not-a-number"
 	economyBulletin1 = "/economy/mybulletin1"
 	financeBulletin1 = "/finance/mybulletin1"
@@ -52,7 +54,13 @@ func encodeBase64(key string) string {
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	r := mux.NewRouter()
 
-	return api.Setup(r, &datastore, newAuthMiddlwareMock())
+	cfg, err := config.Get()
+	So(err, ShouldBeNil)
+
+	redirectsURL, err := neturl.Parse(getRedirectBaseURL)
+	So(err, ShouldBeNil)
+
+	return api.Setup(r, &datastore, newAuthMiddlwareMock(), cfg, url.NewBuilder(redirectsURL))
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {
@@ -200,7 +208,7 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 				So(respItem1.To, ShouldNotBeEmpty)
 				So(respItem1.Id, ShouldEqual, expectedID)
 				So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
-				So(respItem1.Links.Self.Href, ShouldEqual, selfBaseURL+expectedID)
+				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
 				So(response.Cursor, ShouldEqual, "0")
 				So(response.NextCursor, ShouldEqual, "0")
 				So(response.TotalCount, ShouldEqual, 12)
@@ -352,7 +360,7 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 				So(respItem1.To, ShouldNotBeEmpty)
 				So(respItem1.Id, ShouldEqual, expectedID)
 				So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
-				So(respItem1.Links.Self.Href, ShouldEqual, selfBaseURL+expectedID)
+				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
 				So(response.Cursor, ShouldEqual, "1")
 				So(response.NextCursor, ShouldEqual, "0")
 				So(response.TotalCount, ShouldEqual, 12)
