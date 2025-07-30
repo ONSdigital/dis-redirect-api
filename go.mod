@@ -8,6 +8,7 @@ require (
 	github.com/ONSdigital/dp-authorisation/v2 v2.32.2
 	github.com/ONSdigital/dp-component-test v0.25.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
+	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-net/v3 v3.3.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/log.go/v2 v2.4.5

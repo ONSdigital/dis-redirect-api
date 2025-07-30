@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/ONSdigital/dis-redirect-api/models"
+	"github.com/ONSdigital/dp-net/v2/links"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -254,6 +256,18 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirectList = append(redirectList, redirect)
 	}
 
+	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.urlBuilder.GetRedirectAPIURL())
+
+	if api.enableURLRewriting {
+		for _, redirect := range redirectList {
+			err := rewriteSelfLink(ctx, *redirectLinkBuilder, redirect)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	nextCursor := strconv.FormatUint(newCursor, 10)
 
 	// To get the TotalCount we need to get the total number of redirects available in redis
@@ -285,4 +299,17 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, err, http.StatusInternalServerError)
 		return
 	}
+}
+
+// rewriteSelfLink rewrites the self link of a given redirect
+func rewriteSelfLink(ctx context.Context, builder links.Builder, redirect models.Redirect) error {
+	var err error
+
+	redirect.Links.Self.Href, err = builder.BuildLink(redirect.Links.Self.Href)
+	if err != nil {
+		log.Error(ctx, "could not build self link", err, log.Data{"link": redirect.Links.Self.Href})
+		return err
+	}
+
+	return nil
 }
