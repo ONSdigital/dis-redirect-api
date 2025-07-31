@@ -1,15 +1,20 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/ONSdigital/dis-redirect-api/models"
+	"github.com/ONSdigital/dp-net/v2/links"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 // getRedirect gets the value of a key from the store
@@ -19,7 +24,10 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	redirectID := vars["id"]
 
 	if !isValidBase64(redirectID) {
-		http.Error(w, "invalid base64 id", http.StatusBadRequest)
+		errInvalidBase64 := errors.New("invalid base64 id")
+		logData := log.Data{"redirect_id": redirectID}
+		log.Error(ctx, "invalid base64 id", errInvalidBase64, logData)
+		api.handleError(ctx, w, errInvalidBase64, http.StatusBadRequest)
 		return
 	}
 
@@ -31,12 +39,14 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	decodedKey := string(decodedString)
 
-	redirect, err := api.Store.GetRedirect(ctx, decodedKey)
+	redirect, err := api.RedirectStore.GetRedirect(ctx, decodedKey)
+	logData := log.Data{"redirect": redirect}
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
 			api.handleError(ctx, w, err, http.StatusNotFound)
 		} else {
-			api.handleError(ctx, w, apierrors.ErrRedis, http.StatusInternalServerError)
+			log.Error(ctx, "getting redirect from redis failed", err, logData)
+			api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -48,13 +58,15 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	redirectResponse, err := json.Marshal(responseBody)
 	if err != nil {
-		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		log.Error(ctx, "request failed", err, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if _, err = w.Write(redirectResponse); err != nil {
-		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		log.Error(ctx, "failed to write response", err, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 	}
 }
 
@@ -96,9 +108,9 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingValue, _ := api.Store.GetValue(ctx, redirect.From)
+	existingValue, _ := api.RedirectStore.GetValue(ctx, redirect.From)
 
-	err = api.Store.UpsertValue(ctx, redirect.From, redirect.To, 0)
+	err = api.RedirectStore.UpsertValue(ctx, redirect.From, redirect.To, 0)
 	if err != nil {
 		http.Error(w, "failed to save", http.StatusInternalServerError)
 		return
@@ -130,7 +142,7 @@ func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 	key := string(keyBytes)
 
 	// Check if the key exists
-	_, err = api.Store.GetValue(ctx, key)
+	_, err = api.RedirectStore.GetValue(ctx, key)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			http.Error(w, "redirect not found", http.StatusNotFound)
@@ -141,7 +153,7 @@ func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Proceed to delete
-	if err := api.Store.DeleteValue(ctx, key); err != nil {
+	if err := api.RedirectStore.DeleteValue(ctx, key); err != nil {
 		http.Error(w, "failed to delete redirect", http.StatusInternalServerError)
 		return
 	}
@@ -156,4 +168,148 @@ func isValidRelativePath(path string) bool {
 func isValidBase64(s string) bool {
 	_, err := base64.StdEncoding.DecodeString(s)
 	return err == nil
+}
+
+// encodeBase64 returns the base64 encoded string of the original URL key string
+func encodeBase64(key string) string {
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
+
+	return encodedKey
+}
+
+// getRedirects gets a paged list of redirects from the store
+func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	strCount := req.URL.Query().Get("count")
+	strCursor := req.URL.Query().Get("cursor")
+
+	// make count default to 10
+	if strCount == "" {
+		strCount = "10"
+	}
+
+	// make cursor default to 0
+	if strCursor == "" {
+		strCursor = "0"
+	}
+
+	logData := log.Data{"count": strCount, "cursor": strCursor}
+
+	// convert count from a string to an int64 ready to use in call to GetRedirects
+	count, errCount := strconv.ParseInt(strCount, 10, 32)
+
+	if errCount != nil {
+		log.Error(ctx, "invalid path parameter - failed to convert count to int64", errCount, logData)
+		api.handleError(ctx, w, apierrors.ErrInvalidCount, http.StatusBadRequest)
+		return
+	}
+
+	// validate count
+	if count < 0 {
+		errNegCount := errors.New("the count is negative")
+		log.Error(ctx, "invalid path parameter - count should be a positive integer", errNegCount, logData)
+		api.handleError(ctx, w, apierrors.ErrNegativeCount, http.StatusBadRequest)
+		return
+	}
+
+	// convert cursor from a string to a uint64 ready to use in call to GetRedirects
+	var cursor uint64
+	var errCursor error
+	cursor, errCursor = strconv.ParseUint(strCursor, 10, 32)
+
+	logData = log.Data{"count": count, "cursor": cursor}
+
+	// validate cursor
+	if errCursor != nil {
+		log.Error(ctx, "invalid path parameter - failed to convert cursor to uint64", errCursor, logData)
+		api.handleError(ctx, w, apierrors.ErrInvalidOrNegativeCursor, http.StatusBadRequest)
+		return
+	}
+
+	keyValuePairs, newCursor, errRedirects := api.RedirectStore.GetRedirects(ctx, count, cursor)
+	if errRedirects != nil {
+		log.Error(ctx, "error calling the store to get redirects", errRedirects, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
+		return
+	}
+
+	logData = log.Data{"numKeyValuePairs": len(keyValuePairs)}
+	log.Info(ctx, "The number of redirects fetched", logData)
+
+	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
+
+	for key, value := range keyValuePairs {
+		var redirect models.Redirect
+		redirectID := encodeBase64(key)
+		redirectHref := api.urlBuilder.BuildRedirectSelfURL(redirectID)
+		redirectSelf := models.RedirectSelf{
+			Href: redirectHref,
+			Id:   redirectID,
+		}
+		redirectLinks := models.RedirectLinks{
+			Self: redirectSelf,
+		}
+		redirect.From = key
+		redirect.To = value
+		redirect.Id = redirectID
+		redirect.Links = redirectLinks
+		redirectList = append(redirectList, redirect)
+	}
+
+	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiUrl)
+
+	if api.enableURLRewriting {
+		for i := 0; i < len(redirectList); i++ {
+			newRedirect, err := rewriteSelfLink(ctx, *redirectLinkBuilder, redirectList[i])
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			redirectList[i] = newRedirect
+		}
+	}
+
+	nextCursor := strconv.FormatUint(newCursor, 10)
+
+	// To get the TotalCount we need to get the total number of redirects available in redis
+	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)
+	if errTotalCount != nil {
+		log.Error(ctx, "failed to get total count of redirects", errTotalCount, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
+		return
+	}
+
+	responseBody := models.Redirects{
+		Count:        int(count),
+		RedirectList: redirectList,
+		Cursor:       strCursor,
+		NextCursor:   nextCursor,
+		TotalCount:   totalCount,
+	}
+
+	redirectsResponse, err := json.Marshal(responseBody)
+	if err != nil {
+		log.Error(ctx, "failed to marshal response", err, logData)
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if _, err = w.Write(redirectsResponse); err != nil {
+		log.Error(ctx, "request failed", err, logData)
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+// rewriteSelfLink rewrites the self link of a given redirect
+func rewriteSelfLink(ctx context.Context, builder links.Builder, redirect models.Redirect) (models.Redirect, error) {
+	var err error
+	redirect.Links.Self.Href, err = builder.BuildLink(redirect.Links.Self.Href)
+	if err != nil {
+		log.Error(ctx, "could not build self link", err, log.Data{"link": redirect.Links.Self.Href})
+		return models.Redirect{}, err
+	}
+
+	return redirect, nil
 }

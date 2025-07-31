@@ -27,7 +27,7 @@ var (
 	testGitCommit = "GitCommit"
 	testVersion   = "Version"
 	errServer     = errors.New("HTTP Server error")
-	errRedis      = apierrors.ErrRedis
+	errRedis      = apierrors.ErrInternal
 )
 
 var (
