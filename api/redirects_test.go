@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	neturl "net/url"
 	"testing"
 	"time"
 
@@ -28,20 +27,33 @@ import (
 var (
 	getRedirectBaseURL  = "http://localhost:29900/v1/redirects/"
 	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
+	redirectAPIURL      = "http://localhost:29900"
 	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
 	validRedirect       = &models.Redirect{
 		From: "/economy/old-path",
 		To:   "/economy/new-path",
 	}
-	notANumber       = "this-is-not-a-number"
-	economyBulletin1 = "/economy/mybulletin1"
-	financeBulletin1 = "/finance/mybulletin1"
-	economyBulletin2 = "/economy/mybulletin2"
-	financeBulletin2 = "/finance/mybulletin2"
-	economyBulletin3 = "/economy/mybulletin3"
-	financeBulletin3 = "/finance/mybulletin3"
-	nonRedirectURL   = "/non-redirect-url"
-	testFromURL      = "/foo"
+	notANumber         = "this-is-not-a-number"
+	economyBulletin1   = "/economy/mybulletin1"
+	financeBulletin1   = "/finance/mybulletin1"
+	economyBulletin2   = "/economy/mybulletin2"
+	financeBulletin2   = "/finance/mybulletin2"
+	economyBulletin3   = "/economy/mybulletin3"
+	financeBulletin3   = "/finance/mybulletin3"
+	nonRedirectURL     = "/non-redirect-url"
+	testFromURL        = "/foo"
+	expectedProto      = "https"
+	expectedHost       = "api.somehost"
+	expectedPathPrefix = "v1"
+	keyValuePairs      = map[string]string{economyBulletin1: financeBulletin1, economyBulletin2: financeBulletin2, economyBulletin3: financeBulletin3}
+	mockStore          = &storetest.StorerMock{
+		GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
+			return keyValuePairs, 0, nil
+		},
+		GetTotalKeysFunc: func(ctx context.Context) (int64, error) {
+			return 12, nil
+		},
+	}
 )
 
 // encodeBase64 returns the base64 encoded string of the original URL key string
@@ -57,10 +69,8 @@ func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	cfg, err := config.Get()
 	So(err, ShouldBeNil)
 
-	redirectsURL, err := neturl.Parse(getRedirectBaseURL)
-	So(err, ShouldBeNil)
-
-	return api.Setup(r, &datastore, newAuthMiddlwareMock(), cfg, url.NewBuilder(redirectsURL))
+	ctx := context.Background()
+	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), cfg, url.NewBuilder(redirectAPIURL))
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {
@@ -325,20 +335,6 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue+"&cursor="+cursorValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
-			keyValuePairs := make(map[string]string)
-			keyValuePairs[economyBulletin1] = financeBulletin1
-			keyValuePairs[economyBulletin2] = financeBulletin2
-			keyValuePairs[economyBulletin3] = financeBulletin3
-
-			mockStore := &storetest.StorerMock{
-				GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
-					return keyValuePairs, 0, nil
-				},
-				GetTotalKeysFunc: func(ctx context.Context) (int64, error) {
-					return 12, nil
-				},
-			}
-
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
@@ -452,6 +448,64 @@ func TestGetRedirectsServerError(t *testing.T) {
 
 			Convey("Then the response status code should be 500", func() {
 				So(responseRecorder.Code, ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsURLRewriting(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the request headers for host, prefix and protocol are set", func() {
+			countValue := "3"
+			cursorValue := "1"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue+"&cursor="+cursorValue, http.NoBody)
+			request.Header.Add("X-Forwarded-Proto", expectedProto)
+			request.Header.Add("X-Forwarded-Host", expectedHost)
+			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
+			responseRecorder := httptest.NewRecorder()
+
+			Convey("And URL rewriting is enabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = true
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should contain the rewritten links", func() {
+					var response models.Redirects
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					respRedirectList := response.RedirectList
+					respItem1 := respRedirectList[0]
+					respItem1From := respItem1.From
+					expectedID := encodeBase64(respItem1From)
+					So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, expectedID))
+				})
+			})
+
+			Convey("And URL rewriting is disabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = false
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should not contain the rewritten links", func() {
+					var response models.Redirects
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					respRedirectList := response.RedirectList
+					respItem1 := respRedirectList[0]
+					respItem1From := respItem1.From
+					expectedID := encodeBase64(respItem1From)
+					So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
+				})
 			})
 		})
 	})

@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
-	neturl "net/url"
 
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
@@ -67,18 +65,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Set up the Redirect API
-	urlBuilder, err := createURLBuilder(cfg)
-	if err != nil {
-		log.Error(ctx, "failed to create URL builder", err)
-		return &Service{}, err
-	}
-
+	urlBuilder := url.NewBuilder(cfg.RedirectAPIURL)
 	enableURLRewriting := cfg.EnableURLRewriting
 	if enableURLRewriting {
 		log.Info(ctx, "URL rewriting enabled")
 	}
 
-	a := api.Setup(r, &datastore, authorisationMiddleware, cfg, urlBuilder)
+	a := api.Setup(ctx, r, &datastore, authorisationMiddleware, cfg, urlBuilder)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -170,14 +163,4 @@ func registerCheckers(ctx context.Context, hc HealthChecker, redisCli store.Redi
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
 	return nil
-}
-
-func createURLBuilder(cfg *config.Config) (*url.Builder, error) {
-	redirectAPIURLStr := fmt.Sprintf("%s%s", cfg.RedirectAPIURL, "/v1/redirects/")
-	redirectAPIURL, err := neturl.Parse(redirectAPIURLStr)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse redirectAPIURL from config")
-	}
-
-	return url.NewBuilder(redirectAPIURL), nil
 }
