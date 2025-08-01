@@ -1,7 +1,11 @@
 Feature: Redirect endpoint
+
+    Background: Service setup
+      Given the redirect api is running
+
     Scenario: Return the value when the key exists in redis
         Given the key "/economy/old-path" is already set to a value of "/economy/new-path" in the Redis store
-        And the redirect api is running
+        And redis is healthy
         When I GET "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
         Then I should receive the following JSON response with status "200":
             """
@@ -18,10 +22,8 @@ Feature: Redirect endpoint
                 }
             """
 
-
     Scenario: Return 400 when the key is not base64
-    Given redis is healthy
-        And the redirect api is running
+        Given redis is healthy
         When I GET "/v1/redirects/cheese"
         Then the HTTP status code should be "400"
         And I should receive the following response:
@@ -29,10 +31,8 @@ Feature: Redirect endpoint
                 invalid base64 id
             """
 
-
     Scenario: Return 404 when the key is not found
         Given redis is healthy
-        And the redirect api is running
         When I GET "/v1/redirects/b2xkLXBhdGg="
         Then the HTTP status code should be "404"
         And I should receive the following response:
@@ -40,16 +40,14 @@ Feature: Redirect endpoint
                 key old-path not found
             """
 
-
     Scenario: Return 500 when redis returns an error
         Given redis stops running
-        And the redirect api is running
         And I wait 4 seconds to pass the critical timeout
         When I GET "/v1/redirects/b2xkLXBhdGg="
         Then the HTTP status code should be "500"
         And I should receive the following response:
             """
-                redis returned an error
+                internal error
             """
 
     Scenario: Return all the redirects that exist in redis using default path parameters
@@ -88,15 +86,15 @@ Feature: Redirect endpoint
             | count | cursor | next_cursor | total_count |
             | 2     | 1      | 0           | 3           |
 
-        Scenario: Return 400 when the count value given is not an integer
-            Given redis is healthy
-            And the redirect api is running
-            When I GET "/v1/redirects?count=not-a-number"
-            Then the HTTP status code should be "400"
-            And I should receive the following response:
-            """
-                the count must be an integer giving the requested number of redirects
-            """
+    Scenario: Return 400 when the count value given is not an integer
+        Given redis is healthy
+        And the redirect api is running
+        When I GET "/v1/redirects?count=not-a-number"
+        Then the HTTP status code should be "400"
+        And I should receive the following response:
+        """
+            the count must be an integer giving the requested number of redirects
+        """
 
     Scenario: Return 400 when the count value given is negative
         Given redis is healthy
@@ -136,5 +134,5 @@ Feature: Redirect endpoint
         Then the HTTP status code should be "500"
         And I should receive the following response:
             """
-                redis returned an error
+                internal error
             """

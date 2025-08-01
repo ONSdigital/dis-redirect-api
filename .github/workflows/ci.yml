@@ -38,7 +38,7 @@ jobs:
       - name: Run Go audit check with Nancy
         uses: sonatype-nexus-community/nancy-github-action@main
         with:
-          nancyVersion: "latest"
+          nancyVersion: "v1.0.36"
       - name: Run Java audit checks
         run: make audit-java
 
@@ -62,7 +62,7 @@ jobs:
       - name: Run Go lint checks
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1
+          version: v2.1.6
       - name: Run Java linters
         run: make lint-java
   

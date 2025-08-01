@@ -6,6 +6,8 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/store"
+	"github.com/ONSdigital/dis-redirect-api/url"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -14,12 +16,13 @@ import (
 
 // Service contains all the configs, server and clients to run the API
 type Service struct {
-	Config      *config.Config
-	Server      HTTPServer
-	Router      *mux.Router
-	API         *api.RedirectAPI
-	ServiceList *ExternalServiceList
-	HealthCheck HealthChecker
+	Config         *config.Config
+	Server         HTTPServer
+	Router         *mux.Router
+	API            *api.RedirectAPI
+	ServiceList    *ExternalServiceList
+	HealthCheck    HealthChecker
+	AuthMiddleware authorisation.Middleware
 }
 
 type RedisAPIStore struct {
@@ -55,8 +58,20 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		Backend: RedisAPIStore{redisClient},
 	}
 
-	// Set up the API
-	a := api.Setup(r, &datastore)
+	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
+	if err != nil {
+		log.Fatal(ctx, "could not instantiate authorisation middleware", err)
+		return nil, err
+	}
+
+	// Set up the Redirect API
+	urlBuilder := url.NewBuilder(cfg.RedirectAPIURL)
+	enableURLRewriting := cfg.EnableURLRewriting
+	if enableURLRewriting {
+		log.Info(ctx, "URL rewriting enabled")
+	}
+
+	a := api.Setup(ctx, r, &datastore, authorisationMiddleware, cfg, urlBuilder)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

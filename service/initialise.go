@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	disRedis "github.com/ONSdigital/dis-redis"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -14,9 +15,10 @@ import (
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
-	HealthCheck bool
-	Init        Initialiser
-	Redis       bool
+	AuthorisationMiddleware bool
+	HealthCheck             bool
+	Init                    Initialiser
+	Redis                   bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -84,4 +86,15 @@ func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.
 	}
 
 	return redisClient, nil
+}
+
+// DoGetAuthorisationMiddleware creates authorisation middleware for the given config
+func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
+}
+
+// GetAuthorisationMiddleware creates a new instance of authorisation.Middlware
+func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+	e.AuthorisationMiddleware = true
+	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig)
 }

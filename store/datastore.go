@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -18,6 +19,8 @@ type dataRedis interface {
 	GetValue(ctx context.Context, key string) (string, error)
 	GetKeyValuePairs(ctx context.Context, matchPattern string, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error)
 	GetTotalKeys(ctx context.Context) (totalKeys int64, err error)
+	SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	DeleteValue(ctx context.Context, key string) error
 }
 
 // Redis represents all the required methods from Redis
@@ -47,4 +50,16 @@ func (ds *Datastore) GetTotalCount(ctx context.Context) (totalCount int, err err
 	}
 	totalCount = int(totalKeys)
 	return totalCount, err
+}
+
+func (ds *Datastore) GetValue(ctx context.Context, redirectID string) (string, error) {
+	return ds.Backend.GetValue(ctx, redirectID)
+}
+
+func (ds *Datastore) UpsertValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return ds.Backend.SetValue(ctx, key, value, expiration)
+}
+
+func (ds *Datastore) DeleteValue(ctx context.Context, redirectID string) error {
+	return ds.Backend.DeleteValue(ctx, redirectID)
 }

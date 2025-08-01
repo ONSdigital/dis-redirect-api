@@ -8,7 +8,15 @@
   <artifactId>dis-redirect-api-sdk-java</artifactId>
   <version>0.1-SNAPSHOT</version>
 
+  <parent>
+    <groupId>com.github.onsdigital</groupId>
+    <artifactId>dis-redirect-api</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
   <name>dis-redirect-api-sdk-java</name>
+  <packaging>jar</packaging>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
