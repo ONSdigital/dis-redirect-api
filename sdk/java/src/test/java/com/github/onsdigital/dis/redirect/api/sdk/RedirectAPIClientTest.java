@@ -8,6 +8,7 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
+import com.github.onsdigital.dis.redirect.api.sdk.model.Redirects;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -47,6 +49,15 @@ class RedirectAPIClientTest {
      */
     private static final String redirectID = "/economy/old-path";
 
+    /**
+     * Count for testing
+     */
+    private static final String count = "3";
+
+    /**
+     * Cursor for testing
+     */
+    private static final String cursor = "2";
 
     @Test
     void testRedirectAPIInvalidURI() {
@@ -72,16 +83,16 @@ class RedirectAPIClientTest {
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
         Redirect mockRedirect = mockRedirect(mockHttpResponse);
-        Redirect expecteRedirect = mockRedirect;
+        Redirect expectedRedirect = mockRedirect;
 
         // When getRedirect is called
         Redirect actualRedirect = redirectAPIClient.getRedirect(redirectID);
 
         assertNotNull(actualRedirect);
 
-        // Then the response should be whats returned frpm the redirect API
-        assertEquals(expecteRedirect.getTo(), actualRedirect.getTo());
-        assertEquals(expecteRedirect.getFrom(), actualRedirect.getFrom());
+        // Then the response should be whats returned from the redirect API
+        assertEquals(expectedRedirect.getTo(), actualRedirect.getTo());
+        assertEquals(expectedRedirect.getFrom(), actualRedirect.getFrom());
     }
 
     @Test
@@ -89,7 +100,7 @@ class RedirectAPIClientTest {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
 
-        // Given a request to the redirect API that returns a 404
+        // Given a request to the redirect API that returns a 400
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
         when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
 
@@ -132,6 +143,16 @@ class RedirectAPIClientTest {
     private Redirect mockRedirect(CloseableHttpResponse mockHttpResponse)
             throws JsonProcessingException, UnsupportedEncodingException {
         Redirect responseBody = new Redirect("/economy/old-path", "/economy/new-path");
+
+        MockHttp.responseBody(mockHttpResponse, responseBody);
+
+        return responseBody;
+    }
+
+    private Redirects mockRedirects(CloseableHttpResponse mockHttpResponse)
+            throws JsonProcessingException, UnsupportedEncodingException {
+        ArrayList<Redirect> redirectList = new ArrayList<>();
+        Redirects responseBody = new Redirects(3, redirectList, "2", "0", 3);
 
         MockHttp.responseBody(mockHttpResponse, responseBody);
 
@@ -276,12 +297,66 @@ class RedirectAPIClientTest {
                 client.deleteRedirect("/from"));
     }
 
-
     private RedirectClient getRedirectClient(
             final CloseableHttpClient mockHttpClient)
             throws URISyntaxException {
         return new RedirectAPIClient(
                 REDIRECT_API_URL, SERVICE_AUTH_TOKEN, mockHttpClient);
+    }
+
+    @Test
+    public void testRedirectAPI_getRedirects() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
+
+        // Given a mock redirects response from the redirect API
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_OK);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+
+        Redirects mockRedirects = mockRedirects(mockHttpResponse);
+        Redirects expectedRedirects = mockRedirects;
+
+        // When getRedirects is called
+        Redirects observedRedirects = redirectAPIClient.getRedirects(count, cursor);
+
+        assertNotNull(observedRedirects);
+
+        // Then the response should be what's returned from the redirect API
+        assertEquals(expectedRedirects.getCount(), observedRedirects.getCount());
+        assertEquals(expectedRedirects.getRedirectList(), observedRedirects.getRedirectList());
+        assertEquals(expectedRedirects.getCursor(), observedRedirects.getCursor());
+        assertEquals(expectedRedirects.getNextCursor(), observedRedirects.getNextCursor());
+        assertEquals(expectedRedirects.getTotalCount(), observedRedirects.getTotalCount());
+    }
+
+    @Test
+    void testRedirectAPI_getRedirects_badRequest() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
+
+        // Given a request to the redirect API that returns a 400
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+
+        // When getRedirects is called
+        // Then the expected exception is thrown
+        assertThrows(BadRequestException.class,
+                () -> redirectAPIClient.getRedirects(count, cursor));
+    }
+
+    @Test
+    void testRedirectAPI_getRedirects_internalError() throws Exception {
+        CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
+        RedirectClient redirectAPIClient = getRedirectClient(mockHttpClient);
+
+        // Given a request to the redirect API that returns a 500
+        CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+
+        // When getRedirects is called
+        // Then the expected exception is thrown
+        assertThrows(RedirectAPIException.class,
+                () -> redirectAPIClient.getRedirects(count, cursor));
     }
 
     private HttpRequestBase captureHttpRequest(
