@@ -12,11 +12,11 @@ Feature: Redirect endpoint
             {
                 "from": "/economy/old-path",
                 "to": "/economy/new-path",
-                "id": "",
+                "id": "L2Vjb25vbXkvb2xkLXBhdGg=",
                 "links": {
                     "self": {
-                        "href": "",
-                        "id": ""
+                        "href": "http://localhost:29900/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg=",
+                        "id": "L2Vjb25vbXkvb2xkLXBhdGg="
                     }
                   }
                 }
