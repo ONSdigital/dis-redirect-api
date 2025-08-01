@@ -53,6 +53,9 @@ var (
 		GetTotalKeysFunc: func(ctx context.Context) (int64, error) {
 			return 12, nil
 		},
+		GetValueFunc: func(_ context.Context, _ string) (string, error) {
+			return "/economy/new-path", nil
+		},
 	}
 )
 
@@ -79,12 +82,6 @@ func TestGetRedirectEndpoint(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
-			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "/economy/new-path", nil
-				},
-			}
-
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
@@ -97,6 +94,57 @@ func TestGetRedirectEndpoint(t *testing.T) {
 
 				So(response.From, ShouldEqual, validRedirect.From)
 				So(response.To, ShouldEqual, validRedirect.To)
+				So(response.Id, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.Id, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.Href, ShouldEqual, getRedirectBaseURL+existingBase64Key)
+			})
+		})
+	})
+}
+
+func TestGetRedirectURLRewriting(t *testing.T) {
+	Convey("Given a GET /redirects/{id} request", t, func() {
+		Convey("When the request headers for host, prefix and protocol are set", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
+			request.Header.Add("X-Forwarded-Proto", expectedProto)
+			request.Header.Add("X-Forwarded-Host", expectedHost)
+			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
+			responseRecorder := httptest.NewRecorder()
+
+			Convey("And URL rewriting is enabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = true
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should contain the rewritten link", func() {
+					var response models.Redirect
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					So(response.Links.Self.Id, ShouldEqual, existingBase64Key)
+					So(response.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, existingBase64Key))
+				})
+			})
+
+			Convey("And URL rewriting is disabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = false
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should not contain the rewritten links", func() {
+					var response models.Redirect
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					So(response.Links.Self.Id, ShouldEqual, existingBase64Key)
+					So(response.Links.Self.Href, ShouldEqual, getRedirectBaseURL+existingBase64Key)
+				})
 			})
 		})
 	})
