@@ -58,7 +58,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	redirectResponse, err := json.Marshal(responseBody)
 	if err != nil {
-		log.Error(ctx, "request failed", err, logData)
+		log.Error(ctx, "failed to marshal response", err, logData)
 		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
@@ -228,7 +228,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	keyValuePairs, newCursor, errRedirects := api.RedirectStore.GetRedirects(ctx, count, cursor)
 	if errRedirects != nil {
-		log.Error(ctx, "error calling the store to get redirects", errRedirects, logData)
+		log.Error(ctx, "getting redirects from redis failed", errRedirects, logData)
 		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
@@ -274,7 +274,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	// To get the TotalCount we need to get the total number of redirects available in redis
 	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)
 	if errTotalCount != nil {
-		log.Error(ctx, "failed to get total count of redirects", errTotalCount, logData)
+		log.Error(ctx, "getting total count of redirects from redis failed", errTotalCount, logData)
 		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
@@ -296,7 +296,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if _, err = w.Write(redirectsResponse); err != nil {
-		log.Error(ctx, "request failed", err, logData)
+		log.Error(ctx, "failed to write response", err, logData)
 		api.handleError(ctx, w, err, http.StatusInternalServerError)
 		return
 	}
