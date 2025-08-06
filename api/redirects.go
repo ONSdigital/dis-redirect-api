@@ -33,7 +33,9 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	decodedString, err := base64.URLEncoding.DecodeString(redirectID)
 	if err != nil {
-		http.Error(w, "cannot decode id", http.StatusBadRequest)
+		logData := log.Data{"redirect_id": redirectID}
+		log.Error(ctx, "cannot decode id", err, logData)
+		api.handleError(ctx, w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -74,37 +76,50 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := mux.Vars(r)["id"]
+	logData := log.Data{"redirect_id": id}
 
 	if !isValidBase64(id) {
-		http.Error(w, "invalid base64 id", http.StatusBadRequest)
+		errInvalidBase64 := errors.New("invalid base64 id")
+		log.Error(ctx, "invalid base64 id", errInvalidBase64, logData)
+		api.handleError(ctx, w, errInvalidBase64, http.StatusBadRequest)
 		return
 	}
 
 	fromDecoded, err := base64.URLEncoding.DecodeString(id)
 	if err != nil {
-		http.Error(w, "cannot decode id", http.StatusBadRequest)
+		log.Error(ctx, "cannot decode id", err, logData)
+		api.handleError(ctx, w, err, http.StatusBadRequest)
 		return
 	}
 
 	var redirect models.Redirect
 	if err := json.NewDecoder(r.Body).Decode(&redirect); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		log.Error(ctx, "invalid redirect request", err)
+		api.handleError(ctx, w, err, http.StatusBadRequest)
 		return
 	}
 
+	logData = log.Data{"redirect_from": redirect.From}
 	if redirect.From != string(fromDecoded) {
-		http.Error(w, "invalid request: 'from' field does not match base64-decoded 'id' in the URL", http.StatusBadRequest)
+		errFromNotEqualToDecodedID := errors.New("invalid request: 'from' field does not match base64-decoded 'id' in the URL")
+		log.Error(ctx, "invalid redirect request", errFromNotEqualToDecodedID, logData)
+		api.handleError(ctx, w, errFromNotEqualToDecodedID, http.StatusBadRequest)
 		return
 	}
 
+	logData = log.Data{"redirect_from": redirect.From, "redirect_to": redirect.To}
 	if !isValidRelativePath(redirect.From) || !isValidRelativePath(redirect.To) {
-		http.Error(w, "'from' and 'to' must be relative paths starting with '/'", http.StatusBadRequest)
+		errRedirectPathNotRelative := errors.New("'from' and 'to' must be relative paths starting with '/'")
+		log.Error(ctx, "invalid redirect request", errRedirectPathNotRelative, logData)
+		api.handleError(ctx, w, errRedirectPathNotRelative, http.StatusBadRequest)
 		return
 	}
 
 	// Prevent redirect loops
 	if redirect.From == redirect.To {
-		http.Error(w, "'from' and 'to' cannot be the same", http.StatusBadRequest)
+		errFromAndToCannotBeSameValue := errors.New("'from' and 'to' cannot be the same")
+		log.Error(ctx, "'from' and 'to' cannot be the same", errFromAndToCannotBeSameValue, logData)
+		api.handleError(ctx, w, errFromAndToCannotBeSameValue, http.StatusBadRequest)
 		return
 	}
 
@@ -112,7 +127,8 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 
 	err = api.RedirectStore.UpsertValue(ctx, redirect.From, redirect.To, 0)
 	if err != nil {
-		http.Error(w, "failed to save", http.StatusInternalServerError)
+		log.Error(ctx, "failed to upsert redirect to redis", err, logData)
+		api.handleError(ctx, w, apierrors.ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
@@ -233,8 +249,8 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logData = log.Data{"numKeyValuePairs": len(keyValuePairs)}
-	log.Info(ctx, "The number of redirects fetched", logData)
+	logData = log.Data{"num_redirects": len(keyValuePairs)}
+	log.Info(ctx, "redirects retrieved from redirect store", logData)
 
 	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
 
