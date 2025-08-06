@@ -144,33 +144,41 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := mux.Vars(r)["id"]
+	logData := log.Data{"redirect_id": id}
 
 	if !isValidBase64(id) {
-		http.Error(w, "invalid base64 id", http.StatusBadRequest)
+		errInvalidBase64 := errors.New("invalid base64 id")
+		log.Error(ctx, "invalid base64 id", errInvalidBase64, logData)
+		api.handleError(ctx, w, errInvalidBase64, http.StatusBadRequest)
 		return
 	}
 
 	keyBytes, err := base64.URLEncoding.DecodeString(id)
 	if err != nil {
-		http.Error(w, "cannot decode id", http.StatusBadRequest)
+		log.Error(ctx, "cannot decode id", err, logData)
+		api.handleError(ctx, w, err, http.StatusBadRequest)
 		return
 	}
 	key := string(keyBytes)
 
 	// Check if the key exists
+	logData = log.Data{"key": key}
 	_, err = api.RedirectStore.GetValue(ctx, key)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			http.Error(w, "redirect not found", http.StatusNotFound)
+			log.Error(ctx, "redirect not found", err, logData)
+			api.handleError(ctx, w, err, http.StatusNotFound)
 			return
 		}
-		http.Error(w, "failed to check redirect existence", http.StatusInternalServerError)
+		log.Error(ctx, "failed to check redirect existence", err, logData)
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
 		return
 	}
 
 	// Proceed to delete
 	if err := api.RedirectStore.DeleteValue(ctx, key); err != nil {
-		http.Error(w, "failed to delete redirect", http.StatusInternalServerError)
+		log.Error(ctx, "failed to delete redirect", err, logData)
+		api.handleError(ctx, w, err, http.StatusInternalServerError)
 		return
 	}
 

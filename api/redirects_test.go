@@ -564,7 +564,7 @@ func TestDeleteRedirect(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, http.StatusInternalServerError)
-			So(rr.Body.String(), ShouldContainSubstring, "failed to check redirect existence")
+			So(rr.Body.String(), ShouldContainSubstring, "connection failed")
 		})
 
 		Convey("When the base64 id is invalid", func() {
