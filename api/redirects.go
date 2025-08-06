@@ -123,7 +123,19 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingValue, _ := api.RedirectStore.GetValue(ctx, redirect.From)
+	// Check if the redirect already exists but if not then create it
+	existingValue, err := api.RedirectStore.GetValue(ctx, redirect.From)
+	logData = log.Data{"existingValue": existingValue}
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			// log the error but then continue and create new redirect
+			log.Error(ctx, "redirect not found so creating new one", err, logData)
+		} else {
+			log.Error(ctx, "failed to check redirect existence", err, logData)
+			api.handleError(ctx, w, err, http.StatusInternalServerError)
+			return
+		}
+	}
 
 	err = api.RedirectStore.UpsertValue(ctx, redirect.From, redirect.To, 0)
 	if err != nil {
