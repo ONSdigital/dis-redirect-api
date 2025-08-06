@@ -270,7 +270,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	}
 
 	logData = log.Data{"num_redirects": len(keyValuePairs)}
-	log.Info(ctx, "redirects retrieved from redirect store", logData)
+	log.Info(ctx, "redirects retrieved from redis", logData)
 
 	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
 
