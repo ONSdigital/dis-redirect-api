@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ONSdigital/dis-redirect-api/apierrors"
+	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/service"
 	"github.com/ONSdigital/dis-redirect-api/service/mock"
@@ -27,7 +27,7 @@ var (
 	testGitCommit = "GitCommit"
 	testVersion   = "Version"
 	errServer     = errors.New("HTTP Server error")
-	errRedis      = apierrors.ErrInternal
+	errRedis      = api.ErrInternal
 )
 
 var (
