@@ -156,7 +156,7 @@ func TestGetRedirectReturns500(t *testing.T) {
 
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "", apierrors.ErrInternal
+					return "", ErrInternal
 				},
 			}
 
@@ -440,7 +440,7 @@ func TestGetRedirectsServerError(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{
 				GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
-					return nil, 0, apierrors.ErrInternal
+					return nil, 0, ErrInternal
 				},
 			}
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
