@@ -17,6 +17,8 @@ type Datastore struct {
 type dataRedis interface {
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
 	GetValue(ctx context.Context, key string) (string, error)
+	GetKeyValuePairs(ctx context.Context, matchPattern string, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error)
+	GetTotalKeys(ctx context.Context) (totalKeys int64, err error)
 	SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	DeleteValue(ctx context.Context, key string) error
 }
@@ -34,6 +36,20 @@ type Storer interface {
 
 func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string, error) {
 	return ds.Backend.GetValue(ctx, redirectID)
+}
+
+func (ds *Datastore) GetRedirects(ctx context.Context, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error) {
+	return ds.Backend.GetKeyValuePairs(ctx, "", count, cursor)
+}
+
+func (ds *Datastore) GetTotalCount(ctx context.Context) (totalCount int, err error) {
+	var totalKeys int64
+	totalKeys, err = ds.Backend.GetTotalKeys(ctx)
+	if err != nil {
+		return -1, err
+	}
+	totalCount = int(totalKeys)
+	return totalCount, err
 }
 
 func (ds *Datastore) GetValue(ctx context.Context, redirectID string) (string, error) {

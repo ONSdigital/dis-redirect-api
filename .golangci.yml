@@ -86,4 +86,3 @@ formatters:
       simplify: false
   exclusions:
     generated: lax
-

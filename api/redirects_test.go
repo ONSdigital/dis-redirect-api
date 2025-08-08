@@ -14,36 +14,69 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/api"
 	"github.com/ONSdigital/dis-redirect-api/apierrors"
+	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
+	"github.com/ONSdigital/dis-redirect-api/url"
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	baseURL           = "http://localhost:29900/v1/redirects/"
-	existingBase64Key = "L2Vjb25vbXkvb2xkLXBhdGg="
-	nonRedirectURL    = "/non-redirect-url"
-	testFromURL       = "/foo"
+	getRedirectBaseURL  = "http://localhost:29900/v1/redirects/"
+	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
+	redirectAPIURL      = "http://localhost:29900"
+	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
+	validRedirect       = &models.Redirect{
+		From: "/economy/old-path",
+		To:   "/economy/new-path",
+	}
+	notANumber         = "this-is-not-a-number"
+	economyBulletin1   = "/economy/mybulletin1"
+	financeBulletin1   = "/finance/mybulletin1"
+	economyBulletin2   = "/economy/mybulletin2"
+	financeBulletin2   = "/finance/mybulletin2"
+	economyBulletin3   = "/economy/mybulletin3"
+	financeBulletin3   = "/finance/mybulletin3"
+	nonRedirectURL     = "/non-redirect-url"
+	testFromURL        = "/foo"
+	expectedProto      = "https"
+	expectedHost       = "api.somehost"
+	expectedPathPrefix = "v1"
+	keyValuePairs      = map[string]string{economyBulletin1: financeBulletin1, economyBulletin2: financeBulletin2, economyBulletin3: financeBulletin3}
+	mockStore          = &storetest.StorerMock{
+		GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
+			return keyValuePairs, 0, nil
+		},
+		GetTotalKeysFunc: func(_ context.Context) (int64, error) {
+			return 12, nil
+		},
+	}
 )
+
+// encodeBase64 returns the base64 encoded string of the original URL key string
+func encodeBase64(key string) string {
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(key))
+
+	return encodedKey
+}
 
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	r := mux.NewRouter()
 
-	return api.Setup(r, &datastore, newAuthMiddlwareMock())
+	cfg, err := config.Get()
+	So(err, ShouldBeNil)
+
+	ctx := context.Background()
+	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), cfg, url.NewBuilder(redirectAPIURL))
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {
-	validRedirect := &models.Redirect{
-		From: "/economy/old-path",
-		To:   "/economy/new-path",
-	}
-
 	Convey("Given a GET /redirects/{id} request", t, func() {
 		Convey("When the id is valid and encoded in base64", func() {
-			request := httptest.NewRequest(http.MethodGet, baseURL+existingBase64Key, http.NoBody)
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
@@ -73,7 +106,7 @@ func TestGetRedirectReturns400(t *testing.T) {
 	Convey("Given a GET /redirects/{id} request", t, func() {
 		Convey("When the id is not endcoded in base64", func() {
 			var nonBase64Key = "some-string"
-			request := httptest.NewRequest(http.MethodGet, baseURL+nonBase64Key, http.NoBody)
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+nonBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
@@ -96,7 +129,7 @@ func TestGetRedirectReturns404(t *testing.T) {
 	Convey("Given a GET /redirects/{id} request", t, func() {
 		Convey("When the id is valid and encoded in base64", func() {
 			var nonExistentBase64Key = "b2xkLXBhdGg="
-			request := httptest.NewRequest(http.MethodGet, baseURL+nonExistentBase64Key, http.NoBody)
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+nonExistentBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
@@ -118,12 +151,12 @@ func TestGetRedirectReturns404(t *testing.T) {
 func TestGetRedirectReturns500(t *testing.T) {
 	Convey("Given a GET /redirects/{id} request", t, func() {
 		Convey("When the redirect handler fails", func() {
-			request := httptest.NewRequest(http.MethodGet, baseURL+existingBase64Key, http.NoBody)
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "", apierrors.ErrRedis
+					return "", apierrors.ErrInternal
 				},
 			}
 
@@ -137,10 +170,67 @@ func TestGetRedirectReturns500(t *testing.T) {
 	})
 }
 
+func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count and cursor values are using the defaults", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			keyValuePairs := make(map[string]string)
+			keyValuePairs[economyBulletin1] = financeBulletin1
+			keyValuePairs[economyBulletin2] = financeBulletin2
+			keyValuePairs[economyBulletin3] = financeBulletin3
+			keyValuePairs["/economy/mybulletin4"] = "/finance/mybulletin4"
+			keyValuePairs["/economy/mybulletin5"] = "/finance/mybulletin5"
+			keyValuePairs["/economy/mybulletin6"] = "/finance/mybulletin6"
+			keyValuePairs["/economy/mybulletin7"] = "/finance/mybulletin7"
+			keyValuePairs["/economy/mybulletin8"] = "/finance/mybulletin8"
+			keyValuePairs["/economy/mybulletin9"] = "/finance/mybulletin9"
+			keyValuePairs["/economy/mybulletin10"] = "/finance/mybulletin10"
+
+			mockStore := &storetest.StorerMock{
+				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
+					return keyValuePairs, 0, nil
+				},
+				GetTotalKeysFunc: func(_ context.Context) (int64, error) {
+					return 12, nil
+				},
+			}
+
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 200", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusOK)
+
+				var response models.Redirects
+				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+				So(err, ShouldBeNil)
+
+				respRedirectList := response.RedirectList
+				respItem1 := respRedirectList[0]
+				respItem1From := respItem1.From
+				expectedID := encodeBase64(respItem1From)
+
+				So(response.Count, ShouldEqual, 10)
+				So(len(respRedirectList), ShouldEqual, 10)
+				So(respItem1From, ShouldNotBeEmpty)
+				So(respItem1.To, ShouldNotBeEmpty)
+				So(respItem1.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
+				So(response.Cursor, ShouldEqual, "0")
+				So(response.NextCursor, ShouldEqual, "0")
+				So(response.TotalCount, ShouldEqual, 12)
+			})
+		})
+	})
+}
+
 func TestUpsertRedirect(t *testing.T) {
 	Convey("Given a valid UpsertRedirect handler", t, func() {
 		mockStore := &storetest.StorerMock{
-			GetValueFunc: func(ctx context.Context, key string) (string, error) {
+			GetValueFunc: func(_ context.Context, key string) (string, error) {
 				switch key {
 				case "/old-url":
 					return "http://localhost:8081/new-url", nil
@@ -150,7 +240,7 @@ func TestUpsertRedirect(t *testing.T) {
 					return "", nil
 				}
 			},
-			SetValueFunc: func(ctx context.Context, key string, value interface{}, expiry time.Duration) error {
+			SetValueFunc: func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
 				return nil
 			},
 		}
@@ -204,7 +294,7 @@ func TestUpsertRedirect(t *testing.T) {
 		})
 
 		Convey("When Redis returns an error", func() {
-			mockStore.SetValueFunc = func(ctx context.Context, key string, value interface{}, expiry time.Duration) error {
+			mockStore.SetValueFunc = func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
 				return errors.New("redis error")
 			}
 
@@ -237,6 +327,190 @@ func TestUpsertRedirect(t *testing.T) {
 	})
 }
 
+func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count and cursor values are set to valid values", func() {
+			countValue := "3"
+			cursorValue := "1"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue+"&cursor="+cursorValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 200", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusOK)
+
+				var response models.Redirects
+				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+				So(err, ShouldBeNil)
+
+				respRedirectList := response.RedirectList
+				respItem1 := respRedirectList[0]
+				respItem1From := respItem1.From
+				expectedID := encodeBase64(respItem1From)
+
+				So(response.Count, ShouldEqual, 3)
+				So(len(respRedirectList), ShouldEqual, 3)
+				So(respItem1From, ShouldNotBeEmpty)
+				So(respItem1.To, ShouldNotBeEmpty)
+				So(respItem1.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
+				So(response.Cursor, ShouldEqual, "1")
+				So(response.NextCursor, ShouldEqual, "0")
+				So(response.TotalCount, ShouldEqual, 12)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCountNotAnInteger(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count value given is not an integer", func() {
+			countValue := notANumber
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCountNegative(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the count value given is negative", func() {
+			countValue := "-12"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCursorNotAnInteger(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the cursor value given is not an integer", func() {
+			cursorValue := notANumber
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsCursorNegative(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the cursor value given is negative", func() {
+			cursorValue := "-7"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsServerError(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the redirects server has an internal error", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{
+				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
+					return nil, 0, apierrors.ErrInternal
+				},
+			}
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 500", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsURLRewriting(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the request headers for host, prefix and protocol are set", func() {
+			countValue := "3"
+			cursorValue := "1"
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue+"&cursor="+cursorValue, http.NoBody)
+			request.Header.Add("X-Forwarded-Proto", expectedProto)
+			request.Header.Add("X-Forwarded-Host", expectedHost)
+			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
+			responseRecorder := httptest.NewRecorder()
+
+			Convey("And URL rewriting is enabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = true
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should contain the rewritten links", func() {
+					var response models.Redirects
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					respRedirectList := response.RedirectList
+					respItem1 := respRedirectList[0]
+					respItem1From := respItem1.From
+					expectedID := encodeBase64(respItem1From)
+					So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, expectedID))
+				})
+			})
+
+			Convey("And URL rewriting is disabled", func() {
+				cfg, err := config.Get()
+				So(err, ShouldBeNil)
+				cfg.EnableURLRewriting = false
+
+				redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+				redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+				Convey("Then the response body should not contain the rewritten links", func() {
+					var response models.Redirects
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+					So(err, ShouldBeNil)
+
+					respRedirectList := response.RedirectList
+					respItem1 := respRedirectList[0]
+					respItem1From := respItem1.From
+					expectedID := encodeBase64(respItem1From)
+					So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
+				})
+			})
+		})
+	})
+}
+
 func TestDeleteRedirect(t *testing.T) {
 	Convey("Given a DeleteRedirect handler", t, func() {
 		mockStore := &storetest.StorerMock{}
@@ -250,13 +524,13 @@ func TestDeleteRedirect(t *testing.T) {
 		base64ID := base64.URLEncoding.EncodeToString([]byte("/test-path"))
 
 		Convey("When the redirect exists and is deleted successfully", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
 				if key == "/test-path" {
 					return "/target", nil
 				}
 				return "", redis.Nil
 			}
-			mockStore.DeleteValueFunc = func(ctx context.Context, key string) error {
+			mockStore.DeleteValueFunc = func(_ context.Context, _ string) error {
 				return nil
 			}
 
@@ -268,7 +542,7 @@ func TestDeleteRedirect(t *testing.T) {
 		})
 
 		Convey("When the redirect does not exist", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 				return "", fmt.Errorf("redirect not found")
 			}
 
@@ -281,7 +555,7 @@ func TestDeleteRedirect(t *testing.T) {
 		})
 
 		Convey("When an internal error occurs during existence check", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 				return "", errors.New("connection failed")
 			}
 
@@ -290,7 +564,7 @@ func TestDeleteRedirect(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, http.StatusInternalServerError)
-			So(rr.Body.String(), ShouldContainSubstring, "failed to check redirect existence")
+			So(rr.Body.String(), ShouldContainSubstring, "connection failed")
 		})
 
 		Convey("When the base64 id is invalid", func() {

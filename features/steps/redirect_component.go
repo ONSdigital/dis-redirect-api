@@ -21,6 +21,7 @@ const (
 )
 
 type RedirectComponent struct {
+	responseBody []byte
 	componentTest.ErrorFeature
 	svcList                 *service.ExternalServiceList
 	svc                     *service.Service
