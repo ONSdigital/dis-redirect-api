@@ -20,7 +20,7 @@ type RedirectAPI struct {
 	authMiddleware     authorisation.Middleware
 	urlBuilder         *dpurl.Builder
 	enableURLRewriting bool
-	apiUrl             *url.URL
+	apiURL             *url.URL
 }
 
 // Setup function sets up the api and returns an api
@@ -36,7 +36,7 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 		authMiddleware:     auth,
 		urlBuilder:         builder,
 		enableURLRewriting: cfg.EnableURLRewriting,
-		apiUrl:             apiURL,
+		apiURL:             apiURL,
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)

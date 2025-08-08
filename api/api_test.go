@@ -32,7 +32,7 @@ func hasRoute(r *mux.Router, path, method string) bool {
 
 func newAuthMiddlwareMock() *authorisation.MiddlewareMock {
 	return &authorisation.MiddlewareMock{
-		RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+		RequireFunc: func(_ string, handlerFunc http.HandlerFunc) http.HandlerFunc {
 			return handlerFunc
 		},
 	}

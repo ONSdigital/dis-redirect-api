@@ -47,10 +47,10 @@ var (
 	expectedPathPrefix = "v1"
 	keyValuePairs      = map[string]string{economyBulletin1: financeBulletin1, economyBulletin2: financeBulletin2, economyBulletin3: financeBulletin3}
 	mockStore          = &storetest.StorerMock{
-		GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
+		GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
 			return keyValuePairs, 0, nil
 		},
-		GetTotalKeysFunc: func(ctx context.Context) (int64, error) {
+		GetTotalKeysFunc: func(_ context.Context) (int64, error) {
 			return 12, nil
 		},
 	}
@@ -189,10 +189,10 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 			keyValuePairs["/economy/mybulletin10"] = "/finance/mybulletin10"
 
 			mockStore := &storetest.StorerMock{
-				GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
+				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
 					return keyValuePairs, 0, nil
 				},
-				GetTotalKeysFunc: func(ctx context.Context) (int64, error) {
+				GetTotalKeysFunc: func(_ context.Context) (int64, error) {
 					return 12, nil
 				},
 			}
@@ -216,8 +216,8 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 				So(len(respRedirectList), ShouldEqual, 10)
 				So(respItem1From, ShouldNotBeEmpty)
 				So(respItem1.To, ShouldNotBeEmpty)
-				So(respItem1.Id, ShouldEqual, expectedID)
-				So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+				So(respItem1.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
 				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
 				So(response.Cursor, ShouldEqual, "0")
 				So(response.NextCursor, ShouldEqual, "0")
@@ -230,7 +230,7 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 func TestUpsertRedirect(t *testing.T) {
 	Convey("Given a valid UpsertRedirect handler", t, func() {
 		mockStore := &storetest.StorerMock{
-			GetValueFunc: func(ctx context.Context, key string) (string, error) {
+			GetValueFunc: func(_ context.Context, key string) (string, error) {
 				switch key {
 				case "/old-url":
 					return "http://localhost:8081/new-url", nil
@@ -240,7 +240,7 @@ func TestUpsertRedirect(t *testing.T) {
 					return "", nil
 				}
 			},
-			SetValueFunc: func(ctx context.Context, key string, value interface{}, expiry time.Duration) error {
+			SetValueFunc: func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
 				return nil
 			},
 		}
@@ -294,7 +294,7 @@ func TestUpsertRedirect(t *testing.T) {
 		})
 
 		Convey("When Redis returns an error", func() {
-			mockStore.SetValueFunc = func(ctx context.Context, key string, value interface{}, expiry time.Duration) error {
+			mockStore.SetValueFunc = func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
 				return errors.New("redis error")
 			}
 
@@ -354,8 +354,8 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 				So(len(respRedirectList), ShouldEqual, 3)
 				So(respItem1From, ShouldNotBeEmpty)
 				So(respItem1.To, ShouldNotBeEmpty)
-				So(respItem1.Id, ShouldEqual, expectedID)
-				So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+				So(respItem1.ID, ShouldEqual, expectedID)
+				So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
 				So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
 				So(response.Cursor, ShouldEqual, "1")
 				So(response.NextCursor, ShouldEqual, "0")
@@ -439,7 +439,7 @@ func TestGetRedirectsServerError(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{
-				GetKeyValuePairsFunc: func(ctx context.Context, matchPattern string, count int64, cursor uint64) (map[string]string, uint64, error) {
+				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
 					return nil, 0, apierrors.ErrInternal
 				},
 			}
@@ -481,7 +481,7 @@ func TestGetRedirectsURLRewriting(t *testing.T) {
 					respItem1 := respRedirectList[0]
 					respItem1From := respItem1.From
 					expectedID := encodeBase64(respItem1From)
-					So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
 					So(respItem1.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, expectedID))
 				})
 			})
@@ -503,7 +503,7 @@ func TestGetRedirectsURLRewriting(t *testing.T) {
 					respItem1 := respRedirectList[0]
 					respItem1From := respItem1.From
 					expectedID := encodeBase64(respItem1From)
-					So(respItem1.Links.Self.Id, ShouldEqual, expectedID)
+					So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
 					So(respItem1.Links.Self.Href, ShouldEqual, getRedirectBaseURL+expectedID)
 				})
 			})
@@ -524,13 +524,13 @@ func TestDeleteRedirect(t *testing.T) {
 		base64ID := base64.URLEncoding.EncodeToString([]byte("/test-path"))
 
 		Convey("When the redirect exists and is deleted successfully", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
 				if key == "/test-path" {
 					return "/target", nil
 				}
 				return "", redis.Nil
 			}
-			mockStore.DeleteValueFunc = func(ctx context.Context, key string) error {
+			mockStore.DeleteValueFunc = func(_ context.Context, _ string) error {
 				return nil
 			}
 
@@ -542,7 +542,7 @@ func TestDeleteRedirect(t *testing.T) {
 		})
 
 		Convey("When the redirect does not exist", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 				return "", fmt.Errorf("redirect not found")
 			}
 
@@ -555,7 +555,7 @@ func TestDeleteRedirect(t *testing.T) {
 		})
 
 		Convey("When an internal error occurs during existence check", func() {
-			mockStore.GetValueFunc = func(ctx context.Context, key string) (string, error) {
+			mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 				return "", errors.New("connection failed")
 			}
 
