@@ -243,19 +243,19 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirectHref := api.urlBuilder.BuildRedirectSelfURL(redirectID)
 		redirectSelf := models.RedirectSelf{
 			Href: redirectHref,
-			Id:   redirectID,
+			ID:   redirectID,
 		}
 		redirectLinks := models.RedirectLinks{
 			Self: redirectSelf,
 		}
 		redirect.From = key
 		redirect.To = value
-		redirect.Id = redirectID
+		redirect.ID = redirectID
 		redirect.Links = redirectLinks
 		redirectList = append(redirectList, redirect)
 	}
 
-	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiUrl)
+	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiURL)
 
 	if api.enableURLRewriting {
 		for i := 0; i < len(redirectList); i++ {

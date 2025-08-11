@@ -86,7 +86,7 @@ func (c *RedirectComponent) iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInA
 	return nil
 }
 
-func (c *RedirectComponent) inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
+func (c *RedirectComponent) inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(_ *godog.Table) error {
 	var response models.Redirects
 
 	err := json.Unmarshal(c.responseBody, &response)
@@ -109,10 +109,10 @@ func (c *RedirectComponent) checkStructure(responseRedirect *models.Redirect) er
 	assert.NotEmpty(&c.ErrorFeature, from)
 	assert.NotEmpty(&c.ErrorFeature, responseRedirect.To)
 	encodedFrom := base64.StdEncoding.EncodeToString([]byte(from))
-	assert.Equal(&c.ErrorFeature, encodedFrom, responseRedirect.Id)
+	assert.Equal(&c.ErrorFeature, encodedFrom, responseRedirect.ID)
 	expectedSelfHref := "https://api.beta.ons.gov.uk/v1/redirects/" + encodedFrom
 	assert.Equal(&c.ErrorFeature, expectedSelfHref, responseRedirect.Links.Self.Href)
-	assert.Equal(&c.ErrorFeature, encodedFrom, responseRedirect.Links.Self.Id)
+	assert.Equal(&c.ErrorFeature, encodedFrom, responseRedirect.Links.Self.ID)
 	return nil
 }
 
