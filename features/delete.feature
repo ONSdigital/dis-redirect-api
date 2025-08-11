@@ -12,7 +12,7 @@ Feature: Delete redirect endpoint
     Then the HTTP status code should be "404"
     And I should receive the following response:
       """
-      key /economy/old-path not found
+      not found
       """
 
   Scenario: Delete a redirect if the key exists
@@ -30,7 +30,7 @@ Feature: Delete redirect endpoint
     Then the HTTP status code should be "400"
     Then I should receive the following response:
       """
-      invalid base64 id
+      the base64 id provided is invalid
       """
 
   Scenario: Delete a redirect without the correct permission

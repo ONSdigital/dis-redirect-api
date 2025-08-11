@@ -28,7 +28,7 @@ Feature: Redirect endpoint
         Then the HTTP status code should be "400"
         And I should receive the following response:
             """
-                invalid base64 id
+                the base64 id provided is invalid
             """
 
     Scenario: Return 404 when the key is not found
@@ -37,7 +37,7 @@ Feature: Redirect endpoint
         Then the HTTP status code should be "404"
         And I should receive the following response:
             """
-                key old-path not found
+                not found
             """
 
     Scenario: Return 500 when redis returns an error
