@@ -92,7 +92,7 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 
 	logData = log.Data{"redirect_from": redirect.From, "redirect_to": redirect.To}
 	if !isValidRelativePath(redirect.From) || !isValidRelativePath(redirect.To) {
-		log.Info(ctx, "from and too not relative paths", logData)
+		log.Info(ctx, "from and to not relative paths", logData)
 		api.handleError(ctx, w, ErrFromToNotRelative, http.StatusBadRequest)
 		return
 	}
