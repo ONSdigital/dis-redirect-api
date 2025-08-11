@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -86,7 +85,7 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 	logData = log.Data{"redirect_from": redirect.From}
 	if redirect.From != string(fromDecoded) {
 		log.Info(ctx, "from field does not match base64 id", logData)
-		api.handleError(ctx, w, ErrIdFromMismatch, http.StatusBadRequest)
+		api.handleError(ctx, w, ErrIDFromMismatch, http.StatusBadRequest)
 		return
 	}
 
@@ -225,9 +224,9 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	}
 	logData = log.Data{"count": count, "cursor": cursor}
 
-	keyValuePairs, newCursor, errRedirects := api.RedirectStore.GetRedirects(ctx, count, cursor)
-	if errRedirects != nil {
-		log.Error(ctx, "redis failed on getting redirects", errRedirects, logData)
+	keyValuePairs, newCursor, err := api.RedirectStore.GetRedirects(ctx, count, cursor)
+	if err != nil {
+		log.Error(ctx, "redis failed on getting redirects", err, logData)
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
 		return
 	}
@@ -237,10 +236,17 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
 
+	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiURL)
+
 	for key, value := range keyValuePairs {
 		var redirect models.Redirect
 		redirectID := encodeBase64(key)
-		redirectHref := api.urlBuilder.BuildRedirectSelfURL(redirectID)
+		redirectHref, err := redirectLinkBuilder.BuildLink(fmt.Sprintf("/v1/redirects/%s", redirectID))
+		if err != nil {
+			log.Error(ctx, "redirect builder failed to build link", err, logData)
+			api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
+			return
+		}
 		redirectSelf := models.RedirectSelf{
 			Href: redirectHref,
 			ID:   redirectID,
@@ -253,19 +259,6 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirect.ID = redirectID
 		redirect.Links = redirectLinks
 		redirectList = append(redirectList, redirect)
-	}
-
-	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiURL)
-
-	if api.enableURLRewriting {
-		for i := 0; i < len(redirectList); i++ {
-			newRedirect, err := rewriteSelfLink(ctx, *redirectLinkBuilder, redirectList[i])
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			redirectList[i] = newRedirect
-		}
 	}
 
 	nextCursor := strconv.FormatUint(newCursor, 10)
@@ -299,16 +292,4 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
 		return
 	}
-}
-
-// rewriteSelfLink rewrites the self link of a given redirect
-func rewriteSelfLink(ctx context.Context, builder links.Builder, redirect models.Redirect) (models.Redirect, error) {
-	var err error
-	redirect.Links.Self.Href, err = builder.BuildLink(redirect.Links.Self.Href)
-	if err != nil {
-		log.Error(ctx, "could not build self link", err, log.Data{"link": redirect.Links.Self.Href})
-		return models.Redirect{}, err
-	}
-
-	return redirect, nil
 }

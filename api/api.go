@@ -15,12 +15,11 @@ import (
 
 // RedirectAPI provides a struct to wrap the api around
 type RedirectAPI struct {
-	Router             *mux.Router
-	RedirectStore      *store.Datastore
-	authMiddleware     authorisation.Middleware
-	urlBuilder         *dpurl.Builder
-	enableURLRewriting bool
-	apiURL             *url.URL
+	Router         *mux.Router
+	RedirectStore  *store.Datastore
+	authMiddleware authorisation.Middleware
+	urlBuilder     *dpurl.Builder
+	apiURL         *url.URL
 }
 
 // Setup function sets up the api and returns an api
@@ -31,12 +30,11 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 		return nil
 	}
 	api := &RedirectAPI{
-		Router:             r,
-		RedirectStore:      dataStore,
-		authMiddleware:     auth,
-		urlBuilder:         builder,
-		enableURLRewriting: cfg.EnableURLRewriting,
-		apiURL:             apiURL,
+		Router:         r,
+		RedirectStore:  dataStore,
+		authMiddleware: auth,
+		urlBuilder:     builder,
+		apiURL:         apiURL,
 	}
 
 	api.get("/v1/redirects/{id}", api.getRedirect)

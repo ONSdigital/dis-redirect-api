@@ -11,7 +11,7 @@ var (
 	ErrInvalidBase64Id         = errors.New("the base64 id provided is invalid")
 	ErrNotFound                = errors.New("not found")
 	ErrInvalidRequestBody      = errors.New("the request body provided is invalid")
-	ErrIdFromMismatch          = errors.New("the 'from' field does not match the base64 id")
+	ErrIDFromMismatch          = errors.New("the 'from' field does not match the base64 id")
 	ErrFromToNotRelative       = errors.New("'from' and 'to' must be relative paths starting with '/'")
 	ErrCircularPaths           = errors.New("'from' and 'to' cannot be the same")
 )

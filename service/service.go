@@ -66,11 +66,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// Set up the Redirect API
 	urlBuilder := url.NewBuilder(cfg.RedirectAPIURL)
-	enableURLRewriting := cfg.EnableURLRewriting
-	if enableURLRewriting {
-		log.Info(ctx, "URL rewriting enabled")
-	}
-
 	a := api.Setup(ctx, r, &datastore, authorisationMiddleware, cfg, urlBuilder)
 
 	// Get HealthCheck

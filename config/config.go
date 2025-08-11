@@ -19,7 +19,6 @@ type Config struct {
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
 	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
-	EnableURLRewriting         bool          `envconfig:"ENABLE_URL_REWRITING"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -43,7 +42,6 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisAddress:               "localhost:6379",
-		EnableURLRewriting:         false,
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 
