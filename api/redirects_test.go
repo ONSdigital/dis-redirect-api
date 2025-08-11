@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-redirect-api/api"
-	"github.com/ONSdigital/dis-redirect-api/apierrors"
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/ONSdigital/dis-redirect-api/store"
@@ -156,7 +155,7 @@ func TestGetRedirectReturns500(t *testing.T) {
 
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "", apierrors.ErrInternal
+					return "", api.ErrInternal
 				},
 			}
 
@@ -440,7 +439,7 @@ func TestGetRedirectsServerError(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{
 				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
-					return nil, 0, apierrors.ErrInternal
+					return nil, 0, api.ErrInternal
 				},
 			}
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
@@ -551,7 +550,7 @@ func TestDeleteRedirect(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, http.StatusNotFound)
-			So(rr.Body.String(), ShouldContainSubstring, "redirect not found")
+			So(rr.Body.String(), ShouldContainSubstring, "not found")
 		})
 
 		Convey("When an internal error occurs during existence check", func() {
@@ -564,7 +563,7 @@ func TestDeleteRedirect(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, http.StatusInternalServerError)
-			So(rr.Body.String(), ShouldContainSubstring, "connection failed")
+			So(rr.Body.String(), ShouldContainSubstring, "internal error")
 		})
 
 		Convey("When the base64 id is invalid", func() {
@@ -573,7 +572,7 @@ func TestDeleteRedirect(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, http.StatusBadRequest)
-			So(rr.Body.String(), ShouldContainSubstring, "invalid base64 id")
+			So(rr.Body.String(), ShouldContainSubstring, "the base64 id provided is invalid")
 		})
 	})
 }
