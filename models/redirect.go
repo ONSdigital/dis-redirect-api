@@ -4,7 +4,7 @@ package models
 type Redirect struct {
 	From  string        `json:"from,omitempty"`
 	To    string        `json:"to,omitempty"`
-	Id    string        `json:"id"`
+	ID    string        `json:"id"`
 	Links RedirectLinks `json:"links"`
 }
 
@@ -26,5 +26,5 @@ type RedirectLinks struct {
 // RedirectSelf represents a link to the individual redirect itself.
 type RedirectSelf struct {
 	Href string `json:"href"`
-	Id   string `json:"id"`
+	ID   string `json:"id"`
 }

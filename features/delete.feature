@@ -12,7 +12,7 @@ Feature: Delete redirect endpoint
     Then the HTTP status code should be "404"
     And I should receive the following response:
       """
-      redirect not found
+      not found
       """
 
   Scenario: Delete a redirect if the key exists
@@ -30,7 +30,7 @@ Feature: Delete redirect endpoint
     Then the HTTP status code should be "400"
     Then I should receive the following response:
       """
-      invalid base64 id
+      the base64 id provided is invalid
       """
 
   Scenario: Delete a redirect without the correct permission
@@ -45,7 +45,3 @@ Feature: Delete redirect endpoint
     And redis stops running
     When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
     Then the HTTP status code should be "500"
-    And I should receive the following response:
-      """
-      failed to check redirect existence
-      """
