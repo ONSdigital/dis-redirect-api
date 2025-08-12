@@ -7,7 +7,6 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dis-redirect-api/store"
-	dpurl "github.com/ONSdigital/dis-redirect-api/url"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -18,12 +17,11 @@ type RedirectAPI struct {
 	Router         *mux.Router
 	RedirectStore  *store.Datastore
 	authMiddleware authorisation.Middleware
-	urlBuilder     *dpurl.Builder
 	apiURL         *url.URL
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware, cfg *config.Config, builder *dpurl.Builder) *RedirectAPI {
+func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth authorisation.Middleware, cfg *config.Config) *RedirectAPI {
 	apiURL, err := url.Parse(cfg.RedirectAPIURL)
 	if err != nil {
 		log.Error(ctx, "could not parse redirect api url", err, log.Data{"url": cfg.RedirectAPIURL})
@@ -33,7 +31,6 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 		Router:         r,
 		RedirectStore:  dataStore,
 		authMiddleware: auth,
-		urlBuilder:     builder,
 		apiURL:         apiURL,
 	}
 

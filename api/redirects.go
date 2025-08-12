@@ -236,12 +236,12 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 
 	redirectList := make([]models.Redirect, 0, len(keyValuePairs))
 
-	redirectLinkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiURL)
+	linkBuilder := links.FromHeadersOrDefault(&req.Header, api.apiURL)
 
 	for key, value := range keyValuePairs {
 		var redirect models.Redirect
 		redirectID := encodeBase64(key)
-		redirectHref, err := redirectLinkBuilder.BuildLink(fmt.Sprintf("/v1/redirects/%s", redirectID))
+		redirectHref, err := linkBuilder.BuildLink(fmt.Sprintf("/v1/redirects/%s", redirectID))
 		if err != nil {
 			log.Error(ctx, "redirect builder failed to build link", err, logData)
 			api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)

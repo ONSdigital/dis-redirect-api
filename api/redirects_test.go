@@ -17,7 +17,6 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
-	"github.com/ONSdigital/dis-redirect-api/url"
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
@@ -26,7 +25,6 @@ import (
 var (
 	getRedirectBaseURL  = "http://localhost:29900/v1/redirects/"
 	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
-	redirectAPIURL      = "http://localhost:29900"
 	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
 	validRedirect       = &models.Redirect{
 		From: "/economy/old-path",
@@ -69,7 +67,7 @@ func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	So(err, ShouldBeNil)
 
 	ctx := context.Background()
-	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), cfg, url.NewBuilder(redirectAPIURL))
+	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), cfg)
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {
