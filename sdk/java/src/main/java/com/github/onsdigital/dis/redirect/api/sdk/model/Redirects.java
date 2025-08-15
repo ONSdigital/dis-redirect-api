@@ -9,8 +9,7 @@ import java.util.ArrayList;
  * as provided by the redirect API.
  */
 public class Redirects {
-    /** The approximate number of redirects requested,
-     *  defaulted to 10 and limited to 1000. */
+    /** The number of redirects requested. */
     @Getter
     @Setter
     private int count;

@@ -151,12 +151,15 @@ class RedirectAPIClientTest {
 
     private Redirects mockRedirects(CloseableHttpResponse mockHttpResponse)
             throws JsonProcessingException, UnsupportedEncodingException {
-        ArrayList<Redirect> redirectList = new ArrayList<>();
-        Redirects responseBody = new Redirects(3, redirectList, "2", "0", 3);
-
+        Redirects responseBody = createRedirects();
         MockHttp.responseBody(mockHttpResponse, responseBody);
-
         return responseBody;
+    }
+
+    private Redirects createRedirects() {
+        ArrayList<Redirect> redirectList = new ArrayList<>();
+        Redirects redirects = new Redirects(3, redirectList, "2", "0", 3);
+        return redirects;
     }
 
     @Test
