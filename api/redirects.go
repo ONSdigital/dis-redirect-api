@@ -20,7 +20,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	redirectID := vars["id"]
 
-	decodedString, err := base64.URLEncoding.DecodeString(redirectID)
+	decodedString, err := decodeBase64URL(redirectID)
 	if err != nil {
 		logData := log.Data{"redirect_id": redirectID}
 		log.Info(ctx, "invalid base 64 id", logData)
@@ -68,9 +68,9 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	logData := log.Data{"redirect_id": id}
 
-	fromDecoded, err := base64.URLEncoding.DecodeString(id)
+	fromDecoded, err := decodeBase64URL(id)
 	if err != nil {
-		log.Info(ctx, "invalid base64 id", logData)
+		log.Info(ctx, "invalid base64 id", log.Data{"redirect_id": id, "err": err.Error()})
 		api.handleError(ctx, w, ErrInvalidBase64Id, http.StatusBadRequest)
 		return
 	}
@@ -138,7 +138,7 @@ func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	logData := log.Data{"redirect_id": id}
 
-	keyBytes, err := base64.URLEncoding.DecodeString(id)
+	keyBytes, err := decodeBase64URL(id)
 	if err != nil {
 		log.Info(ctx, "invalid base 64 id", logData)
 		api.handleError(ctx, w, ErrInvalidBase64Id, http.StatusBadRequest)
@@ -292,4 +292,14 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
 		return
 	}
+}
+
+func decodeBase64URL(s string) ([]byte, error) {
+	if b, err := base64.RawURLEncoding.DecodeString(s); err == nil {
+		return b, nil
+	}
+	if m := len(s) % 4; m != 0 {
+		s += strings.Repeat("=", 4-m)
+	}
+	return base64.URLEncoding.DecodeString(s)
 }
