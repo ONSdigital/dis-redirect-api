@@ -326,7 +326,7 @@ class RedirectAPIClientTest {
 
         // Then the response should be what's returned from the redirect API
         assertEquals(expectedRedirects.getCount(), observedRedirects.getCount());
-        assertEquals(expectedRedirects.getRedirectList(), observedRedirects.getRedirectList());
+        assertEquals(expectedRedirects.getItems(), observedRedirects.getItems());
         assertEquals(expectedRedirects.getCursor(), observedRedirects.getCursor());
         assertEquals(expectedRedirects.getNextCursor(), observedRedirects.getNextCursor());
         assertEquals(expectedRedirects.getTotalCount(), observedRedirects.getTotalCount());
