@@ -13,6 +13,7 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.commons.lang3.StringUtils;
@@ -280,22 +281,22 @@ public class RedirectAPIClient implements RedirectClient {
      * @throws BadRequestException
      * @throws RedirectAPIException
      * @throws RedirectNotFoundException
+     * @throws URISyntaxException
      */
     @Override
     public Redirects getRedirects(final String count, final String cursor)
             throws IOException, BadRequestException, RedirectAPIException,
-            RedirectNotFoundException {
+            RedirectNotFoundException, URISyntaxException {
         String path = "/v1/redirects";
-        URI uri = redirectAPIUri.resolve(path);
-
-        if (count != "") {
-            path = path + "?count=" + count;
-            if (cursor != "") {
-                path = path + "&cursor=" + cursor;
-            }
-        } else if (cursor != "") {
-            path = path + "?cursor=" + cursor;
+        URIBuilder builder = new URIBuilder(redirectAPIUri.resolve(path));
+        if (StringUtils.isNotBlank(count)) {
+            builder.setParameter("count", count);
         }
+
+        if (StringUtils.isNotBlank(cursor)) {
+             builder.setParameter("cursor", cursor);
+        }
+        URI uri = builder.build();
 
         HttpGet req = new HttpGet(uri);
         req.addHeader(SERVICE_TOKEN_HEADER_NAME, authToken);

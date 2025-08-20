@@ -2,6 +2,7 @@ package com.github.onsdigital.dis.redirect.api.sdk;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
@@ -31,10 +32,11 @@ public interface RedirectClient extends Closeable {
      * @throws BadRequestException
      * @throws RedirectNotFoundException
      * @throws RedirectAPIException
+     * @throws URISyntaxException
      */
     Redirects getRedirects(String count, String cursor)
             throws IOException, BadRequestException, RedirectNotFoundException,
-            RedirectAPIException;
+            RedirectAPIException, URISyntaxException;
 
      /**
       * Upserts a redirect by sending a PUT request to the /redirects/{id}
