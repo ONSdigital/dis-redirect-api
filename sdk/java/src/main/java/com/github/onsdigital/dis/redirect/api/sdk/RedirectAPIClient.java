@@ -138,7 +138,9 @@ public class RedirectAPIClient implements RedirectClient {
             throws IOException, RedirectAPIException {
 
         if (payload.getFrom() == null || payload.getFrom().isEmpty()) {
-        throw new IllegalArgumentException("'from' must not be null or empty");
+            throw new IllegalArgumentException(
+                "'from' must not be null or empty"
+            );
         }
 
         String base64Id = Base64.getUrlEncoder()
