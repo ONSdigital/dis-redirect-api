@@ -35,17 +35,8 @@ func (cli *Client) GetRedirect(ctx context.Context, options Options, key string)
 }
 
 // GetRedirects gets the /redirects endpoint
-func (cli *Client) GetRedirects(ctx context.Context, options Options, count, cursor string) (*models.Redirects, apiError.Error) {
+func (cli *Client) GetRedirects(ctx context.Context, options Options) (*models.Redirects, apiError.Error) {
 	path := fmt.Sprintf(RedirectsEndpoint, cli.hcCli.URL)
-
-	if count != "" {
-		path = path + "?count=" + count
-		if cursor != "" {
-			path = path + "&cursor=" + cursor
-		}
-	} else if cursor != "" {
-		path = path + "?cursor=" + cursor
-	}
 
 	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, options.Query, nil)
 	if apiErr != nil {

@@ -21,7 +21,7 @@ type Client struct {
 	hcCli *healthcheck.Client
 }
 
-// New creates a new instance of Client with a given redirect api url
+// NewClient creates a new instance of Client with a given redirect api url
 func NewClient(redirectAPIURL string) *Client {
 	return &Client{
 		hcCli: healthcheck.NewClient(service, redirectAPIURL),

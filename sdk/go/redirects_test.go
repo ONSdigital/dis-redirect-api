@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/ONSdigital/dis-redirect-api/models"
@@ -61,6 +62,7 @@ func TestGetRedirects(t *testing.T) {
 	t.Parallel()
 
 	headers := http.Header{}
+	queryValues := url.Values{}
 
 	Convey("Given a request to get the default number of redirects", t, func() {
 		body, err := json.Marshal(getRedirectsResponse)
@@ -78,7 +80,9 @@ func TestGetRedirects(t *testing.T) {
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
 
 		Convey("When GetRedirects is called using the default values of count and cursor", func() {
-			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "", "")
+			queryValues.Set("count", "")
+			queryValues.Set("cursor", "")
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers, Query: queryValues})
 
 			Convey("Then the expected response body is returned", func() {
 				So(*resp, ShouldResemble, getRedirectsResponse)
@@ -99,7 +103,9 @@ func TestGetRedirects(t *testing.T) {
 		})
 
 		Convey("When GetRedirects is called using specific values of count and cursor", func() {
-			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "2", "1")
+			queryValues.Set("count", "2")
+			queryValues.Set("cursor", "1")
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers, Query: queryValues})
 
 			Convey("Then the expected response body is returned", func() {
 				So(*resp, ShouldResemble, getRedirectsResponse)
@@ -120,7 +126,9 @@ func TestGetRedirects(t *testing.T) {
 		})
 
 		Convey("When GetRedirects is called using a specific value of count only", func() {
-			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "3", "")
+			queryValues.Set("count", "3")
+			queryValues.Set("cursor", "")
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers, Query: queryValues})
 
 			Convey("Then the expected response body is returned", func() {
 				So(*resp, ShouldResemble, getRedirectsResponse)
@@ -141,7 +149,9 @@ func TestGetRedirects(t *testing.T) {
 		})
 
 		Convey("When GetRedirects is called using a specific value of cursor only", func() {
-			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers}, "", "2")
+			queryValues.Set("count", "")
+			queryValues.Set("cursor", "2")
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers, Query: queryValues})
 
 			Convey("Then the expected response body is returned", func() {
 				So(*resp, ShouldResemble, getRedirectsResponse)
