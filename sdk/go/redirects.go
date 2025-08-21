@@ -19,7 +19,7 @@ const (
 func (cli *Client) GetRedirect(ctx context.Context, options Options, key string) (*models.Redirect, apiError.Error) {
 	path := fmt.Sprintf(RedirectEndpoint, cli.hcCli.URL, key)
 
-	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, nil)
+	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, options.Query, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -47,7 +47,7 @@ func (cli *Client) GetRedirects(ctx context.Context, options Options, count, cur
 		path = path + "?cursor=" + cursor
 	}
 
-	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, nil)
+	respInfo, apiErr := cli.callRedirectAPI(ctx, path, http.MethodGet, options.Headers, options.Query, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -78,7 +78,7 @@ func (cli *Client) PutRedirect(
 		}
 	}
 
-	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodPut, options.Headers, bodyBytes)
+	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodPut, options.Headers, options.Query, bodyBytes)
 	if apiErr != nil {
 		return apiErr
 	}
@@ -94,7 +94,7 @@ func (cli *Client) DeleteRedirect(
 ) apiError.Error {
 	path := fmt.Sprintf(RedirectEndpoint, cli.hcCli.URL, id)
 
-	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodDelete, options.Headers, nil)
+	_, apiErr := cli.callRedirectAPI(ctx, path, http.MethodDelete, options.Headers, options.Query, nil)
 	if apiErr != nil {
 		return apiErr
 	}

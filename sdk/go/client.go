@@ -59,7 +59,7 @@ type ResponseInfo struct {
 
 // callRedirectAPI calls the Redirect API endpoint given by path for the provided REST method, request headers, and body payload.
 // It returns the response body and any error that occurred.
-func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, headers http.Header, payload []byte) (*ResponseInfo, apiError.Error) {
+func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, headers http.Header, queryParams url.Values, payload []byte) (*ResponseInfo, apiError.Error) {
 	URL, err := url.Parse(path)
 	if err != nil {
 		return nil, apiError.StatusError{
@@ -90,6 +90,12 @@ func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, hea
 	if payload != nil {
 		req.Header.Add("Content-type", "application/json")
 	}
+
+	// add the count and cursor values, if present, to the path URL
+	q := req.URL.Query()
+	q.Add("count", queryParams.Get("count"))
+	q.Add("cursor", queryParams.Get("cursor"))
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
 	if err != nil {
