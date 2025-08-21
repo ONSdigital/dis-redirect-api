@@ -178,9 +178,7 @@ class RedirectAPIClientTest {
         HttpRequestBase request = captureHttpRequest(mockHttpClient);
         assertEquals("PUT", request.getMethod());
 
-        String expectedId = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString("/from-path".getBytes(StandardCharsets.UTF_8));
+        String expectedId = Redirect.encodeRedirectID("/from-path");
 
         assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
         assertEquals("Bearer " + SERVICE_AUTH_TOKEN, request.getFirstHeader("Authorization").getValue());
@@ -240,9 +238,8 @@ class RedirectAPIClientTest {
         assertEquals("DELETE", request.getMethod());
 
         // Ensure URL ends with base64("/from")
-        String expectedId = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString("/from".getBytes(StandardCharsets.UTF_8));
+        String expectedId = Redirect.encodeRedirectID("/from");
+
 
         assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
         assertNotNull(request.getFirstHeader("Authorization"));

@@ -3,8 +3,6 @@ package com.github.onsdigital.dis.redirect.api.sdk;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.onsdigital.dis.redirect.api.sdk.model.Redirect;
@@ -110,7 +108,7 @@ public class RedirectAPIClient implements RedirectClient {
 
         validateRedirectID(redirectID);
 
-        String encodedID = encodeToBase64(redirectID);
+        String encodedID = Redirect.encodeRedirectID(redirectID);
 
         String path = "/v1/redirects/" + encodedID;
         URI uri = redirectAPIUri.resolve(path);
@@ -120,9 +118,7 @@ public class RedirectAPIClient implements RedirectClient {
 
         try (CloseableHttpResponse resp = executeRequest(req)) {
             validateResponseCode(req, resp);
-            Redirect response = parseResponseBody(resp, Redirect.class);
-            response.setFrom(redirectID);
-            return response;
+            return parseResponseBody(resp, Redirect.class);
         }
     }
 
@@ -143,11 +139,8 @@ public class RedirectAPIClient implements RedirectClient {
             );
         }
 
-        String base64Id = Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(payload.getFrom().getBytes(StandardCharsets.UTF_8));
         URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
-                + base64Id);
+                + payload.getId());
         HttpPut put = new HttpPut(requestUri);
 
         // Add Authorization header
@@ -190,9 +183,7 @@ public class RedirectAPIClient implements RedirectClient {
             IllegalArgumentException("'fromPath' must not be null or empty");
         }
 
-        String base64Id = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(fromPath.getBytes(StandardCharsets.UTF_8));
+        String base64Id = Redirect.encodeRedirectID(fromPath);
 
         URI requestUri = redirectAPIUri.resolve("/v1/redirects/" + base64Id);
         HttpDelete delete = new HttpDelete(requestUri);
@@ -236,10 +227,6 @@ public class RedirectAPIClient implements RedirectClient {
             throw new RedirectAPIException(formatErrResponse(httpRequest,
                     response, HttpStatus.SC_INTERNAL_SERVER_ERROR), statusCode);
         }
-    }
-
-    private static String encodeToBase64(final String str) {
-        return new String(Base64.getEncoder().encodeToString(str.getBytes()));
     }
 
     private <T> T parseResponseBody(final CloseableHttpResponse response,
