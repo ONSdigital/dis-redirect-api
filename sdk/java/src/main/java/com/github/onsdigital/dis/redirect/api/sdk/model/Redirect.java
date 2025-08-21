@@ -4,12 +4,15 @@ import java.util.Base64;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * The model of a redirect as provided by the redirect API.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Redirect {
     /** The original path to redirect from. */
     @Getter
