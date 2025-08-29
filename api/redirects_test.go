@@ -27,9 +27,11 @@ var (
 	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
 	selfBaseURL         = "http://localhost:29900/redirects/" // TODO Change this to be "http://localhost:29900/v1/redirects/" when dp-net has been fixed
 	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
+	redirectFrom        = "/economy/old-path"
+	redirectTo          = "/economy/new-path"
 	validRedirect       = &models.Redirect{
-		From: "/economy/old-path",
-		To:   "/economy/new-path",
+		From: redirectFrom,
+		To:   redirectTo,
 	}
 	notANumber         = "this-is-not-a-number"
 	economyBulletin1   = "/economy/mybulletin1"
@@ -52,7 +54,7 @@ var (
 			return 12, nil
 		},
 		GetValueFunc: func(_ context.Context, _ string) (string, error) {
-			return "/economy/new-path", nil
+			return redirectTo, nil
 		},
 	}
 )
@@ -82,7 +84,7 @@ func TestGetRedirectEndpoint(t *testing.T) {
 
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "/economy/new-path", nil
+					return redirectTo, nil
 				},
 			}
 
