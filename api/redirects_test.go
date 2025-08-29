@@ -25,6 +25,7 @@ import (
 var (
 	getRedirectBaseURL  = "http://localhost:29900/v1/redirects/"
 	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
+	selfBaseURL         = "http://localhost:29900/redirects/" // TODO Change this to be "http://localhost:29900/v1/redirects/" when dp-net has been fixed
 	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
 	validRedirect       = &models.Redirect{
 		From: "/economy/old-path",
@@ -49,6 +50,9 @@ var (
 		},
 		GetTotalKeysFunc: func(_ context.Context) (int64, error) {
 			return 12, nil
+		},
+		GetValueFunc: func(_ context.Context, _ string) (string, error) {
+			return "/economy/new-path", nil
 		},
 	}
 )
@@ -94,6 +98,31 @@ func TestGetRedirectEndpoint(t *testing.T) {
 
 				So(response.From, ShouldEqual, validRedirect.From)
 				So(response.To, ShouldEqual, validRedirect.To)
+				So(response.ID, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.ID, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.Href, ShouldEqual, selfBaseURL+existingBase64Key)
+			})
+		})
+	})
+}
+
+func TestGetRedirectURLWriting(t *testing.T) {
+	Convey("Given a GET /redirects/{id} request", t, func() {
+		Convey("When the request headers for host, prefix and protocol are set", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
+			request.Header.Add("X-Forwarded-Proto", expectedProto)
+			request.Header.Add("X-Forwarded-Host", expectedHost)
+			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
+			responseRecorder := httptest.NewRecorder()
+			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response body should contain the correct link", func() {
+				var response models.Redirect
+				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+				So(err, ShouldBeNil)
+				So(response.Links.Self.ID, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, existingBase64Key))
 			})
 		})
 	})

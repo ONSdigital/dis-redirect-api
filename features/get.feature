@@ -3,6 +3,7 @@ Feature: Redirect endpoint
     Background: Service setup
       Given the redirect api is running
 
+# TODO Update the href value to be "http://localhost:29900/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg=" when dp-net has been fixed
     Scenario: Return the value when the key exists in redis
         Given the key "/economy/old-path" is already set to a value of "/economy/new-path" in the Redis store
         And redis is healthy
@@ -12,11 +13,11 @@ Feature: Redirect endpoint
             {
                 "from": "/economy/old-path",
                 "to": "/economy/new-path",
-                "id": "",
+                "id": "L2Vjb25vbXkvb2xkLXBhdGg=",
                 "links": {
                     "self": {
-                        "href": "",
-                        "id": ""
+                        "href": "http://localhost:29900/redirects/L2Vjb25vbXkvb2xkLXBhdGg=",
+                        "id": "L2Vjb25vbXkvb2xkLXBhdGg="
                     }
                   }
                 }
