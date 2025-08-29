@@ -43,9 +43,27 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	linkBuilder := links.FromHeadersOrDefault(&r.Header, api.apiURL)
+	redirectHref, err := linkBuilder.BuildLink(fmt.Sprintf("/v1/redirects/%s", redirectID))
+	if err != nil {
+		log.Error(ctx, "redirect builder failed to build link", err, logData)
+		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
+		return
+	}
+
+	redirectSelf := models.RedirectSelf{
+		Href: redirectHref,
+		ID:   redirectID,
+	}
+	redirectLinks := models.RedirectLinks{
+		Self: redirectSelf,
+	}
+
 	responseBody := models.Redirect{
-		From: decodedKey,
-		To:   redirect,
+		From:  decodedKey,
+		To:    redirect,
+		ID:    redirectID,
+		Links: redirectLinks,
 	}
 
 	redirectResponse, err := json.Marshal(responseBody)
