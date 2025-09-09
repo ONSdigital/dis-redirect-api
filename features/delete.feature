@@ -1,7 +1,7 @@
 Feature: Delete redirect endpoint
 
   Background: Service setup
-    Given an admin user has the "legacy:delete" permission
+    Given an admin user has the "redirects:delete" permission
     And the redirect api is running
 
   Scenario: Delete a redirect if the key does not exist
@@ -43,5 +43,6 @@ Feature: Delete redirect endpoint
   Scenario: Server error when attempting to delete a redirect
     Given I am an admin user
     And redis stops running
+    And the redirect api is running
     When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
     Then the HTTP status code should be "500"

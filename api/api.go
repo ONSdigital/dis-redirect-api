@@ -34,19 +34,13 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 		apiURL:         apiURL,
 	}
 
-	api.get("/v1/redirects/{id}", api.getRedirect)
+	api.get("/v1/redirects/{id}", auth.Require("redirects:read", api.getRedirect))
 
-	api.get("/v1/redirects", api.getRedirects)
+	api.get("/v1/redirects", auth.Require("redirects:read", api.getRedirects))
 
-	api.put(
-		"/v1/redirects/{id}",
-		auth.Require("legacy:edit", api.UpsertRedirect),
-	)
+	api.put("/v1/redirects/{id}", auth.Require("redirects:edit", api.UpsertRedirect))
 
-	api.delete(
-		"/v1/redirects/{id}",
-		auth.Require("legacy:delete", api.DeleteRedirect),
-	)
+	api.delete("/v1/redirects/{id}", auth.Require("redirects:delete", api.DeleteRedirect))
 
 	return api
 }

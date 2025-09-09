@@ -61,7 +61,7 @@ Feature: Health endpoint
 
     Scenario: Returning a CRITICAL (500) status when health endpoint called
         Given redis stops running
-        Given I have a healthcheck interval of 1 second
+        And I have a healthcheck interval of 1 second
         And I wait 6 seconds to pass the critical timeout
         And I GET "/health"
         Then the HTTP status code should be "500"
