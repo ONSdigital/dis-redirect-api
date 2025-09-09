@@ -10,29 +10,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Single source of truth for tool versions
+env:
+  GO_VERSION: '1.25'
+  JAVA_VERSION: '8'
+  GOLANGCI_LINT_VERSION: 'v2.4.0'
+
 jobs:
-  dis-redirect-api-setup:
+  dis-redirect-api-audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Go
+      - uses: actions/checkout@v4
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
-      - name: Set up JDK 8 for x64
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
-          distribution: 'temurin'
-          architecture: x64
-
-  dis-redirect-api-audit:
-    needs: dis-redirect-api-setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
       - name: Generate Go Module List
         run: go list -json -m all > go.list
       - name: Run Go audit check with Nancy
@@ -42,56 +41,86 @@ jobs:
       - name: Run Java audit checks
         run: make audit-java
 
-  dis-redirect-api-build:
-    needs: dis-redirect-api-setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run Go build test
-        run: make build-go
-      - name: Run Java build test
-        run: make build-java
-
   dis-redirect-api-lint:
-    needs: dis-redirect-api-setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
       - name: Run Go lint checks
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          install-mode: go
       - name: Run Java linters
         run: make lint-java
 
-  dis-redirect-api-validate-spec:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run specification validation
-        uses: fluximus-prime/redocly-cli-github-action@v1
-        with:
-          args: 'lint swagger.yaml'
-
   dis-redirect-api-unit:
-    needs: dis-redirect-api-setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
       - name: Run Go unit tests
         run: make test-go
       - name: Run Java unit tests
         run: make test-java
 
-  dis-redirect-api-component:
-    needs: dis-redirect-api-setup
+  dis-redirect-api-build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Run Go build test
+        run: make build-go
+      - name: Run Java build test
+        run: make build-java
+
+  dis-redirect-api-component:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run component tests
         run: make test-component
+
+  dis-redirect-api-validate-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run specification validation
+        uses: fluximus-prime/redocly-cli-github-action@v1
+        with:
+          args: 'lint swagger.yaml'
