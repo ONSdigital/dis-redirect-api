@@ -1,7 +1,7 @@
 Feature: Upsert redirect endpoint with user auth
 
     Background: Service setup
-      Given an admin user has the "legacy:edit" permission
+      Given an admin user has the "redirects:edit" permission
       And the redirect api is running
 
     Scenario: Upsert a redirect value via PUT if the key and value do not exist
