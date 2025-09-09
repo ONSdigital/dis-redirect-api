@@ -62,7 +62,7 @@ jobs:
       - name: Run Go lint checks
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: v2.4.0
       - name: Run Java linters
         run: make lint-java
 
