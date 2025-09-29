@@ -11,7 +11,22 @@ A Go API for management of redirects.
 
 * No further dependencies other than those defined in `go.mod`
 
-#### Validating Specification
+#### Tools
+
+To run some of our tests you will need additional tooling:
+
+##### Audit
+
+We use `dis-vulncheck` to do Go auditing, which you will [need to install](https://github.com/ONSdigital/dis-vulncheck).
+
+For Java auditing we use mvn `ossindex:audit` which requires you to [setup an OSS Index account](https://github.com/ONSdigital/dp/blob/main/guides/MAC_SETUP.md#oss-index-account-and-configuration) 
+and make some updates to [Maven: Local Setup for ossindex:audit](https://github.com/ONSdigital/dp/blob/main/guides/MAC_SETUP.md#maven-local-setup-for-ossindexaudit)
+
+##### Linting
+
+We use v2 of golangci-lint, which you will [need to install](https://golangci-lint.run/docs/welcome/install).
+
+##### Validating Specification
 
 To validate the swagger specification you can do this via:
 

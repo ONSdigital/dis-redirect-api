@@ -22,7 +22,7 @@ audit: audit-go audit-java ## Runs checks for security vulnerabilities on depend
 	
 .PHONY: audit-go
 audit-go:
-	go list -json -m all | nancy sleuth
+	dis-vulncheck
 
 .PHONY: audit-java
 audit-java: 

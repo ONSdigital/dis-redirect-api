@@ -2,7 +2,6 @@ name: CI
 
 permissions:
   contents: read
-
 on:
   push:
     branches: ["main"]
@@ -15,7 +14,7 @@ concurrency:
 
 # Single source of truth for tool versions
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.24.7'
   JAVA_VERSION: '8'
   GOLANGCI_LINT_VERSION: 'v2.4.0'
 
@@ -23,7 +22,8 @@ jobs:
   dis-redirect-api-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -35,14 +35,21 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
+      - name: Configure Maven settings.xml for OSS Index
+        uses: s4u/maven-settings-action@v3.1.0
+        with:
+          servers: |
+            [{
+              "id": "ossindex",
+              "username": "${{ secrets.OSSINDEX_USERNAME }}",
+              "password": "${{ secrets.OSSINDEX_TOKEN }}"
+            }]
       - name: Generate Go Module List
         run: go list -json -m all > go.list
-      - name: Run Go audit check with Nancy
-        uses: sonatype-nexus-community/nancy-github-action@main
-        with:
-          nancyVersion: "v1.0.36"
-      - name: Run Java audit checks
-        run: make audit-java
+      - name: Install dis-vulncheck
+        run: go install github.com/ONSdigital/dis-vulncheck@latest
+      - name: Run audit
+        run: make audit
 
   dis-redirect-api-lint:
     runs-on: ubuntu-latest
