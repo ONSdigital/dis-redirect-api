@@ -10,7 +10,6 @@ import (
 // Config represents service configuration for dis-redirect-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
-	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
@@ -19,6 +18,7 @@ type Config struct {
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
 	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
+	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
 	AuthorisationConfig        *authorisation.Config
 }
 
