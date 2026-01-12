@@ -2,6 +2,6 @@
 
 # Build the application
 pushd pull_request
-  make build
+  make build-go
   cp build/dis-redirect-api Dockerfile.concourse ../build
 popd
