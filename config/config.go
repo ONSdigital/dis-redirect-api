@@ -7,6 +7,10 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+const (
+	RedisTLSProtocol = "TLS"
+)
+
 // Config represents service configuration for dis-redirect-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
@@ -19,6 +23,7 @@ type Config struct {
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
 	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
 	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
+	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -42,6 +47,7 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisAddress:               "localhost:6379",
+		RedisSecProtocol:           "",
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 

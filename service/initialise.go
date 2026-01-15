@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 
 	"github.com/ONSdigital/dis-redirect-api/config"
@@ -77,9 +78,19 @@ func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Co
 
 // DoGetRedisClient initialises a dis-redis client
 func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.Redis, error) {
-	redisClient, err := disRedis.NewClient(ctx, &disRedis.ClientConfig{
+	clientCfg := &disRedis.ClientConfig{
 		Address: cfg.RedisAddress,
-	})
+	}
+
+	if cfg.RedisSecProtocol == config.RedisTLSProtocol {
+		log.Info(ctx, "redis TLS protocol specified, initializing dis-redis client with TLS")
+		clientCfg.TLSConfig = &tls.Config{
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: false,
+		}
+	}
+
+	redisClient, err := disRedis.NewClient(ctx, clientCfg)
 	if err != nil {
 		log.Error(ctx, "failed to create dis-redis client", err)
 		return nil, err
