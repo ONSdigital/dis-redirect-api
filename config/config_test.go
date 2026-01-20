@@ -34,6 +34,10 @@ func TestConfig(t *testing.T) {
 					OTServiceName:              "dis-redirect-api",
 					OtelEnabled:                false,
 					RedisAddress:               "localhost:6379",
+					RedisRegion:                "",
+					RedisSecProtocol:           "",
+					RedisService:               "",
+					RedisUsername:              "",
 					AuthorisationConfig:        authorisation.NewDefaultConfig(),
 				})
 			})

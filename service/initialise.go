@@ -79,7 +79,10 @@ func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Co
 // DoGetRedisClient initialises a dis-redis client
 func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.Redis, error) {
 	clientCfg := &disRedis.ClientConfig{
-		Address: cfg.RedisAddress,
+		Address:  cfg.RedisAddress,
+		Region:   cfg.RedisRegion,
+		Service:  cfg.RedisService,
+		Username: cfg.RedisUsername,
 	}
 
 	if cfg.RedisSecProtocol == config.RedisTLSProtocol {

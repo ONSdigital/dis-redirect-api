@@ -23,7 +23,10 @@ type Config struct {
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
 	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
 	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
+	RedisRegion                string        `envconfig:"REDIS_REGION"`
 	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
+	RedisService               string        `envconfig:"REDIS_SERVICE"`
+	RedisUsername              string        `envconfig:"REDIS_USERNAME"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -47,7 +50,10 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisAddress:               "localhost:6379",
+		RedisRegion:                "",
 		RedisSecProtocol:           "",
+		RedisService:               "",
+		RedisUsername:              "",
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 
