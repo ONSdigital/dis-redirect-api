@@ -25,7 +25,6 @@ func TestConfig(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(configuration, ShouldResemble, &Config{
 					BindAddr:                   "localhost:29900",
-					RedirectAPIURL:             "http://localhost:29900",
 					GracefulShutdownTimeout:    5 * time.Second,
 					HealthCheckInterval:        30 * time.Second,
 					HealthCheckCriticalTimeout: 90 * time.Second,
@@ -33,7 +32,9 @@ func TestConfig(t *testing.T) {
 					OTExporterOTLPEndpoint:     "localhost:4317",
 					OTServiceName:              "dis-redirect-api",
 					OtelEnabled:                false,
+					RedirectAPIURL:             "http://localhost:29900",
 					RedisAddress:               "localhost:6379",
+					RedisClusterName:           "",
 					RedisRegion:                "",
 					RedisSecProtocol:           "",
 					RedisService:               "",

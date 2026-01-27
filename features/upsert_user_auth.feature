@@ -1,3 +1,4 @@
+@UpsertRedirect @UpsertRedirectUser
 Feature: Upsert redirect endpoint with user auth
 
     Background: Service setup

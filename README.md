@@ -62,6 +62,7 @@ npm install -g redocly-cli
 | OTEL_ENABLED                 | false            | Feature flag to enable OpenTelemetry                                                                               |
 | REDIRECT_API_URL             | localhost:29900  | Currently used to populated HATEOS links                                                                           |
 | REDIS_ADDRESS                | localhost:6379   | Endpoint for Redis service                                                                                         |
+| REDIS_CLUSTER_NAME           | ""               | Cluster name for Redis service                                                                                     |
 | REDIS_REGION                 | ""               | AWS Region to connect to for Redis backing service                                                                 |
 | REDIS_SEC_PROTO              | ""               | Use 'TLS' to connect with TLS                                                                                      |
 | REDIS_SERVICE                | ""               | Name of the redis service to connect to, e.g. memorydb, elasticache                                                |

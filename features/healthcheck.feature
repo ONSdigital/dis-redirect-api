@@ -61,7 +61,7 @@ Feature: Health endpoint
               "name": "Redis",
               "status": "CRITICAL",
               "status_code": 500,
-              "message": "connect: connection refused"
+              "message": "EOF"
             }
           ]
         }

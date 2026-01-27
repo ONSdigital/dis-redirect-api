@@ -18,7 +18,6 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
 	"github.com/gorilla/mux"
-	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -527,7 +526,7 @@ func TestDeleteRedirect(t *testing.T) {
 				if key == "/test-path" {
 					return "/target", nil
 				}
-				return "", redis.Nil
+				return "", nil
 			}
 			mockStore.DeleteValueFunc = func(_ context.Context, _ string) error {
 				return nil
