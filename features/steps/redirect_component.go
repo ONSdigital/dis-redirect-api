@@ -58,7 +58,6 @@ func (c *RedirectComponent) Reset() *RedirectComponent {
 
 func (c *RedirectComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
-		c.redisFeature.Close()
 		if err := c.svc.Close(context.Background()); err != nil {
 			return err
 		}

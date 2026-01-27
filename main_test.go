@@ -46,6 +46,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	})
 
 	ctx.After(func(ctx context.Context, _ *godog.Scenario, _ error) (context.Context, error) {
+		redirectAPIComponent.Close()
 		if closeErr := f.RedisFeature.Close(); closeErr != nil {
 			log.Error(context.Background(), "error occured while closing the RedisFeature", closeErr)
 			os.Exit(1)
