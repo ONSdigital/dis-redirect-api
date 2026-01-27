@@ -45,7 +45,7 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 		return err
 	}
 
-	c.Config.RedisAddress = c.redisFeature.Server.Addr()
+	c.Config.RedisAddress = c.redisFeature.Client.Options().Addr
 	c.Config.AuthorisationConfig.ZebedeeURL = c.authFeature.FakeAuthService.ResolveURL("")
 	c.Config.AuthorisationConfig.PermissionsAPIURL = c.authFeature.FakePermissionsAPI.ResolveURL("")
 
@@ -57,7 +57,7 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
-	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
+	c.Config.HealthCheckCriticalTimeout = 6 * time.Second
 	c.Config.BindAddr = "localhost:0"
 	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)

@@ -14,6 +14,9 @@ import (
 )
 
 var componentFlag = flag.Bool("component", false, "perform component tests")
+var redisOptions = componentTest.RedisOptions{
+	RedisVersion: "7.2",
+}
 
 type ComponentTest struct {
 	RedisFeature         *componentTest.RedisFeature
@@ -21,7 +24,7 @@ type ComponentTest struct {
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	f.RedisFeature = componentTest.NewRedisFeature()
+	f.RedisFeature = componentTest.NewRedisFeature(redisOptions)
 	f.AuthorizationFeature = componentTest.NewAuthorizationFeature()
 	redirectAPIComponent, err := steps.NewRedirectComponent(f.RedisFeature, f.AuthorizationFeature)
 	if err != nil {
@@ -33,7 +36,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 
 	ctx.Before(func(ctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		if f.RedisFeature == nil {
-			f.RedisFeature = componentTest.NewRedisFeature()
+			f.RedisFeature = componentTest.NewRedisFeature(redisOptions)
 		}
 
 		f.AuthorizationFeature.Reset()

@@ -22,6 +22,14 @@ We use `dis-vulncheck` to do Go auditing, which you will [need to install](https
 For Java auditing we use mvn `ossindex:audit` which requires you to [setup an OSS Index account](https://github.com/ONSdigital/dp/blob/main/guides/MAC_SETUP.md#oss-index-account-and-configuration) 
 and make some updates to [Maven: Local Setup for ossindex:audit](https://github.com/ONSdigital/dp/blob/main/guides/MAC_SETUP.md#maven-local-setup-for-ossindexaudit)
 
+##### Component testing
+
+To run the component tests, we use [testcontainers](https://golang.testcontainers.org/) via our dp-component-test library.
+
+To get setup, follow our guidance on [using testcontainers](https://golang.testcontainers.org/)
+
+If you're already setup, you will just need to ensure a docker daemon is running, for example via `colima start`.
+
 ##### Linting
 
 We use v2 of golangci-lint, which you will [need to install](https://golangci-lint.run/docs/welcome/install).
