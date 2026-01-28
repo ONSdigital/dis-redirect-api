@@ -6,7 +6,7 @@ require (
 	github.com/ONSdigital/dis-redis v0.7.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.32.3
-	github.com/ONSdigital/dp-component-test v1.2.5-alpha
+	github.com/ONSdigital/dp-component-test v1.2.6-alpha
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-net/v3 v3.5.0
