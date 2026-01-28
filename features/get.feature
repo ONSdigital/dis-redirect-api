@@ -1,10 +1,11 @@
+@GetRedirect
 Feature: Redirect endpoint
 
   Background: Service setup
     Given an admin user has the "redirects:read" permission
     And the redirect api is running
 
-# TODO Update the href value to be "http://localhost:29900/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg=" when dp-net has been fixed
+  # TODO Update the href value to be "http://localhost:29900/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg=" when dp-net has been fixed
   Scenario: Return the value when the key exists in redis
     Given I am an admin user
     And the key "/economy/old-path" is already set to a value of "/economy/new-path" in the Redis store

@@ -79,10 +79,11 @@ func (e *ExternalServiceList) GetRedisClient(ctx context.Context, cfg *config.Co
 // DoGetRedisClient initialises a dis-redis client
 func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.Redis, error) {
 	clientCfg := &disRedis.ClientConfig{
-		Address:  cfg.RedisAddress,
-		Region:   cfg.RedisRegion,
-		Service:  cfg.RedisService,
-		Username: cfg.RedisUsername,
+		Address:     cfg.RedisAddress,
+		ClusterName: cfg.RedisClusterName,
+		Region:      cfg.RedisRegion,
+		Service:     cfg.RedisService,
+		Username:    cfg.RedisUsername,
 	}
 
 	if cfg.RedisSecProtocol == config.RedisTLSProtocol {
@@ -93,10 +94,21 @@ func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.
 		}
 	}
 
-	redisClient, err := disRedis.NewClient(ctx, clientCfg)
-	if err != nil {
-		log.Error(ctx, "failed to create dis-redis client", err)
-		return nil, err
+	var redisClient store.Redis
+	var err error
+
+	if cfg.RedisRegion != "" && cfg.RedisService != "" && cfg.RedisClusterName != "" {
+		redisClient, err = disRedis.NewClusterClient(ctx, clientCfg)
+		if err != nil {
+			log.Error(ctx, "failed to create dis-redis cluster client", err)
+			return nil, err
+		}
+	} else {
+		redisClient, err = disRedis.NewClient(ctx, clientCfg)
+		if err != nil {
+			log.Error(ctx, "failed to create dis-redis client", err)
+			return nil, err
+		}
 	}
 
 	return redisClient, nil

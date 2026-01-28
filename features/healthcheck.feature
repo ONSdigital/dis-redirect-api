@@ -71,7 +71,7 @@ Feature: Health endpoint
     Scenario: Returning a CRITICAL (500) status when health endpoint called
       Given the redirect api is running
       And I have a healthcheck interval of 1 second
-      And I wait 8 seconds to pass the critical timeout
+      And I wait 9 seconds to pass the critical timeout
       When I GET "/health"
       Then the HTTP status code should be "500"
       And the response header "Content-Type" should be "application/json; charset=utf-8"

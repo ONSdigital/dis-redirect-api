@@ -21,8 +21,9 @@ type Config struct {
 	OTExporterOTLPEndpoint     string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
 	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
-	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
 	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
+	RedisAddress               string        `envconfig:"REDIS_ADDRESS"`
+	RedisClusterName           string        `envconfig:"REDIS_CLUSTER_NAME"`
 	RedisRegion                string        `envconfig:"REDIS_REGION"`
 	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
 	RedisService               string        `envconfig:"REDIS_SERVICE"`
@@ -50,6 +51,7 @@ func Get() (*Config, error) {
 		OTServiceName:              "dis-redirect-api",
 		OtelEnabled:                false,
 		RedisAddress:               "localhost:6379",
+		RedisClusterName:           "",
 		RedisRegion:                "",
 		RedisSecProtocol:           "",
 		RedisService:               "",

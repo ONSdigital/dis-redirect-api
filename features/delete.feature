@@ -1,3 +1,4 @@
+@DeleteRedirect
 Feature: Delete redirect endpoint
 
   Background: Service setup
