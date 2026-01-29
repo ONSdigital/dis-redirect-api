@@ -3,7 +3,7 @@ module github.com/ONSdigital/dis-redirect-api
 go 1.24.0
 
 require (
-	github.com/ONSdigital/dis-redis v0.7.0
+	github.com/ONSdigital/dis-redis v0.7.1
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.32.3
 	github.com/ONSdigital/dp-component-test v1.2.6-alpha

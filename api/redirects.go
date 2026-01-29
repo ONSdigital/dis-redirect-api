@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dis-redirect-api/models"
+	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/ONSdigital/dp-net/v2/links"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -33,7 +34,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 	redirect, err := api.RedirectStore.GetRedirect(ctx, decodedKey)
 	logData := log.Data{"redirect": redirect}
 	if err != nil {
-		if strings.Contains(err.Error(), fmt.Sprintf("key %s not found", decodedKey)) {
+		if err == disRedis.ErrKeyNotFound {
 			log.Info(ctx, "redirect not found", logData)
 			api.handleError(ctx, w, ErrNotFound, http.StatusNotFound)
 		} else {
@@ -168,7 +169,7 @@ func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 	logData = log.Data{"key": key}
 	_, err = api.RedirectStore.GetValue(ctx, key)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if err == disRedis.ErrKeyNotFound {
 			log.Info(ctx, "redirect not found", logData)
 			api.handleError(ctx, w, ErrNotFound, http.StatusNotFound)
 			return

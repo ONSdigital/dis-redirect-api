@@ -17,6 +17,7 @@ import (
 	"github.com/ONSdigital/dis-redirect-api/models"
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
+	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -161,7 +162,7 @@ func TestGetRedirectReturns404(t *testing.T) {
 
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, _ string) (string, error) {
-					return "", errors.New("key old-path not found")
+					return "", disRedis.ErrKeyNotFound
 				},
 			}
 
@@ -541,7 +542,7 @@ func TestDeleteRedirect(t *testing.T) {
 
 		Convey("When the redirect does not exist", func() {
 			mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
-				return "", fmt.Errorf("redirect not found")
+				return "", disRedis.ErrKeyNotFound
 			}
 
 			req := httptest.NewRequest(http.MethodDelete, "/redirects/"+base64ID, http.NoBody)
