@@ -30,7 +30,7 @@ type RedisAPIStore struct {
 
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
-	log.Info(ctx, "running service")
+	log.Info(ctx, "running this redirect service")
 
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
