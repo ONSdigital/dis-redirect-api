@@ -259,9 +259,9 @@ public class RedirectAPIClient implements RedirectClient {
 
     private CloseableHttpResponse executeRequest(final HttpUriRequest req)
             throws IOException {
-        // TODO: remove reliance on CloseableHttpClient.execute as
-        // is deprecated in HttpClient 5.4.0 - instead use 
-        // HttpClient.execute with a ResponseHandler
+        // TODO: remove reliance on CloseableHttpClient.execute
+        // as it is deprecated in HttpClient 5.4.0 - instead
+        // use HttpClient.execute with a ResponseHandler
         return client.execute(req);
     }
 
