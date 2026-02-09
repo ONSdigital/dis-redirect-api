@@ -236,17 +236,21 @@ public class RedirectAPIClient implements RedirectClient {
         return JSON.readValue(responseString, type);
     }
 
-     private String formatErrResponse(HttpUriRequestBase httpRequest, CloseableHttpResponse response, int expectedStatusCode) {
+     private String formatErrResponse(final HttpUriRequestBase httpRequest,
+            final CloseableHttpResponse response,
+            final int expectedStatusCode) {
         int responseCode = response.getCode();
 
         try {
             String requestURI = httpRequest.getUri().toString();
-            return String.format("the redirect api returned a %s response for %s (expected %s)",
+            return String.format(
+                "the redirect api returned a %s response for %s (expected %s)",
                             responseCode,
                             requestURI,
                             expectedStatusCode);
         } catch (URISyntaxException e) {
-            return String.format("the redirect api returned a %s response for %s (expected %s)",
+            return String.format(
+                "the redirect api returned a %s response for %s (expected %s)",
                 responseCode,
                 httpRequest.getRequestUri(),
                 expectedStatusCode);
@@ -255,6 +259,9 @@ public class RedirectAPIClient implements RedirectClient {
 
     private CloseableHttpResponse executeRequest(final HttpUriRequest req)
             throws IOException {
+        // TODO: remove reliance on CloseableHttpClient.execute as
+        // is deprecated in HttpClient 5.4.0 - instead use 
+        // HttpClient.execute with a ResponseHandler
         return client.execute(req);
     }
 
@@ -284,8 +291,9 @@ public class RedirectAPIClient implements RedirectClient {
      */
     @Override
     public Redirects getRedirects(final String count, final String cursor)
-            throws IOException, BadRequestException, ParseException, RedirectAPIException,
-            RedirectNotFoundException, URISyntaxException {
+            throws IOException, BadRequestException, ParseException,
+            RedirectAPIException, RedirectNotFoundException,
+            URISyntaxException {
         String path = "/v1/redirects";
         URIBuilder builder = new URIBuilder(redirectAPIUri.resolve(path));
         if (StringUtils.isNotBlank(count)) {
