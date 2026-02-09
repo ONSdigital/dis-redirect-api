@@ -4,6 +4,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.apache.hc.core5.http.ParseException;
+
 import com.github.onsdigital.dis.redirect.api.sdk.exception.BadRequestException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException;
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
@@ -21,7 +23,7 @@ public interface RedirectClient extends Closeable {
      * @throws RedirectAPIException
      */
     Redirect getRedirect(String redirectID)
-            throws IOException, BadRequestException, RedirectNotFoundException,
+            throws IOException, BadRequestException, ParseException, RedirectNotFoundException,
             RedirectAPIException;
 
     /**
@@ -35,7 +37,7 @@ public interface RedirectClient extends Closeable {
      * @throws URISyntaxException
      */
     Redirects getRedirects(String count, String cursor)
-            throws IOException, BadRequestException, RedirectNotFoundException,
+            throws IOException, BadRequestException, ParseException, RedirectNotFoundException,
             RedirectAPIException, URISyntaxException;
 
      /**

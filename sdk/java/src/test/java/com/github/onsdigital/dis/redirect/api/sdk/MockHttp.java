@@ -2,9 +2,8 @@ package com.github.onsdigital.dis.redirect.api.sdk;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.UnsupportedEncodingException;
 
@@ -28,9 +27,7 @@ class MockHttp {
         CloseableHttpResponse mockHttpResponse = mock(
                 CloseableHttpResponse.class);
 
-        StatusLine mockResponseStatus = mock(StatusLine.class);
-        when(mockResponseStatus.getStatusCode()).thenReturn(httpStatus);
-        when(mockHttpResponse.getStatusLine()).thenReturn(mockResponseStatus);
+        when(mockHttpResponse.getCode()).thenReturn(httpStatus);
 
         return mockHttpResponse;
     }

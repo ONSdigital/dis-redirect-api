@@ -1,6 +1,6 @@
 package com.github.onsdigital.dis.redirect.api.sdk.exception;
 
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 import lombok.Getter;
 

@@ -27,11 +27,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 class RedirectAPIClientTest {
     /**
@@ -80,7 +79,7 @@ class RedirectAPIClientTest {
 
         // Given a mock redirect response from the redirect API
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_OK);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         Redirect mockRedirect = mockRedirect(mockHttpResponse);
         Redirect expectedRedirect = mockRedirect;
@@ -102,7 +101,7 @@ class RedirectAPIClientTest {
 
         // Given a request to the redirect API that returns a 400
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getRedirect is called
         // Then the expected exception is thrown
@@ -117,7 +116,7 @@ class RedirectAPIClientTest {
 
         // Given a request to the redirect API that returns a 404
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_NOT_FOUND);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getRedirect is called
         // Then the expected exception is thrown
@@ -132,7 +131,7 @@ class RedirectAPIClientTest {
 
         // Given a request to the redirect API that returns a 500
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getRedirect is called
         // Then the expected exception is thrown
@@ -166,21 +165,19 @@ class RedirectAPIClientTest {
     void putRedirectSuccessfullySendsPutRequest() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
-        StatusLine mockStatus = mock(StatusLine.class);
-        when(mockStatus.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
-        when(mockResponse.getStatusLine()).thenReturn(mockStatus);
+        when(mockResponse.getCode()).thenReturn(HttpStatus.SC_CREATED);
         when(mockHttpClient.execute(any())).thenReturn(mockResponse);
 
         RedirectClient client = getRedirectClient(mockHttpClient);
         Redirect redirect = new Redirect("/from-path", "/to-path");
         client.putRedirect(redirect);
 
-        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        HttpUriRequestBase request = captureHttpRequest(mockHttpClient);
         assertEquals("PUT", request.getMethod());
 
         String expectedId = Redirect.encodeRedirectID("/from-path");
 
-        assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
+        assertTrue(request.getUri().toString().endsWith("/redirects/" + expectedId));
         assertEquals("Bearer " + SERVICE_AUTH_TOKEN, request.getFirstHeader("Authorization").getValue());
     }
 
@@ -188,9 +185,7 @@ class RedirectAPIClientTest {
     void putRedirectReturnsErrorOnUnexpectedStatusCode() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
-        StatusLine mockStatus = mock(StatusLine.class);
-        when(mockStatus.getStatusCode()).thenReturn(HttpStatus.SC_BAD_GATEWAY);
-        when(mockResponse.getStatusLine()).thenReturn(mockStatus);
+        when(mockResponse.getCode()).thenReturn(HttpStatus.SC_BAD_GATEWAY);
         when(mockHttpClient.execute(any())).thenReturn(mockResponse);
 
         RedirectClient client = getRedirectClient(mockHttpClient);
@@ -224,24 +219,22 @@ class RedirectAPIClientTest {
     void testDeleteRedirectSuccess() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
-        StatusLine mockStatusLine = mock(StatusLine.class);
 
-        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NO_CONTENT);
-        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+        when(mockResponse.getCode()).thenReturn(HttpStatus.SC_NO_CONTENT);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockResponse);
 
         RedirectClient client = getRedirectClient(mockHttpClient);
 
         client.deleteRedirect("/from"); // raw path, not base64
 
-        HttpRequestBase request = captureHttpRequest(mockHttpClient);
+        HttpUriRequestBase request = captureHttpRequest(mockHttpClient);
         assertEquals("DELETE", request.getMethod());
 
         // Ensure URL ends with base64("/from")
         String expectedId = Redirect.encodeRedirectID("/from");
 
 
-        assertTrue(request.getURI().toString().endsWith("/redirects/" + expectedId));
+        assertTrue(request.getUri().toString().endsWith("/redirects/" + expectedId));
         assertNotNull(request.getFirstHeader("Authorization"));
     }
 
@@ -249,11 +242,9 @@ class RedirectAPIClientTest {
     void testDeleteRedirectReturns404() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
-        StatusLine mockStatusLine = mock(StatusLine.class);
 
-        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
-        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+        when(mockResponse.getCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockResponse);
 
         RedirectClient client = getRedirectClient(mockHttpClient);
 
@@ -269,11 +260,9 @@ class RedirectAPIClientTest {
     void testDeleteRedirectServerError() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
         CloseableHttpResponse mockResponse = mock(CloseableHttpResponse.class);
-        StatusLine mockStatusLine = mock(StatusLine.class);
 
-        when(mockStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockResponse);
+        when(mockResponse.getCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockResponse);
 
         RedirectClient client = getRedirectClient(mockHttpClient);
 
@@ -288,7 +277,7 @@ class RedirectAPIClientTest {
     @Test
     void testDeleteRedirectIOException() throws Exception {
         CloseableHttpClient mockHttpClient = mock(CloseableHttpClient.class);
-        when(mockHttpClient.execute(any(HttpRequestBase.class)))
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class)))
                 .thenThrow(new IOException("Simulated network failure"));
 
         RedirectClient client = getRedirectClient(mockHttpClient);
@@ -311,7 +300,7 @@ class RedirectAPIClientTest {
 
         // Given a mock redirects response from the redirect API
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_OK);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         Redirects mockRedirects = mockRedirects(mockHttpResponse);
         Redirects expectedRedirects = mockRedirects;
@@ -336,7 +325,7 @@ class RedirectAPIClientTest {
 
         // Given a request to the redirect API that returns a 400
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_BAD_REQUEST);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getRedirects is called
         // Then the expected exception is thrown
@@ -351,7 +340,7 @@ class RedirectAPIClientTest {
 
         // Given a request to the redirect API that returns a 500
         CloseableHttpResponse mockHttpResponse = MockHttp.response(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(mockHttpClient.execute(any(HttpRequestBase.class))).thenReturn(mockHttpResponse);
+        when(mockHttpClient.execute(any(HttpUriRequestBase.class))).thenReturn(mockHttpResponse);
 
         // When getRedirects is called
         // Then the expected exception is thrown
@@ -359,11 +348,11 @@ class RedirectAPIClientTest {
                 () -> redirectAPIClient.getRedirects(count, cursor));
     }
 
-    private HttpRequestBase captureHttpRequest(
+    private HttpUriRequestBase captureHttpRequest(
             final CloseableHttpClient mockHttpClient)
             throws IOException {
-        ArgumentCaptor<HttpRequestBase> requestCaptor = ArgumentCaptor.forClass(
-                HttpRequestBase.class);
+        ArgumentCaptor<HttpUriRequestBase> requestCaptor = ArgumentCaptor.forClass(
+                HttpUriRequestBase.class);
         verify(mockHttpClient).execute(requestCaptor.capture());
         return requestCaptor.getValue();
     }

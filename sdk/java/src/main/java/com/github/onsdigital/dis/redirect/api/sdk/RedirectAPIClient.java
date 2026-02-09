@@ -12,26 +12,26 @@ import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectAPIException
 import com.github.onsdigital.dis.redirect.api.sdk.exception.RedirectNotFoundException;
 
 import org.apache.hc.core5.net.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.util.Args;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.util.Args;
+import org.apache.hc.core5.http.ParseException;
 
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.ContentType;
 
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 public class RedirectAPIClient implements RedirectClient {
 
     /**
@@ -104,7 +104,7 @@ public class RedirectAPIClient implements RedirectClient {
     @Override
     public Redirect getRedirect(final String redirectID)
             throws IOException, BadRequestException, RedirectNotFoundException,
-            RedirectAPIException {
+            RedirectAPIException, ParseException {
 
         validateRedirectID(redirectID);
 
@@ -154,7 +154,7 @@ public class RedirectAPIClient implements RedirectClient {
                 ContentType.APPLICATION_JSON));
 
             try (CloseableHttpResponse response = executeRequest(put)) {
-                int statusCode = response.getStatusLine().getStatusCode();
+                int statusCode = response.getCode();
 
             if (statusCode != HttpStatus.SC_CREATED
                     && statusCode != HttpStatus.SC_OK) {
@@ -191,7 +191,7 @@ public class RedirectAPIClient implements RedirectClient {
         delete.addHeader(SERVICE_TOKEN_HEADER_NAME, "Bearer " + authToken);
 
         try (CloseableHttpResponse response = executeRequest(delete)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+            int statusCode = response.getCode();
 
             if (statusCode != HttpStatus.SC_NO_CONTENT) {
                 throw new RedirectAPIException(
@@ -208,11 +208,11 @@ public class RedirectAPIClient implements RedirectClient {
                 "a redirect id must be provided.");
     }
 
-    private void validateResponseCode(final HttpRequestBase httpRequest,
+    private void validateResponseCode(final HttpUriRequestBase httpRequest,
             final CloseableHttpResponse response)
             throws IOException, BadRequestException, RedirectNotFoundException,
             RedirectAPIException {
-        int statusCode = response.getStatusLine().getStatusCode();
+        int statusCode = response.getCode();
 
         switch (statusCode) {
         case HttpStatus.SC_OK:
@@ -230,18 +230,27 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     private <T> T parseResponseBody(final CloseableHttpResponse response,
-            final Class<T> type) throws IOException {
+            final Class<T> type) throws IOException, ParseException  {
         HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity);
         return JSON.readValue(responseString, type);
     }
 
-    private String formatErrResponse(final HttpRequestBase httpRequest,
-            final CloseableHttpResponse response, final int expectedStatus) {
-        return String.format(
-                "the redirect api returned a %s response for %s (expected %s)",
-                response.getStatusLine().getStatusCode(), httpRequest.getURI(),
-                expectedStatus);
+     private String formatErrResponse(HttpUriRequestBase httpRequest, CloseableHttpResponse response, int expectedStatusCode) {
+        int responseCode = response.getCode();
+
+        try {
+            String requestURI = httpRequest.getUri().toString();
+            return String.format("the redirect api returned a %s response for %s (expected %s)",
+                            responseCode,
+                            requestURI,
+                            expectedStatusCode);
+        } catch (URISyntaxException e) {
+            return String.format("the redirect api returned a %s response for %s (expected %s)",
+                responseCode,
+                httpRequest.getRequestUri(),
+                expectedStatusCode);
+        }
     }
 
     private CloseableHttpResponse executeRequest(final HttpUriRequest req)
@@ -271,10 +280,11 @@ public class RedirectAPIClient implements RedirectClient {
      * @throws RedirectAPIException
      * @throws RedirectNotFoundException
      * @throws URISyntaxException
+     * @throws ParseException
      */
     @Override
     public Redirects getRedirects(final String count, final String cursor)
-            throws IOException, BadRequestException, RedirectAPIException,
+            throws IOException, BadRequestException, ParseException, RedirectAPIException,
             RedirectNotFoundException, URISyntaxException {
         String path = "/v1/redirects";
         URIBuilder builder = new URIBuilder(redirectAPIUri.resolve(path));
