@@ -241,20 +241,12 @@ public class RedirectAPIClient implements RedirectClient {
             final int expectedStatusCode) {
         int responseCode = response.getCode();
 
-        try {
-            String requestURI = httpRequest.getUri().toString();
-            return String.format(
-                "the redirect api returned a %s response for %s (expected %s)",
-                            responseCode,
-                            requestURI,
-                            expectedStatusCode);
-        } catch (URISyntaxException e) {
-            return String.format(
-                "the redirect api returned a %s response for %s (expected %s)",
+        String requestURI = httpRequest.getRequestUri();
+        return String.format(
+            "the redirect api returned a %s response for %s (expected %s)",
                 responseCode,
-                httpRequest.getRequestUri(),
+                requestURI,
                 expectedStatusCode);
-        }
     }
 
     private CloseableHttpResponse executeRequest(final HttpUriRequest req)
