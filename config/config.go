@@ -28,6 +28,7 @@ type Config struct {
 	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
 	RedisService               string        `envconfig:"REDIS_SERVICE"`
 	RedisUsername              string        `envconfig:"REDIS_USERNAME"`
+	UseIdentityClientKeys      bool          `envconfig:"USE_IDENTITY_CLIENT_KEYS"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -56,6 +57,7 @@ func Get() (*Config, error) {
 		RedisSecProtocol:           "",
 		RedisService:               "",
 		RedisUsername:              "",
+		UseIdentityClientKeys:      true,
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 
