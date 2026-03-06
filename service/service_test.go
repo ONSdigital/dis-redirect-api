@@ -82,7 +82,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		funcDoGetAuthOk := func(_ context.Context, _ *authorisation.Config) (authorisation.Middleware, error) {
+		funcDoGetAuthOk := func(_ context.Context, _ *authorisation.Config, _ *config.Config) (authorisation.Middleware, error) {
 			return authorisationMiddleware, nil
 		}
 
@@ -279,7 +279,7 @@ func TestClose(t *testing.T) {
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
-				DoGetAuthorisationMiddlewareFunc: func(_ context.Context, _ *authorisation.Config) (authorisation.Middleware, error) {
+				DoGetAuthorisationMiddlewareFunc: func(_ context.Context, _ *authorisation.Config, _ *config.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
 				DoGetHTTPServerFunc: func(_ string, _ http.Handler) service.HTTPServer { return serverMock },
@@ -311,7 +311,7 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetAuthorisationMiddlewareFunc: func(_ context.Context, _ *authorisation.Config) (authorisation.Middleware, error) {
+				DoGetAuthorisationMiddlewareFunc: func(_ context.Context, _ *authorisation.Config, _ *config.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
 				DoGetHTTPServerFunc: func(_ string, _ http.Handler) service.HTTPServer { return failingserverMock },

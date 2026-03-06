@@ -61,9 +61,5 @@ func Get() (*Config, error) {
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
 	}
 
-	if cfg.UseIdentityClientKeys {
-		cfg.AuthorisationConfig.JWTVerificationPublicKeys = nil
-	}
-
 	return cfg, envconfig.Process("", cfg)
 }

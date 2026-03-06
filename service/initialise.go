@@ -115,12 +115,16 @@ func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.
 }
 
 // DoGetAuthorisationMiddleware creates authorisation middleware for the given config
-func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
-	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
+func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config, cfg *config.Config) (authorisation.Middleware, error) {
+	if cfg.UseIdentityClientKeys {
+		return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
+	} else {
+		return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
+	}
 }
 
 // GetAuthorisationMiddleware creates a new instance of authorisation.Middlware
-func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config, cfg *config.Config) (authorisation.Middleware, error) {
 	e.AuthorisationMiddleware = true
-	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig)
+	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig, cfg)
 }

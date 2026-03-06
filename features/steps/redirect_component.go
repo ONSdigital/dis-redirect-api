@@ -98,8 +98,12 @@ func (c *RedirectComponent) DoGetRedisClientOk(ctx context.Context, cfg *config.
 	return redisCli, err
 }
 
-func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
-	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
+func (c *RedirectComponent) DoGetAuthorisationMiddlewareOk(ctx context.Context, authorisationConfig *authorisation.Config, cfg *config.Config) (middleware authorisation.Middleware, err error) {
+	if cfg.UseIdentityClientKeys {
+		middleware, err = authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
+	} else {
+		middleware, err = authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
+	}
 	if err != nil {
 		return nil, err
 	}

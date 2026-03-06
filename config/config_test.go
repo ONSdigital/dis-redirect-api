@@ -39,6 +39,7 @@ func TestConfig(t *testing.T) {
 					RedisSecProtocol:           "",
 					RedisService:               "",
 					RedisUsername:              "",
+					UseIdentityClientKeys:      true,
 					AuthorisationConfig:        authorisation.NewDefaultConfig(),
 				})
 			})

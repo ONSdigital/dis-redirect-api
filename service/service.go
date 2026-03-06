@@ -57,7 +57,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		Backend: RedisAPIStore{redisClient},
 	}
 
-	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
+	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig, cfg)
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate authorisation middleware", err)
 		return nil, err
