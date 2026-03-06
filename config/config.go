@@ -28,6 +28,7 @@ type Config struct {
 	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
 	RedisService               string        `envconfig:"REDIS_SERVICE"`
 	RedisUsername              string        `envconfig:"REDIS_USERNAME"`
+	UseTestTokens              bool          `envconfig:"USE_TEST_TOKENS"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -56,7 +57,12 @@ func Get() (*Config, error) {
 		RedisSecProtocol:           "",
 		RedisService:               "",
 		RedisUsername:              "",
+		UseTestTokens:              false,
 		AuthorisationConfig:        authorisation.NewDefaultConfig(),
+	}
+
+	if !cfg.UseTestTokens {
+		cfg.AuthorisationConfig.JWTVerificationPublicKeys = nil
 	}
 
 	return cfg, envconfig.Process("", cfg)
