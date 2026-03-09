@@ -116,7 +116,7 @@ func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.
 
 // DoGetAuthorisationMiddleware creates authorisation middleware for the given config
 func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
-	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
+	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
 }
 
 // GetAuthorisationMiddleware creates a new instance of authorisation.Middlware
