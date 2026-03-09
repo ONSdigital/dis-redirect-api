@@ -2,6 +2,8 @@ module github.com/ONSdigital/dis-redirect-api
 
 go 1.26
 
+retract v0.37.0 // Retracted due to accidental release.
+
 require (
 	github.com/ONSdigital/dis-redis v0.7.2
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0
