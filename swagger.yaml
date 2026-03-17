@@ -15,7 +15,7 @@ tags:
 paths:
   /redirects:
     get:
-      summary: "Get a list of redirects"
+      summary: "Get a list of unordered redirects"
       tags:
         - "Private"
       security: []
@@ -26,7 +26,7 @@ paths:
         - $ref: "#/parameters/Cursor"
       responses:
         200: 
-          description: "Paginated list of redirects"
+          description: "Paginated list of unordered redirects"
           schema:
             $ref: "#/definitions/RedirectList"
         400:
