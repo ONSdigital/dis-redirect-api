@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -62,7 +62,7 @@ jobs:
   dis-redirect-api-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -85,7 +85,7 @@ jobs:
   dis-redirect-api-unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -105,7 +105,7 @@ jobs:
   dis-redirect-api-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -125,7 +125,7 @@ jobs:
   dis-redirect-api-component:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -137,7 +137,7 @@ jobs:
   dis-redirect-api-validate-spec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run specification validation
         uses: fluximus-prime/redocly-cli-github-action@v1
         with:
