@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-redirect-api
 
-go 1.26
+go 1.26.0
 
 retract v0.37.0 // Retracted due to accidental release.
 
