@@ -13,6 +13,7 @@ VERSION ?= $(shell git tag --points-at HEAD | grep ^v | head -n 1)
 LDFLAGS = -ldflags "-X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT) -X main.Version=$(VERSION)"
 
 JAVA_SDK_DIR="./sdk/java"
+OSSINDEX_ERRORS = "Unable to contact OSS Index|authentication failed|401 Unauthorized|403 Forbidden|429 Too Many Requests|Too many requests|Rate limit|Unknown host|Connection refused|timed out|unreachable|402 Payment Required"
 
 .PHONY: all
 all: delimiter-AUDIT audit delimiter-LINTERS lint delimiter-UNIT-TESTS test delimiter-COMPONENT_TESTS test-component delimiter-FINISH ## Runs multiple targets, audit, lint, test and test-component
@@ -25,8 +26,14 @@ audit-go:
 	dis-vulncheck
 
 .PHONY: audit-java
-audit-java: 
-	mvn -f $(JAVA_SDK_DIR) ossindex:audit
+audit-java:
+	@echo "🔍 Running OSS Index audit for dis-redirect-api"
+	@mkdir -p target
+	@mvn -f $(JAVA_SDK_DIR) ossindex:audit > target/ossindex-audit-dis-redirect-api.log 2>&1; status=$$?; \
+	cat target/ossindex-audit-dis-redirect-api.log; \
+	[ $$status -eq 0 ] && grep -Eiqn $(OSSINDEX_ERRORS) target/ossindex-audit-dis-redirect-api.log && \
+		{ echo "❌ OSS Index API/auth/network error (CMS) — see target/ossindex-audit-dis-redirect-api.log"; exit 1; }; \
+	exit $$status
 
 .PHONY: build
 build: build-go build-java
