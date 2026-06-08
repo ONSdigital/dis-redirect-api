@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	. "github.com/smartystreets/goconvey/convey"
@@ -24,16 +23,16 @@ func TestConfig(t *testing.T) {
 				configuration, err = Get() // This Get() is only called once, when inside this function
 				So(err, ShouldBeNil)
 				So(configuration, ShouldResemble, &Config{
-					BindAddr:                   "localhost:29900",
-					GracefulShutdownTimeout:    5 * time.Second,
-					HealthCheckInterval:        30 * time.Second,
-					HealthCheckCriticalTimeout: 90 * time.Second,
-					OTBatchTimeout:             5 * time.Second,
-					OTExporterOTLPEndpoint:     "localhost:4317",
-					OTServiceName:              "dis-redirect-api",
-					OtelEnabled:                false,
-					RedirectAPIURL:             "http://localhost:29900",
-					RedisAddress:               "localhost:6379",
+					BindAddr:                   defaultBindAddr,
+					GracefulShutdownTimeout:    defaultGracefulShutdownTimeout,
+					HealthCheckInterval:        defaultHealthCheckInterval,
+					HealthCheckCriticalTimeout: defaultHealthCheckCriticalTimeout,
+					OTBatchTimeout:             defaultOTBatchTimeout,
+					OTExporterOTLPEndpoint:     defaultOTExporterOTLPEndpoint,
+					OTServiceName:              defaultOTServiceName,
+					OtelEnabled:                defaultOtelEnabled,
+					RedirectAPIURL:             defaultRedirectAPIURL,
+					RedisAddress:               defaultRedisAddress,
 					RedisClusterName:           "",
 					RedisRegion:                "",
 					RedisSecProtocol:           "",

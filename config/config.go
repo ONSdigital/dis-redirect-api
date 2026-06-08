@@ -9,6 +9,17 @@ import (
 
 const (
 	RedisTLSProtocol = "TLS"
+
+	defaultBindAddr                   = "localhost:29900"
+	defaultRedirectAPIURL             = "http://localhost:29900"
+	defaultGracefulShutdownTimeout    = 5 * time.Second
+	defaultHealthCheckInterval        = 30 * time.Second
+	defaultHealthCheckCriticalTimeout = 90 * time.Second
+	defaultOTBatchTimeout             = 5 * time.Second
+	defaultOTExporterOTLPEndpoint     = "localhost:4317"
+	defaultOTServiceName              = "dis-redirect-api"
+	defaultOtelEnabled                = false
+	defaultRedisAddress               = "localhost:6379"
 )
 
 // Config represents service configuration for dis-redirect-api
@@ -41,16 +52,16 @@ func Get() (*Config, error) {
 	}
 
 	cfg = &Config{
-		BindAddr:                   "localhost:29900",
-		RedirectAPIURL:             "http://localhost:29900",
-		GracefulShutdownTimeout:    5 * time.Second,
-		HealthCheckInterval:        30 * time.Second,
-		HealthCheckCriticalTimeout: 90 * time.Second,
-		OTBatchTimeout:             5 * time.Second,
-		OTExporterOTLPEndpoint:     "localhost:4317",
-		OTServiceName:              "dis-redirect-api",
-		OtelEnabled:                false,
-		RedisAddress:               "localhost:6379",
+		BindAddr:                   defaultBindAddr,
+		RedirectAPIURL:             defaultRedirectAPIURL,
+		GracefulShutdownTimeout:    defaultGracefulShutdownTimeout,
+		HealthCheckInterval:        defaultHealthCheckInterval,
+		HealthCheckCriticalTimeout: defaultHealthCheckCriticalTimeout,
+		OTBatchTimeout:             defaultOTBatchTimeout,
+		OTExporterOTLPEndpoint:     defaultOTExporterOTLPEndpoint,
+		OTServiceName:              defaultOTServiceName,
+		OtelEnabled:                defaultOtelEnabled,
+		RedisAddress:               defaultRedisAddress,
 		RedisClusterName:           "",
 		RedisRegion:                "",
 		RedisSecProtocol:           "",

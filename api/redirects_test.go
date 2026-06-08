@@ -42,9 +42,11 @@ var (
 	financeBulletin3   = "/finance/mybulletin3"
 	nonRedirectURL     = "/non-redirect-url"
 	testFromURL        = "/foo"
+	testToURL          = "/bar"
 	expectedProto      = "https"
 	expectedHost       = "api.somehost"
 	expectedPathPrefix = "v1"
+	idKey              = "id"
 	keyValuePairs      = map[string]string{economyBulletin1: financeBulletin1, economyBulletin2: financeBulletin2, economyBulletin3: financeBulletin3}
 	mockStore          = &storetest.StorerMock{
 		GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
@@ -277,7 +279,7 @@ func TestUpsertRedirect(t *testing.T) {
 
 		Convey("When request is valid with matching base64 ID and from path", func() {
 			from := testFromURL
-			to := "/bar"
+			to := testToURL
 			id := base64.URLEncoding.EncodeToString([]byte(from))
 
 			redirect := models.Redirect{
@@ -286,7 +288,7 @@ func TestUpsertRedirect(t *testing.T) {
 			}
 			body, _ := json.Marshal(redirect)
 			req := httptest.NewRequest(http.MethodPut, "/redirects/"+id, bytes.NewBuffer(body))
-			req = mux.SetURLVars(req, map[string]string{"id": id})
+			req = mux.SetURLVars(req, map[string]string{idKey: id})
 			rec := httptest.NewRecorder()
 
 			apiInstance.UpsertRedirect(rec, req)
@@ -297,7 +299,7 @@ func TestUpsertRedirect(t *testing.T) {
 
 		Convey("When ID is not valid base64", func() {
 			req := httptest.NewRequest(http.MethodPut, "/redirects/!badid", bytes.NewBuffer([]byte(`{}`)))
-			req = mux.SetURLVars(req, map[string]string{"id": "!badid"})
+			req = mux.SetURLVars(req, map[string]string{idKey: "!badid"})
 			rec := httptest.NewRecorder()
 
 			apiInstance.UpsertRedirect(rec, req)
@@ -309,11 +311,11 @@ func TestUpsertRedirect(t *testing.T) {
 			id := base64.URLEncoding.EncodeToString([]byte(testFromURL))
 			redirect := models.Redirect{
 				From: "/mismatch",
-				To:   "/bar",
+				To:   testToURL,
 			}
 			body, _ := json.Marshal(redirect)
 			req := httptest.NewRequest(http.MethodPut, "/redirects/"+id, bytes.NewBuffer(body))
-			req = mux.SetURLVars(req, map[string]string{"id": id})
+			req = mux.SetURLVars(req, map[string]string{idKey: id})
 			rec := httptest.NewRecorder()
 
 			apiInstance.UpsertRedirect(rec, req)
@@ -330,11 +332,11 @@ func TestUpsertRedirect(t *testing.T) {
 			id := base64.URLEncoding.EncodeToString([]byte(from))
 			redirect := models.Redirect{
 				From: from,
-				To:   "/bar",
+				To:   testToURL,
 			}
 			body, _ := json.Marshal(redirect)
 			req := httptest.NewRequest(http.MethodPut, "/redirects/"+id, bytes.NewBuffer(body))
-			req = mux.SetURLVars(req, map[string]string{"id": id})
+			req = mux.SetURLVars(req, map[string]string{idKey: id})
 			rec := httptest.NewRecorder()
 
 			apiInstance.UpsertRedirect(rec, req)
@@ -345,7 +347,7 @@ func TestUpsertRedirect(t *testing.T) {
 		Convey("When request body is invalid JSON", func() {
 			id := base64.URLEncoding.EncodeToString([]byte("/foo"))
 			req := httptest.NewRequest(http.MethodPut, "/redirects/"+id, bytes.NewBuffer([]byte(`{bad json`)))
-			req = mux.SetURLVars(req, map[string]string{"id": id})
+			req = mux.SetURLVars(req, map[string]string{idKey: id})
 			rec := httptest.NewRecorder()
 
 			apiInstance.UpsertRedirect(rec, req)

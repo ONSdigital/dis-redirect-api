@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/ONSdigital/dis-redirect-api/api"
 	apiError "github.com/ONSdigital/dis-redirect-api/sdk/go/errors"
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -93,8 +94,8 @@ func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, hea
 
 	// add the count and cursor values, if present, to the path URL
 	q := req.URL.Query()
-	q.Add("count", queryParams.Get("count"))
-	q.Add("cursor", queryParams.Get("cursor"))
+	q.Add(api.QueryParameterCount, queryParams.Get(api.QueryParameterCount))
+	q.Add(api.QueryParameterCursor, queryParams.Get(api.QueryParameterCursor))
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)

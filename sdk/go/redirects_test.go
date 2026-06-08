@@ -17,6 +17,10 @@ import (
 
 var getRedirectsResponse = models.Redirects{}
 
+const (
+	AuthorizedUserToken = "Bearer authorised-user"
+)
+
 func TestGetRedirect(t *testing.T) {
 	t.Parallel()
 
@@ -178,7 +182,7 @@ func TestPutRedirect(t *testing.T) {
 	ctx := context.Background()
 
 	headers := http.Header{
-		Authorization: {"Bearer authorised-user"},
+		Authorization: {AuthorizedUserToken},
 	}
 
 	Convey("Given a successful 201 Created response from dis-redirect-api", t, func() {
@@ -269,7 +273,7 @@ func TestDeleteRedirect(t *testing.T) {
 	ctx := context.Background()
 
 	headers := http.Header{
-		Authorization: {"Bearer authorised-user"},
+		Authorization: {AuthorizedUserToken},
 	}
 
 	Convey("Given a successful 204 No Content response from dis-redirect-api", t, func() {

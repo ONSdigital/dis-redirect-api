@@ -23,7 +23,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 
 	decodedString, err := base64.URLEncoding.DecodeString(redirectID)
 	if err != nil {
-		logData := log.Data{"redirect_id": redirectID}
+		logData := log.Data{models.LogRedirectIDKey: redirectID}
 		log.Info(ctx, "invalid base 64 id", logData)
 		api.handleError(ctx, w, ErrInvalidBase64Id, http.StatusBadRequest)
 		return
@@ -85,7 +85,7 @@ func (api *RedirectAPI) getRedirect(w http.ResponseWriter, r *http.Request) {
 func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := mux.Vars(r)["id"]
-	logData := log.Data{"redirect_id": id}
+	logData := log.Data{models.LogRedirectIDKey: id}
 
 	fromDecoded, err := base64.URLEncoding.DecodeString(id)
 	if err != nil {
@@ -101,14 +101,14 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logData = log.Data{"redirect_from": redirect.From}
+	logData = log.Data{models.LogRedirectFromKey: redirect.From}
 	if redirect.From != string(fromDecoded) {
 		log.Info(ctx, "from field does not match base64 id", logData)
 		api.handleError(ctx, w, ErrIDFromMismatch, http.StatusBadRequest)
 		return
 	}
 
-	logData = log.Data{"redirect_from": redirect.From, "redirect_to": redirect.To}
+	logData = log.Data{models.LogRedirectFromKey: redirect.From, models.LogRedirectToKey: redirect.To}
 	if !isValidRelativePath(redirect.From) || !isValidRelativePath(redirect.To) {
 		log.Info(ctx, "from and to not relative paths", logData)
 		api.handleError(ctx, w, ErrFromToNotRelative, http.StatusBadRequest)
@@ -203,8 +203,8 @@ func encodeBase64(key string) string {
 // getRedirects gets a paged list of redirects from the store
 func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	strCount := req.URL.Query().Get("count")
-	strCursor := req.URL.Query().Get("cursor")
+	strCount := req.URL.Query().Get(QueryParameterCount)
+	strCursor := req.URL.Query().Get(QueryParameterCursor)
 
 	// make count default to 10
 	if strCount == "" {
@@ -216,7 +216,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		strCursor = "0"
 	}
 
-	logData := log.Data{"count": strCount, "cursor": strCursor}
+	logData := log.Data{QueryParameterCount: strCount, QueryParameterCursor: strCursor}
 
 	// convert count from a string to an int64 ready to use in call to GetRedirects
 	count, errCount := strconv.ParseInt(strCount, 10, 32)
@@ -241,7 +241,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, ErrInvalidOrNegativeCursor, http.StatusBadRequest)
 		return
 	}
-	logData = log.Data{"count": count, "cursor": cursor}
+	logData = log.Data{QueryParameterCount: count, QueryParameterCursor: cursor}
 
 	keyValuePairs, newCursor, err := api.RedirectStore.GetRedirects(ctx, count, cursor)
 	if err != nil {
