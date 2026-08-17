@@ -11,7 +11,7 @@ const (
 	RedisTLSProtocol = "TLS"
 
 	defaultBindAddr                   = "localhost:29900"
-	defaultRedirectAPIURL             = "http://localhost:29900"
+	defaultEnablePrivateEndpoints     = false
 	defaultGracefulShutdownTimeout    = 5 * time.Second
 	defaultHealthCheckInterval        = 30 * time.Second
 	defaultHealthCheckCriticalTimeout = 90 * time.Second
@@ -19,12 +19,14 @@ const (
 	defaultOTExporterOTLPEndpoint     = "localhost:4317"
 	defaultOTServiceName              = "dis-redirect-api"
 	defaultOtelEnabled                = false
+	defaultRedirectAPIURL             = "http://localhost:29900"
 	defaultRedisAddress               = "localhost:6379"
 )
 
 // Config represents service configuration for dis-redirect-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
+	EnablePrivateEndpoints     bool          `envconfig:"ENABLE_PRIVATE_ENDPOINTS"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
@@ -53,7 +55,7 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   defaultBindAddr,
-		RedirectAPIURL:             defaultRedirectAPIURL,
+		EnablePrivateEndpoints:     defaultEnablePrivateEndpoints,
 		GracefulShutdownTimeout:    defaultGracefulShutdownTimeout,
 		HealthCheckInterval:        defaultHealthCheckInterval,
 		HealthCheckCriticalTimeout: defaultHealthCheckCriticalTimeout,
@@ -61,6 +63,7 @@ func Get() (*Config, error) {
 		OTExporterOTLPEndpoint:     defaultOTExporterOTLPEndpoint,
 		OTServiceName:              defaultOTServiceName,
 		OtelEnabled:                defaultOtelEnabled,
+		RedirectAPIURL:             defaultRedirectAPIURL,
 		RedisAddress:               defaultRedisAddress,
 		RedisClusterName:           "",
 		RedisRegion:                "",

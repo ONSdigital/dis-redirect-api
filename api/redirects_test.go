@@ -71,11 +71,14 @@ func encodeBase64(key string) string {
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 	r := mux.NewRouter()
 
-	cfg, err := config.Get()
+	baseCfg, err := config.Get()
 	So(err, ShouldBeNil)
 
+	cfg := *baseCfg
+	cfg.EnablePrivateEndpoints = true
+
 	ctx := context.Background()
-	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), cfg)
+	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), &cfg)
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {

@@ -24,6 +24,7 @@ func TestConfig(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(configuration, ShouldResemble, &Config{
 					BindAddr:                   defaultBindAddr,
+					EnablePrivateEndpoints:     defaultEnablePrivateEndpoints,
 					GracefulShutdownTimeout:    defaultGracefulShutdownTimeout,
 					HealthCheckInterval:        defaultHealthCheckInterval,
 					HealthCheckCriticalTimeout: defaultHealthCheckCriticalTimeout,
