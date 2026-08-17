@@ -53,6 +53,7 @@ func (c *RedirectComponent) InitAPIFeature() *componentTest.APIFeature {
 
 func (c *RedirectComponent) Reset() *RedirectComponent {
 	c.apiFeature.Reset()
+	c.Config.EnablePrivateEndpoints = false
 	return c
 }
 

@@ -21,6 +21,7 @@ import (
 
 func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	c.apiFeature.RegisterSteps(ctx)
+	ctx.Step(`^private endpoints are enabled$`, c.privateEndpointsAreEnabled)
 	ctx.Step(`^the redirect api is running$`, c.theRedirectAPIIsRunning)
 	ctx.Step(`^I would expect there to be three or more redirects returned in a list$`, c.iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInAList)
 	ctx.Step(`^in each redirect I would expect the response to contain values that have these structures$`, c.inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
@@ -40,9 +41,13 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 		return fmt.Errorf("failed to register permissions bundle: %w", err)
 	}
 
-	c.Config, err = config.Get()
-	if err != nil {
-		return err
+	if c.Config == nil {
+		cfg, err := config.Get()
+		if err != nil {
+			return err
+		}
+		cfgCopy := *cfg
+		c.Config = &cfgCopy
 	}
 
 	c.Config.RedisAddress = c.redisFeature.Client.Options().Addr
@@ -164,5 +169,18 @@ func (c *RedirectComponent) iWouldExpectThereToBeRedirectsReturnedInAList(expect
 	numRedirectsFound := len(response.RedirectList)
 	assert.True(&c.ErrorFeature, numRedirectsFound == expectedNumRedirects, "The list should contain "+strconv.Itoa(expectedNumRedirects)+" redirects but it contains "+strconv.Itoa(numRedirectsFound))
 
+	return nil
+}
+
+func (c *RedirectComponent) privateEndpointsAreEnabled() error {
+	if c.Config == nil {
+		cfg, err := config.Get()
+		if err != nil {
+			return err
+		}
+		cfgCopy := *cfg
+		c.Config = &cfgCopy
+	}
+	c.Config.EnablePrivateEndpoints = true
 	return nil
 }

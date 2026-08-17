@@ -3,6 +3,7 @@ Feature: Delete redirect endpoint
 
   Background: Service setup
     Given an admin user has the "redirects:delete" permission
+    And private endpoints are enabled
     And the redirect api is running
 
   Scenario: Delete a redirect if the key does not exist

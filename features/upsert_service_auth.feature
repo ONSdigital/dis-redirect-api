@@ -3,6 +3,7 @@ Feature: Upsert redirect endpoint with service auth
 
   Background: Service setup
     Given service "dis-other-service" has the "redirects:edit" permission
+    And private endpoints are enabled
     And the redirect api is running
     And I am identified as "dis-other-service"
 
