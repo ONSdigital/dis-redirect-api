@@ -1,5 +1,5 @@
-@DeleteRedirect
-Feature: Delete redirect endpoint
+@DeletePrivateUserAuth
+Feature: DELETE redirect endpoint for private mode with user auth
 
   Background: Service setup
     Given an admin user has the "redirects:delete" permission
@@ -35,12 +35,11 @@ Feature: Delete redirect endpoint
       the base64 id provided is invalid
       """
 
-  Scenario: Delete a redirect without the correct permission
+  Scenario: Delete a redirect without user auth
     Given redis is healthy
     And I am not authenticated
     When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
     Then the HTTP status code should be "401"
-
 
   Scenario: Server error when attempting to delete a redirect
     Given I am an admin user

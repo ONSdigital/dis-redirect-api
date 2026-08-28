@@ -47,6 +47,7 @@ func (c *RedirectComponent) theRedirectAPIIsRunning() error {
 			return err
 		}
 		cfgCopy := *cfg
+		cfgCopy.EnablePrivateEndpoints = false
 		c.Config = &cfgCopy
 	}
 

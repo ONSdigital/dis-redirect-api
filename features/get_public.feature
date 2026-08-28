@@ -1,5 +1,5 @@
-@GetRedirect
-Feature: Redirect endpoint
+@GetRedirectPublic
+Feature: GET redirect endpoint for public mode
 
   Background: Service setup
     Given an admin user has the "redirects:read" permission
