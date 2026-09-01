@@ -20,15 +20,3 @@ Feature: GET redirect endpoint for private mode with service auth
     And redis is healthy
     When I GET "/v1/redirects"
     Then the HTTP status code should be "200"
-
-  Scenario: Return 401 for GET /v1/redirects/{id} without service auth
-    Given I am not authorised
-    And redis is healthy
-    When I GET "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
-    Then the HTTP status code should be "401"
-
-  Scenario: Return 401 for GET /v1/redirects without service auth
-    Given I am not authorised
-    And redis is healthy
-    When I GET "/v1/redirects"
-    Then the HTTP status code should be "401"

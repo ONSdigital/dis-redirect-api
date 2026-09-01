@@ -37,7 +37,7 @@ Feature: DELETE redirect endpoint for private mode with user auth
 
   Scenario: Delete a redirect without user auth
     Given redis is healthy
-    And I am not authenticated
+    And I am not authorised
     When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
     Then the HTTP status code should be "401"
 

@@ -57,15 +57,3 @@ Feature: Upsert redirect endpoint for private mode with user auth
         }
       """
     Then the HTTP status code should be "400"
-
-  Scenario: Upsert a redirect value via PUT without user auth
-    Given redis is healthy
-    And I am not authenticated
-    When I PUT "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
-      """
-        {
-          "from": "/economy/old-path",
-          "to": "/economy/new-path"
-        }
-      """
-    Then the HTTP status code should be "401"

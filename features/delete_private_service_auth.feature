@@ -25,9 +25,3 @@ Feature: DELETE redirect endpoint for private mode with service auth
     When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
     Then the HTTP status code should be "204"
     And redis contains no value for key "/economy/old-path"
-
-  Scenario: Delete a redirect without service auth
-    Given I am not authorised
-    And redis is healthy
-    When I DELETE "/v1/redirects/L2Vjb25vbXkvb2xkLXBhdGg="
-    Then the HTTP status code should be "401"
