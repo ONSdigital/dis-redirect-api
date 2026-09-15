@@ -34,6 +34,7 @@ func TestConfig(t *testing.T) {
 					OtelEnabled:                defaultOtelEnabled,
 					RedirectAPIURL:             defaultRedirectAPIURL,
 					RedisAddress:               defaultRedisAddress,
+					EnableReverseLookup:        defaultEnableReverseLookup,
 					RedisClusterName:           "",
 					RedisRegion:                "",
 					RedisSecProtocol:           "",
