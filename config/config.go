@@ -21,6 +21,7 @@ const (
 	defaultOtelEnabled                = false
 	defaultRedirectAPIURL             = "http://localhost:29900"
 	defaultRedisAddress               = "localhost:6379"
+	defaultEnableReverseLookup        = false
 )
 
 // Config represents service configuration for dis-redirect-api
@@ -41,6 +42,7 @@ type Config struct {
 	RedisSecProtocol           string        `envconfig:"REDIS_SEC_PROTO"`
 	RedisService               string        `envconfig:"REDIS_SERVICE"`
 	RedisUsername              string        `envconfig:"REDIS_USERNAME"`
+	EnableReverseLookup        bool          `envconfig:"ENABLE_REVERSE_LOOKUP"`
 	AuthorisationConfig        *authorisation.Config
 }
 
@@ -65,6 +67,7 @@ func Get() (*Config, error) {
 		OtelEnabled:                defaultOtelEnabled,
 		RedirectAPIURL:             defaultRedirectAPIURL,
 		RedisAddress:               defaultRedisAddress,
+		EnableReverseLookup:        defaultEnableReverseLookup,
 		RedisClusterName:           "",
 		RedisRegion:                "",
 		RedisSecProtocol:           "",

@@ -67,6 +67,7 @@ npm install -g redocly-cli
 | REDIS_SEC_PROTO              | ""               | Use 'TLS' to connect with TLS                                                                                      |
 | REDIS_SERVICE                | ""               | Name of the redis service to connect to, e.g. memorydb, elasticache                                                |
 | REDIS_USERNAME               | ""               | Username to connect to Redis with                                                                                  |
+| ENABLE_REVERSE_LOOKUP        | false            | Feature flag to enable reverse lookup capability                                                                               |
 
 ### SDKs
 
