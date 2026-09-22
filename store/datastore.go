@@ -39,7 +39,10 @@ func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string
 }
 
 func (ds *Datastore) GetRedirects(ctx context.Context, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error) {
-	return ds.Backend.GetKeyValuePairs(ctx, "", count, cursor)
+
+	// Calling the backend will try to return all key value pairs, which includes 'string to string' and 'string to set', so will error
+	// unless we ask it to only return the 'string to string' values, which are the ones beginning with 'fwd'
+	return ds.Backend.GetKeyValuePairs(ctx, "fwd*", count, cursor)
 }
 
 func (ds *Datastore) GetTotalCount(ctx context.Context) (totalCount int, err error) {
