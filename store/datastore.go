@@ -83,7 +83,7 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 		return ds.Backend.GetSetMemberValues(ctx, revPrefix+to, "", fwdPrefix, count, cursor)
 	}
 
-	return ds.Backend.GetKeyValuePairs(ctx, "", count, cursor)
+	return ds.Backend.GetKeyValuePairs(ctx, "fwd*", count, cursor)
 }
 
 // GetTotalCount retrieves the total count of redirects from the datastore.
