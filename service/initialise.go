@@ -14,7 +14,8 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// ExternalServiceList holds the initialiser and initialisation state of external services.
+// ExternalServiceList holds the initialiser and
+// initialisation state of external services.
 type ExternalServiceList struct {
 	AuthorisationMiddleware bool
 	HealthCheck             bool
@@ -38,7 +39,8 @@ func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler
 	return s
 }
 
-// GetHealthCheck creates a healthcheck with versionInfo and sets teh HealthCheck flag to true
+// GetHealthCheck creates a healthcheck with versionInfo and
+// sets the HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	hc, err := e.Init.DoGetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
@@ -48,7 +50,8 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 	return hc, nil
 }
 
-// DoGetHTTPServer creates an HTTP Server with the provided bind address and router
+// DoGetHTTPServer creates an HTTP Server with the
+// provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
@@ -114,12 +117,14 @@ func (e *Init) DoGetRedisClient(ctx context.Context, cfg *config.Config) (store.
 	return redisClient, nil
 }
 
-// DoGetAuthorisationMiddleware creates authorisation middleware for the given config
+// DoGetAuthorisationMiddleware creates authorisation
+// middleware for the given config
 func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
 }
 
-// GetAuthorisationMiddleware creates a new instance of authorisation.Middlware
+// GetAuthorisationMiddleware creates a new instance
+// of authorisation.Middlware
 func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 	e.AuthorisationMiddleware = true
 	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig)

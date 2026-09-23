@@ -1,7 +1,13 @@
 package models
 
 const (
-	LogRedirectIDKey   = "redirect_id"
+	// LogRedirectIDKey represents the key used for
+	// logging the redirect ID.
+	LogRedirectIDKey = "redirect_id"
+	// LogRedirectFromKey represents the key used for
+	// logging the redirect source.
 	LogRedirectFromKey = "redirect_from"
-	LogRedirectToKey   = "redirect_to"
+	// LogRedirectToKey represents the key used for
+	// logging the redirect destination.
+	LogRedirectToKey = "redirect_to"
 )

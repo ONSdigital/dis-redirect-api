@@ -7,8 +7,9 @@ import (
 	"github.com/ONSdigital/dp-net/v3/request"
 )
 
+// List of available headers
 const (
-	// List of available headers
+	// Authorization represents the HTTP Authorization header.
 	Authorization string = request.AuthHeaderKey
 )
 

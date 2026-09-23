@@ -15,7 +15,7 @@ type StatusError struct {
 	Err  error
 }
 
-// Allows StatusError to satisfy the error interface.
+// Error allows StatusError to satisfy the error interface.
 func (e StatusError) Error() string {
 	if e.Err == nil {
 		return "nil"
@@ -29,6 +29,8 @@ func (e StatusError) Status() int {
 	return e.Code
 }
 
+// ErrorStatus returns the HTTP status code associated
+// with the given error.
 func ErrorStatus(err error) int {
 	var rerr Error
 	if errors.As(err, &rerr) {
@@ -38,6 +40,7 @@ func ErrorStatus(err error) int {
 	return 0
 }
 
+// ErrorMessage returns the error message associated with the given error.
 func ErrorMessage(err error) string {
 	var rerr Error
 	if errors.As(err, &rerr) {

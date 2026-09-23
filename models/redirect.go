@@ -17,7 +17,8 @@ type Redirects struct {
 	TotalCount   int        `json:"total_count"`
 }
 
-// RedirectLinks is a type that contains links relating to the individual redirect.
+// RedirectLinks is a type that contains links relating to the
+// individual redirect.
 // Currently, it only contains one link, which is a link to itself.
 type RedirectLinks struct {
 	Self RedirectSelf `json:"self"`

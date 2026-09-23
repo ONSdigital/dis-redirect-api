@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	RedirectEndpoint  = "%s/v1/redirects/%s"
+	// RedirectEndpoint is the endpoint for a single redirect.
+	RedirectEndpoint = "%s/v1/redirects/%s"
+	// RedirectsEndpoint is the listing endpoint for redirects.
 	RedirectsEndpoint = "%s/v1/redirects"
 )
 

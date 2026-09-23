@@ -18,6 +18,7 @@ const (
 	service = "dis-redirect-api"
 )
 
+// Client represents a client for interacting with the redirect API.
 type Client struct {
 	hcCli *healthcheck.Client
 }
@@ -47,18 +48,25 @@ func (cli *Client) Health() *healthcheck.Client {
 	return cli.hcCli
 }
 
-// Checker calls redirect api health endpoint and returns a check object to the caller
+// Checker calls redirect api health endpoint and returns
+// a check object to the caller
 func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error {
 	return cli.hcCli.Checker(ctx, check)
 }
 
+// ResponseInfo represents the response information returned
+// from a call to the redirect API.
 type ResponseInfo struct {
-	Body    []byte
+	// Body contains the response body as a byte slice.
+	Body []byte
+	// Headers contains the HTTP headers returned in the response.
 	Headers http.Header
-	Status  int
+	// Status contains the HTTP status code returned in the response.
+	Status int
 }
 
-// callRedirectAPI calls the Redirect API endpoint given by path for the provided REST method, request headers, and body payload.
+// callRedirectAPI calls the Redirect API endpoint given by path for the
+// provided REST method, request headers, and body payload.
 // It returns the response body and any error that occurred.
 func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, headers http.Header, queryParams url.Values, payload []byte) (*ResponseInfo, apiError.Error) {
 	URL, err := url.Parse(path)

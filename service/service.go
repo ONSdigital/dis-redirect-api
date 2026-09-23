@@ -24,6 +24,7 @@ type Service struct {
 	AuthMiddleware authorisation.Middleware
 }
 
+// RedisAPIStore wraps the Redis client to implement the store.Redis interface.
 type RedisAPIStore struct {
 	store.Redis
 }
@@ -143,7 +144,8 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-// registerCheckers adds the checkers for the provided clients to the health check object
+// registerCheckers adds the checkers for the provided
+// clients to the health check object
 func registerCheckers(ctx context.Context, hc HealthChecker, redisCli store.Redis) (err error) {
 	hasErrors := false
 

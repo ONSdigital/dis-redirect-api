@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// RedisTLSProtocol represents the protocol used for Redis TLS connections.
 	RedisTLSProtocol = "TLS"
 
 	defaultBindAddr                   = "localhost:29900"

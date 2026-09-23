@@ -47,7 +47,8 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 	return api
 }
 
-// enablePrivateRedirectEndpoints enables the redirect endpoints for the redirect api with authorisation middleware
+// enablePrivateRedirectEndpoints enables the redirect endpoints for
+// the redirect api with authorisation middleware
 func (api *RedirectAPI) enablePrivateRedirectEndpoints(auth authorisation.Middleware) {
 	api.get("/v1/redirects/{id}", auth.Require("redirects:read", api.getRedirect))
 
@@ -58,7 +59,8 @@ func (api *RedirectAPI) enablePrivateRedirectEndpoints(auth authorisation.Middle
 	api.delete("/v1/redirects/{id}", auth.Require("redirects:delete", api.DeleteRedirect))
 }
 
-// enablePublicRedirectEndpoints enables only the public endpoints for the redirect api
+// enablePublicRedirectEndpoints enables only the public
+// endpoints for the redirect api
 func (api *RedirectAPI) enablePublicRedirectEndpoints() {
 	api.get("/v1/redirects/{id}", api.getRedirect)
 
