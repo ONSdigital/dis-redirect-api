@@ -58,6 +58,24 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		Backend: RedisAPIStore{redisClient},
 	}
 
+	var reconciler store.Reconciler
+
+	if cfg.EnableReverseLookup {
+		reconciler = store.NewReverseLookupReconciler(datastore)
+	} else {
+		reconciler = store.NewForwardLookupOnlyReconciler(datastore)
+	}
+
+	log.Info(ctx, "reconciling datastore")
+
+	changes, err := reconciler.Reconcile(ctx)
+	if err != nil {
+		log.Fatal(ctx, "failed to reconcile datastore", err, log.Data{"records_changed": changes})
+		return nil, err
+	}
+
+	log.Info(ctx, "datastore reconciliation complete", log.Data{"records_changed": changes})
+
 	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate authorisation middleware", err)

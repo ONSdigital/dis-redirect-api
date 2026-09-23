@@ -22,6 +22,7 @@ import (
 func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	c.apiFeature.RegisterSteps(ctx)
 	ctx.Step(`^private endpoints are enabled$`, c.privateEndpointsAreEnabled)
+	ctx.Step(`^reverse lookup is (enabled|disabled)$`, c.reverseLookupIsEnabled)
 	ctx.Step(`^the redirect api is running$`, c.theRedirectAPIIsRunning)
 	ctx.Step(`^I would expect there to be three or more redirects returned in a list$`, c.iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInAList)
 	ctx.Step(`^in each redirect I would expect the response to contain values that have these structures$`, c.inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
@@ -183,5 +184,23 @@ func (c *RedirectComponent) privateEndpointsAreEnabled() error {
 		c.Config = &cfgCopy
 	}
 	c.Config.EnablePrivateEndpoints = true
+	return nil
+}
+
+func (c *RedirectComponent) reverseLookupIsEnabled(status string) error {
+	if c.Config == nil {
+		cfg, err := config.Get()
+		if err != nil {
+			return err
+		}
+		cfgCopy := *cfg
+		c.Config = &cfgCopy
+	}
+	switch status {
+	case "enabled":
+		c.Config.EnableReverseLookup = true
+	case "disabled":
+		c.Config.EnableReverseLookup = false
+	}
 	return nil
 }

@@ -73,7 +73,11 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		redisMock := &storetest.RedisMock{}
+		redisMock := &storetest.RedisMock{
+			GetKeysFunc: func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+				return nil, 0, nil
+			},
+		}
 
 		failingServerMock := &mock.HTTPServerMock{
 			ListenAndServeFunc: func() error {
@@ -274,6 +278,9 @@ func TestClose(t *testing.T) {
 
 		// Redis Close will fail if healthcheck and http server are not already closed
 		redisMock := &storetest.RedisMock{
+			GetKeysFunc: func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+				return nil, 0, nil
+			},
 			CheckerFunc: func(_ context.Context, _ *healthcheck.CheckState) error { return nil },
 		}
 

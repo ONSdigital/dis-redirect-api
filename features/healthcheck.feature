@@ -34,13 +34,12 @@ Feature: Health endpoint
         """
 
   Rule: Redis is unhealthy
-    Background:
-      Given redis stops running
 
     @HealthcheckWarning
     Scenario: Returning a WARNING (429) status when health endpoint called
       Given the redirect api is running
       And I have a healthcheck interval of 1 second
+      And redis stops running
       And I wait 4 seconds for the healthcheck to be available
       When I GET "/health"
       Then the HTTP status code should be "429"
@@ -71,6 +70,7 @@ Feature: Health endpoint
     Scenario: Returning a CRITICAL (500) status when health endpoint called
       Given the redirect api is running
       And I have a healthcheck interval of 1 second
+      And redis stops running
       And I wait 9 seconds to pass the critical timeout
       When I GET "/health"
       Then the HTTP status code should be "500"
