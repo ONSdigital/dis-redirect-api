@@ -22,3 +22,4 @@ Feature: Database Reconciliation
     And the redirect api is running
     Then the key "/economy/mypage" has a value of "/newpage" in the Redis store   
     And redis contains no value for key "rev:/newpage"
+    And redis contains no value for key "fwd:/economy/mypage"
