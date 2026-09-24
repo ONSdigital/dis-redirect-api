@@ -205,6 +205,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	strCount := req.URL.Query().Get(QueryParameterCount)
 	strCursor := req.URL.Query().Get(QueryParameterCursor)
+	strTo := req.URL.Query().Get(QueryParameterTo)
 
 	// make count default to 10
 	if strCount == "" {
@@ -241,9 +242,25 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		api.handleError(ctx, w, ErrInvalidOrNegativeCursor, http.StatusBadRequest)
 		return
 	}
-	logData = log.Data{QueryParameterCount: count, QueryParameterCursor: cursor}
 
-	keyValuePairs, newCursor, err := api.RedirectStore.GetRedirects(ctx, count, cursor)
+	// validate the 'to' query parameter
+	if strTo != "" {
+		if !api.enableReverseLookup {
+			log.Info(ctx, "reverse lookup is not enabled, rejecting request", logData)
+			api.handleError(ctx, w, ErrToNotAllowed, http.StatusBadRequest)
+			return
+		}
+
+		if !isValidRelativePath(strTo) {
+			log.Info(ctx, "invalid query parameter - 'to' should be a valid relative path", logData)
+			api.handleError(ctx, w, ErrInvalidTo, http.StatusBadRequest)
+			return
+		}
+	}
+
+	logData = log.Data{QueryParameterCount: count, QueryParameterCursor: cursor, QueryParameterTo: strTo}
+
+	keyValuePairs, newCursor, err := api.RedirectStore.GetRedirects(ctx, strTo, count, cursor)
 	if err != nil {
 		log.Error(ctx, "redis failed on getting redirects", err, logData)
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
@@ -283,7 +300,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	nextCursor := strconv.FormatUint(newCursor, 10)
 
 	// To get the TotalCount we need to get the total number of redirects available in redis
-	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx)
+	totalCount, errTotalCount := api.RedirectStore.GetTotalCount(ctx, strTo)
 	if errTotalCount != nil {
 		log.Error(ctx, "redis failed on getting total count of redirects", errTotalCount, logData)
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
@@ -291,7 +308,7 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 	}
 
 	responseBody := models.Redirects{
-		Count:        int(count),
+		Count:        len(redirectList),
 		RedirectList: redirectList,
 		Cursor:       strCursor,
 		NextCursor:   nextCursor,

@@ -69,6 +69,10 @@ func encodeBase64(key string) string {
 }
 
 func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
+	return GetRedirectAPIWithReverseLookup(datastore, true)
+}
+
+func GetRedirectAPIWithReverseLookup(datastore store.Datastore, enableReverseLookup bool) *api.RedirectAPI {
 	r := mux.NewRouter()
 
 	baseCfg, err := config.Get()
@@ -76,6 +80,7 @@ func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
 
 	cfg := *baseCfg
 	cfg.EnablePrivateEndpoints = true
+	cfg.EnableReverseLookup = enableReverseLookup
 
 	ctx := context.Background()
 	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), &cfg)
@@ -398,6 +403,84 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 	})
 }
 
+func TestGetRedirectsSuccessWithToFilter(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the to filter is valid and reverse lookup is enabled", func() {
+			filterTo := financeBulletin1
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to="+filterTo, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			mockStore := &storetest.StorerMock{
+				GetSetMemberValuesFunc: func(_ context.Context, setKey, matchPattern, valuePrefix string, count int64, cursor uint64) (map[string]string, uint64, error) {
+					So(setKey, ShouldEqual, "rev:"+filterTo)
+					So(matchPattern, ShouldEqual, "")
+					So(valuePrefix, ShouldEqual, "fwd:")
+					So(count, ShouldEqual, int64(10))
+					So(cursor, ShouldEqual, uint64(0))
+
+					return map[string]string{economyBulletin1: filterTo}, 4, nil
+				},
+				GetSetMemberCountFunc: func(_ context.Context, setKey string) (int64, error) {
+					So(setKey, ShouldEqual, "rev:"+filterTo)
+					return 1, nil
+				},
+			}
+
+			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: mockStore}, true)
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 200", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusOK)
+
+				var response models.Redirects
+				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+				So(err, ShouldBeNil)
+				So(response.Count, ShouldEqual, 1)
+				So(len(response.RedirectList), ShouldEqual, 1)
+				So(response.RedirectList[0].From, ShouldEqual, economyBulletin1)
+				So(response.RedirectList[0].To, ShouldEqual, filterTo)
+				So(response.Cursor, ShouldEqual, "0")
+				So(response.NextCursor, ShouldEqual, "4")
+				So(response.TotalCount, ShouldEqual, 1)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsToFilterDisabled(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the to filter is provided but reverse lookup is disabled", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to="+financeBulletin1, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: &storetest.StorerMock{}}, false)
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+				So(responseRecorder.Body.String(), ShouldContainSubstring, api.ErrToNotAllowed.Error())
+			})
+		})
+	})
+}
+
+func TestGetRedirectsInvalidToFilter(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When the to filter is not a relative path", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to=invalid-path", http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: &storetest.StorerMock{}}, true)
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 400", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusBadRequest)
+				So(responseRecorder.Body.String(), ShouldContainSubstring, api.ErrInvalidTo.Error())
+			})
+		})
+	})
+}
+
 func TestGetRedirectsCountNotAnInteger(t *testing.T) {
 	Convey("Given a GET /redirects request", t, func() {
 		Convey("When the count value given is not an integer", func() {
@@ -477,6 +560,38 @@ func TestGetRedirectsServerError(t *testing.T) {
 				},
 			}
 			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the response status code should be 500", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
+}
+
+func TestGetRedirectsTotalCountError(t *testing.T) {
+	Convey("Given a GET /redirects request", t, func() {
+		Convey("When retrieving the total count for a filtered request fails", func() {
+			filterTo := financeBulletin1
+			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to="+filterTo, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+			mockStore := &storetest.StorerMock{
+				GetSetMemberValuesFunc: func(_ context.Context, setKey, matchPattern, valuePrefix string, count int64, cursor uint64) (map[string]string, uint64, error) {
+					So(setKey, ShouldEqual, "rev:"+filterTo)
+					So(matchPattern, ShouldEqual, "")
+					So(valuePrefix, ShouldEqual, "fwd:")
+					So(count, ShouldEqual, int64(10))
+					So(cursor, ShouldEqual, uint64(0))
+
+					return map[string]string{economyBulletin1: filterTo}, 0, nil
+				},
+				GetSetMemberCountFunc: func(_ context.Context, setKey string) (int64, error) {
+					So(setKey, ShouldEqual, "rev:"+filterTo)
+					return 0, errors.New("count failed")
+				},
+			}
+
+			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: mockStore}, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 500", func() {

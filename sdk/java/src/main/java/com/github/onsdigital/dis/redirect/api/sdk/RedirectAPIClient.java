@@ -32,6 +32,7 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+
 public class RedirectAPIClient implements RedirectClient {
 
     /**
@@ -125,9 +126,9 @@ public class RedirectAPIClient implements RedirectClient {
     /**
      * Upserts a redirect by sending a PUT request to /redirects/{id}.
      *
-     * @param payload  the redirect payload with 'from' and 'to' fields
-     * @throws IOException            if request fails
-     * @throws RedirectAPIException   if non-2xx response returned
+     * @param payload the redirect payload with 'from' and 'to' fields
+     * @throws IOException          if request fails
+     * @throws RedirectAPIException if non-2xx response returned
      */
     @Override
     public void putRedirect(final Redirect payload)
@@ -135,8 +136,7 @@ public class RedirectAPIClient implements RedirectClient {
 
         if (payload.getFrom() == null || payload.getFrom().isEmpty()) {
             throw new IllegalArgumentException(
-                "'from' must not be null or empty"
-            );
+                    "'from' must not be null or empty");
         }
 
         URI requestUri = redirectAPIUri.resolve("/v1/redirects/"
@@ -153,14 +153,14 @@ public class RedirectAPIClient implements RedirectClient {
                 jsonPayload,
                 ContentType.APPLICATION_JSON));
 
-            try (CloseableHttpResponse response = executeRequest(put)) {
-                int statusCode = response.getCode();
+        try (CloseableHttpResponse response = executeRequest(put)) {
+            int statusCode = response.getCode();
 
             if (statusCode != HttpStatus.SC_CREATED
                     && statusCode != HttpStatus.SC_OK) {
                 throw new RedirectAPIException(
                         formatErrResponse(put, response,
-                        HttpStatus.SC_CREATED),
+                                HttpStatus.SC_CREATED),
                         statusCode);
             }
         }
@@ -171,8 +171,8 @@ public class RedirectAPIClient implements RedirectClient {
      * The {@code fromPath} is base64 URL-encoded internally.
      *
      * @param fromPath the raw unencoded redirect source path
-     * @throws IOException            if the request fails
-     * @throws RedirectAPIException   if a non-204 response is returned
+     * @throws IOException          if the request fails
+     * @throws RedirectAPIException if a non-204 response is returned
      */
     @Override
     public void deleteRedirect(final String fromPath)
@@ -196,9 +196,8 @@ public class RedirectAPIClient implements RedirectClient {
             if (statusCode != HttpStatus.SC_NO_CONTENT) {
                 throw new RedirectAPIException(
                         formatErrResponse(delete, response,
-                        HttpStatus.SC_NO_CONTENT),
-                        statusCode
-                );
+                                HttpStatus.SC_NO_CONTENT),
+                        statusCode);
             }
         }
     }
@@ -230,20 +229,20 @@ public class RedirectAPIClient implements RedirectClient {
     }
 
     private <T> T parseResponseBody(final CloseableHttpResponse response,
-            final Class<T> type) throws IOException, ParseException  {
+            final Class<T> type) throws IOException, ParseException {
         HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity);
         return JSON.readValue(responseString, type);
     }
 
-     private String formatErrResponse(final HttpUriRequestBase httpRequest,
+    private String formatErrResponse(final HttpUriRequestBase httpRequest,
             final CloseableHttpResponse response,
             final int expectedStatusCode) {
         int responseCode = response.getCode();
 
         String requestURI = httpRequest.getRequestUri();
         return String.format(
-            "the redirect api returned a %s response for %s (expected %s)",
+                "the redirect api returned a %s response for %s (expected %s)",
                 responseCode,
                 requestURI,
                 expectedStatusCode);
@@ -271,7 +270,7 @@ public class RedirectAPIClient implements RedirectClient {
      * Get a redirects object containing the requested number of
      * redirect objects in a list.
      *
-     * @param count - the number of redirect objects requested
+     * @param count  - the number of redirect objects requested
      * @param cursor - the location, in the store, to start counting from
      * @return throws an exception to indicate an error
      * @throws IOException
@@ -286,6 +285,30 @@ public class RedirectAPIClient implements RedirectClient {
             throws IOException, BadRequestException, ParseException,
             RedirectAPIException, RedirectNotFoundException,
             URISyntaxException {
+        return getRedirects(count, cursor, null);
+    }
+
+    /**
+     * Get a redirects object containing the requested number of
+     * redirect objects in a list.
+     *
+     * @param count  - the number of redirect objects requested
+     * @param cursor - the location, in the store, to start counting from
+     * @param to     - the target path to filter redirects by
+     * @return throws an exception to indicate an error
+     * @throws IOException
+     * @throws BadRequestException
+     * @throws RedirectAPIException
+     * @throws RedirectNotFoundException
+     * @throws URISyntaxException
+     * @throws ParseException
+     */
+    @Override
+    public Redirects getRedirects(final String count,
+            final String cursor, final String to)
+            throws IOException, BadRequestException, ParseException,
+            RedirectAPIException, RedirectNotFoundException,
+            URISyntaxException {
         String path = "/v1/redirects";
         URIBuilder builder = new URIBuilder(redirectAPIUri.resolve(path));
         if (StringUtils.isNotBlank(count)) {
@@ -293,7 +316,10 @@ public class RedirectAPIClient implements RedirectClient {
         }
 
         if (StringUtils.isNotBlank(cursor)) {
-             builder.setParameter("cursor", cursor);
+            builder.setParameter("cursor", cursor);
+        }
+        if (StringUtils.isNotBlank(to)) {
+            builder.setParameter("to", to);
         }
         URI uri = builder.build();
 

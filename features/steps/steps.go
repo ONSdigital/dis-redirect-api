@@ -174,6 +174,7 @@ func (c *RedirectComponent) iWouldExpectThereToBeRedirectsReturnedInAList(expect
 	return nil
 }
 
+// This must be run before the api is started
 func (c *RedirectComponent) privateEndpointsAreEnabled() error {
 	if c.Config == nil {
 		cfg, err := config.Get()
@@ -187,6 +188,7 @@ func (c *RedirectComponent) privateEndpointsAreEnabled() error {
 	return nil
 }
 
+// This must be run before the api is started
 func (c *RedirectComponent) reverseLookupIsEnabled(status string) error {
 	if c.Config == nil {
 		cfg, err := config.Get()

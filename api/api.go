@@ -19,6 +19,7 @@ type RedirectAPI struct {
 	authMiddleware         authorisation.Middleware
 	apiURL                 *url.URL
 	enablePrivateEndpoints bool
+	enableReverseLookup    bool
 }
 
 // Setup function sets up the api and returns an api
@@ -34,6 +35,7 @@ func Setup(ctx context.Context, r *mux.Router, dataStore *store.Datastore, auth 
 		authMiddleware:         auth,
 		apiURL:                 apiURL,
 		enablePrivateEndpoints: cfg.EnablePrivateEndpoints,
+		enableReverseLookup:    cfg.EnableReverseLookup,
 	}
 
 	if api.enablePrivateEndpoints {

@@ -7,4 +7,7 @@ const (
 	// QueryParameterCursor represents the query parameter
 	// for the cursor used in pagination.
 	QueryParameterCursor = "cursor"
+	// QueryParameterTo represents the query parameter
+	// for the redirect destination
+	QueryParameterTo = "to"
 )

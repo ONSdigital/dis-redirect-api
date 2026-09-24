@@ -133,6 +133,17 @@ Feature: GET redirect endpoint for public mode
             the redirects cursor was invalid. It must be a positive integer
         """
 
+  Scenario: Return 400 when the to value is supplied
+    Given I am an admin user
+    And redis is healthy
+    When I GET "/v1/redirects?to=/not/allowed/to/submit"
+    Then the HTTP status code should be "400"
+    And I should receive the following response:
+        """
+            the 'to' query parameter is not yet implemented
+        """
+
+
   Scenario: Return 500 when calling get redirects with redis not running
     Given I am an admin user
     And redis stops running

@@ -41,6 +41,21 @@ public interface RedirectClient extends Closeable {
          RedirectNotFoundException, RedirectAPIException, URISyntaxException;
 
    /**
+    * @param count
+    * @param cursor
+    * @param to
+    * @return throws an exception to indicate an error
+    * @throws IOException
+    * @throws BadRequestException
+    * @throws RedirectNotFoundException
+    * @throws RedirectAPIException
+    * @throws URISyntaxException
+    */
+   Redirects getRedirects(String count, String cursor, String to)
+         throws IOException, BadRequestException, ParseException,
+         RedirectNotFoundException, RedirectAPIException, URISyntaxException;
+
+   /**
     * Upserts a redirect by sending a PUT request to the /redirects/{id}
     * endpoint.
     *

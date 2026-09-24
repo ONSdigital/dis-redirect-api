@@ -45,7 +45,7 @@ make validate-specification
 To run this, you will need to run Node > v20 and have [redocly CLI](https://github.com/Redocly/redocly-cli) installed:
 
 ```sh
-npm install -g redocly-cli
+npm install @redocly/cli -g
 ```
 
 ### Configuration

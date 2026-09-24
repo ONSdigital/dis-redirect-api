@@ -27,6 +27,8 @@ type dataRedis interface {
 	GetValue(ctx context.Context, key string) (string, error)
 	GetKeyValuePairs(ctx context.Context, matchPattern string, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error)
 	GetTotalKeys(ctx context.Context) (totalKeys int64, err error)
+	GetSetMemberValues(ctx context.Context, setKey, matchPattern, valuePrefix string, count int64, cursor uint64) (map[string]string, uint64, error)
+	GetSetMemberCount(ctx context.Context, setKey string) (count int64, err error)
 	SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	GetKeys(ctx context.Context, matchPattern string, count int64, cursor uint64) (keys []string, newCursor uint64, err error)
 	Transaction(ctx context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error)
@@ -51,14 +53,32 @@ func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string
 	return ds.Backend.GetValue(ctx, redirectID)
 }
 
-// GetRedirects retrieves a set of key-value pairs from the datastore
-// based on the specified count and cursor for pagination.
-func (ds *Datastore) GetRedirects(ctx context.Context, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error) {
+// GetRedirects retrieves a list of redirects from the datastore.
+// If the 'to' parameter is provided, it retrieves redirects
+// pointing to the specified destination.
+// Otherwise, it retrieves all redirects with pagination support.
+func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error) {
+	if to != "" {
+		return ds.Backend.GetSetMemberValues(ctx, revPrefix+to, "", fwdPrefix, count, cursor)
+	}
+
 	return ds.Backend.GetKeyValuePairs(ctx, "", count, cursor)
 }
 
-// GetTotalCount retrieves the total number of keys in the datastore.
-func (ds *Datastore) GetTotalCount(ctx context.Context) (totalCount int, err error) {
+// GetTotalCount retrieves the total count of redirects from the datastore.
+// If the 'to' parameter is provided, it retrieves the count of
+// redirects pointing to the specified destination.
+// Otherwise, it retrieves the total count of all redirects.
+func (ds *Datastore) GetTotalCount(ctx context.Context, to string) (totalCount int, err error) {
+	if to != "" {
+		var setMemberCount int64
+		setMemberCount, err = ds.Backend.GetSetMemberCount(ctx, revPrefix+to)
+		if err != nil {
+			return -1, err
+		}
+		totalCount = int(setMemberCount)
+		return totalCount, err
+	}
 	var totalKeys int64
 	totalKeys, err = ds.Backend.GetTotalKeys(ctx)
 	if err != nil {
@@ -80,8 +100,15 @@ func (ds *Datastore) GetKeys(ctx context.Context, matchPattern string, count int
 	return ds.Backend.GetKeys(ctx, matchPattern, count, cursor)
 }
 
-// UpsertValue inserts or updates a value in the datastore with the
-// specified key, value, and expiration time.
+// GetSetMemberValues retrieves the values of members in a set
+// from the datastore based on the provided set key
+// and optional match pattern and value prefix.
+func (ds *Datastore) GetSetMemberValues(ctx context.Context, setKey, matchPattern, valuePrefix string, count int64, cursor uint64) (keyValuePairs map[string]string, newCursor uint64, err error) {
+	return ds.Backend.GetSetMemberValues(ctx, setKey, matchPattern, valuePrefix, count, cursor)
+}
+
+// UpsertValue inserts or updates a value in the
+// datastore with the specified key, value, and expiration time.
 func (ds *Datastore) UpsertValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	return ds.Backend.SetValue(ctx, key, value, expiration)
 }

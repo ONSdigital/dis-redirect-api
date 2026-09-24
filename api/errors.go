@@ -6,6 +6,8 @@ import "errors"
 var (
 	ErrNegativeCount           = errors.New("the count must be a positive integer")
 	ErrInternal                = errors.New("internal error")
+	ErrInvalidTo               = errors.New("the 'to' query parameter must be a valid relative path")
+	ErrToNotAllowed            = errors.New("the 'to' query parameter is not yet implemented")
 	ErrInvalidCount            = errors.New("the count must be an integer giving the requested number of redirects")
 	ErrInvalidOrNegativeCursor = errors.New("the redirects cursor was invalid. It must be a positive integer")
 	ErrInvalidBase64Id         = errors.New("the base64 id provided is invalid")

@@ -24,6 +24,7 @@ paths:
       parameters:
         - $ref: "#/parameters/Count"
         - $ref: "#/parameters/Cursor"
+        - $ref: "#/parameters/To"
       responses:
         200: 
           description: "Paginated list of unordered redirects"
@@ -165,6 +166,12 @@ parameters:
     description: "A redirect to be created"
     schema: 
       $ref: "#/definitions/RedirectPutBody"
+  To:
+    in: query
+    name: to
+    description: "The target path for the redirect"
+    type: string
+    required: false
 
 definitions:
   Redirect:
