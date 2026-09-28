@@ -20,12 +20,12 @@ const (
 
 func TestSetupPrivateEndpoints(t *testing.T) {
 	Convey("Given an API instance with private endpoints enabled", t, func() {
-		dataStore := &store.Datastore{}
 		r := mux.NewRouter()
 		cfg := &config.Config{
 			RedirectAPIURL:         testRedirectAPIURL,
 			EnablePrivateEndpoints: true,
 		}
+		dataStore := store.NewDatastore(nil, cfg)
 		redirectAPI := api.Setup(context.Background(), r, dataStore, newAuthMiddlwareMock(), cfg)
 
 		Convey("Then all read and write routes should be registered", func() {
@@ -39,12 +39,12 @@ func TestSetupPrivateEndpoints(t *testing.T) {
 
 func TestSetupPublicEndpoints(t *testing.T) {
 	Convey("Given an API instance with private endpoints disabled", t, func() {
-		dataStore := &store.Datastore{}
 		r := mux.NewRouter()
 		cfg := &config.Config{
 			RedirectAPIURL:         testRedirectAPIURL,
 			EnablePrivateEndpoints: false,
 		}
+		dataStore := store.NewDatastore(nil, cfg)
 		redirectAPI := api.Setup(context.Background(), r, dataStore, newAuthMiddlwareMock(), cfg)
 
 		Convey("Then only public GET routes should be registered", func() {

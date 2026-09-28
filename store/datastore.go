@@ -16,10 +16,20 @@ const revPrefix = "rev:"
 //go:generate moq -out datastoretest/redis.go -pkg storetest . Redis
 //go:generate moq -out datastoretest/datastore.go -pkg storetest . Storer
 
+// NewDatastore creates a new instance of Datastore
+// with the provided backend and configuration.
+func NewDatastore(backend Storer, cfg *config.Config) *Datastore {
+	return &Datastore{
+		Backend: backend,
+		cfg:     cfg,
+	}
+}
+
 // Datastore represents a generic data store that abstracts the
 // underlying storage backend.
 type Datastore struct {
 	Backend Storer
+	cfg     *config.Config
 }
 
 type dataRedis interface {

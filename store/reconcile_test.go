@@ -47,7 +47,7 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 				return nil, nil
 			}
 
-			reconciler := store.NewReverseLookupReconciler(store.Datastore{Backend: mockStore})
+			reconciler := store.NewReverseLookupReconciler(&store.Datastore{Backend: mockStore})
 			changes, err := reconciler.Reconcile(ctx)
 
 			Convey("Then it converts each redirect correctly", func() {
@@ -133,7 +133,7 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 					expectedErr := errors.New(tc.errMessage)
 					tc.configureMock(mockStore, expectedErr)
 
-					reconciler := store.NewReverseLookupReconciler(store.Datastore{Backend: mockStore})
+					reconciler := store.NewReverseLookupReconciler(&store.Datastore{Backend: mockStore})
 					changes, err := reconciler.Reconcile(context.Background())
 
 					So(changes, ShouldEqual, tc.wantChanges)
@@ -181,7 +181,7 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 				return nil, nil
 			}
 
-			reconciler := store.NewForwardLookupOnlyReconciler(store.Datastore{Backend: mockStore})
+			reconciler := store.NewForwardLookupOnlyReconciler(&store.Datastore{Backend: mockStore})
 			changes, err := reconciler.Reconcile(ctx)
 
 			Convey("Then it converts each prefixed redirect correctly", func() {
@@ -267,7 +267,7 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 					expectedErr := errors.New(tc.errMessage)
 					tc.configureMock(mockStore, expectedErr)
 
-					reconciler := store.NewForwardLookupOnlyReconciler(store.Datastore{Backend: mockStore})
+					reconciler := store.NewForwardLookupOnlyReconciler(&store.Datastore{Backend: mockStore})
 					changes, err := reconciler.Reconcile(context.Background())
 
 					So(changes, ShouldEqual, tc.wantChanges)

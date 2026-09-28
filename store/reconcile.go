@@ -14,11 +14,11 @@ type Reconciler interface {
 // ReverseLookupReconciler is a reconciler that ensures reverse lookup
 // keys are correctly maintained for stored redirects.
 type ReverseLookupReconciler struct {
-	ds Datastore
+	ds *Datastore
 }
 
 // NewReverseLookupReconciler creates a new instance of ReverseLookupReconciler.
-func NewReverseLookupReconciler(ds Datastore) *ReverseLookupReconciler {
+func NewReverseLookupReconciler(ds *Datastore) *ReverseLookupReconciler {
 	return &ReverseLookupReconciler{
 		ds: ds,
 	}
@@ -50,12 +50,12 @@ func (r *ReverseLookupReconciler) reconcileBatchForReverseLookup(ctx context.Con
 // ForwardLookupOnlyReconciler is a reconciler that ensures only forward lookup
 // keys are maintained for stored redirects.
 type ForwardLookupOnlyReconciler struct {
-	ds Datastore
+	ds *Datastore
 }
 
 // NewForwardLookupOnlyReconciler creates a new instance of
 // ForwardLookupOnlyReconciler.
-func NewForwardLookupOnlyReconciler(ds Datastore) *ForwardLookupOnlyReconciler {
+func NewForwardLookupOnlyReconciler(ds *Datastore) *ForwardLookupOnlyReconciler {
 	return &ForwardLookupOnlyReconciler{
 		ds: ds,
 	}

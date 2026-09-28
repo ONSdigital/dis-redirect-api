@@ -54,9 +54,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Get Datastore
-	datastore := store.Datastore{
-		Backend: RedisAPIStore{redisClient},
-	}
+	datastore := store.NewDatastore(RedisAPIStore{redisClient}, cfg)
 
 	var reconciler store.Reconciler
 
@@ -83,7 +81,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Set up the Redirect API
-	a := api.Setup(ctx, r, &datastore, authorisationMiddleware, cfg)
+	a := api.Setup(ctx, r, datastore, authorisationMiddleware, cfg)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

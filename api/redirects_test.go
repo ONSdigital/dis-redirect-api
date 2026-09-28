@@ -68,11 +68,11 @@ func encodeBase64(key string) string {
 	return encodedKey
 }
 
-func GetRedirectAPIWithMocks(datastore store.Datastore) *api.RedirectAPI {
-	return GetRedirectAPIWithReverseLookup(datastore, true)
+func GetRedirectAPIWithMocks(backend store.Storer) *api.RedirectAPI {
+	return GetRedirectAPIWithReverseLookup(backend, true)
 }
 
-func GetRedirectAPIWithReverseLookup(datastore store.Datastore, enableReverseLookup bool) *api.RedirectAPI {
+func GetRedirectAPIWithReverseLookup(backend store.Storer, enableReverseLookup bool) *api.RedirectAPI {
 	r := mux.NewRouter()
 
 	baseCfg, err := config.Get()
@@ -81,9 +81,10 @@ func GetRedirectAPIWithReverseLookup(datastore store.Datastore, enableReverseLoo
 	cfg := *baseCfg
 	cfg.EnablePrivateEndpoints = true
 	cfg.EnableReverseLookup = enableReverseLookup
+	datastoreWithConfig := store.NewDatastore(backend, &cfg)
 
 	ctx := context.Background()
-	return api.Setup(ctx, r, &datastore, newAuthMiddlwareMock(), &cfg)
+	return api.Setup(ctx, r, datastoreWithConfig, newAuthMiddlwareMock(), &cfg)
 }
 
 func TestGetRedirectEndpoint(t *testing.T) {
@@ -98,7 +99,7 @@ func TestGetRedirectEndpoint(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 200", func() {
@@ -126,7 +127,7 @@ func TestGetRedirectURLWriting(t *testing.T) {
 			request.Header.Add("X-Forwarded-Host", expectedHost)
 			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
 			responseRecorder := httptest.NewRecorder()
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response body should contain the correct link", func() {
@@ -153,7 +154,7 @@ func TestGetRedirectReturns400(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -176,7 +177,7 @@ func TestGetRedirectReturns404(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 404", func() {
@@ -198,7 +199,7 @@ func TestGetRedirectReturns500(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, false)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 500", func() {
@@ -235,7 +236,7 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 200", func() {
@@ -283,7 +284,7 @@ func TestUpsertRedirect(t *testing.T) {
 			},
 		}
 
-		apiInstance := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+		apiInstance := GetRedirectAPIWithReverseLookup(mockStore, false)
 
 		Convey("When request is valid with matching base64 ID and from path", func() {
 			from := testFromURL
@@ -373,7 +374,7 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue+"&cursor="+cursorValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 200", func() {
@@ -426,7 +427,7 @@ func TestGetRedirectsSuccessWithToFilter(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: mockStore}, true)
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 200", func() {
@@ -453,7 +454,7 @@ func TestGetRedirectsToFilterDisabled(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to="+financeBulletin1, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
-			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: &storetest.StorerMock{}}, false)
+			redirectAPI := GetRedirectAPIWithReverseLookup(&storetest.StorerMock{}, false)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -470,7 +471,7 @@ func TestGetRedirectsInvalidToFilter(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?to=invalid-path", http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
-			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: &storetest.StorerMock{}}, true)
+			redirectAPI := GetRedirectAPIWithReverseLookup(&storetest.StorerMock{}, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -488,7 +489,7 @@ func TestGetRedirectsCountNotAnInteger(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{}
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -505,7 +506,7 @@ func TestGetRedirectsCountNegative(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?count="+countValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{}
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -522,7 +523,7 @@ func TestGetRedirectsCursorNotAnInteger(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{}
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -539,7 +540,7 @@ func TestGetRedirectsCursorNegative(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectsBaseURL+"?cursor="+cursorValue, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 			mockStore := &storetest.StorerMock{}
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 400", func() {
@@ -559,7 +560,7 @@ func TestGetRedirectsServerError(t *testing.T) {
 					return nil, 0, api.ErrInternal
 				},
 			}
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 500", func() {
@@ -591,7 +592,7 @@ func TestGetRedirectsTotalCountError(t *testing.T) {
 				},
 			}
 
-			redirectAPI := GetRedirectAPIWithReverseLookup(store.Datastore{Backend: mockStore}, true)
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, true)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response status code should be 500", func() {
@@ -611,7 +612,7 @@ func TestGetRedirectsURLRewriting(t *testing.T) {
 			request.Header.Add("X-Forwarded-Host", expectedHost)
 			request.Header.Add("X-Forwarded-Path-Prefix", expectedPathPrefix)
 			responseRecorder := httptest.NewRecorder()
-			redirectAPI := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
 
 			Convey("Then the response body should contain the rewritten links", func() {
@@ -634,7 +635,7 @@ func TestDeleteRedirect(t *testing.T) {
 	Convey("Given a DeleteRedirect handler", t, func() {
 		mockStore := &storetest.StorerMock{}
 
-		apiInstance := GetRedirectAPIWithMocks(store.Datastore{Backend: mockStore})
+		apiInstance := GetRedirectAPIWithMocks(mockStore)
 
 		router := mux.NewRouter()
 		router.HandleFunc("/redirects/{id}", apiInstance.DeleteRedirect).Methods(http.MethodDelete)
