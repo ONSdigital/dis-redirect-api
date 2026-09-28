@@ -136,7 +136,7 @@ func (api *RedirectAPI) UpsertRedirect(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = api.RedirectStore.UpsertValue(ctx, redirect.From, redirect.To, 0)
+	err = api.RedirectStore.UpsertRedirect(ctx, redirect.From, redirect.To)
 	if err != nil {
 		log.Error(ctx, "redis failed on upserting redirect", err, logData)
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)

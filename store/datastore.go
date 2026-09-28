@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	disRedis "github.com/ONSdigital/dis-redis"
+
+	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/redis/go-redis/v9"
 )
@@ -119,8 +122,42 @@ func (ds *Datastore) GetSetMemberValues(ctx context.Context, setKey, matchPatter
 
 // UpsertValue inserts or updates a value in the
 // datastore with the specified key, value, and expiration time.
+//
+// Deprecated: Use UpsertRedirect instead.
 func (ds *Datastore) UpsertValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	return ds.Backend.SetValue(ctx, key, value, expiration)
+}
+
+// UpsertRedirect inserts or updates a redirect in the datastore
+// with the specified 'from' and 'to' values.
+func (ds *Datastore) UpsertRedirect(ctx context.Context, from, to string) error {
+	if ds.cfg.EnableReverseLookup {
+		fwdRedirectKey := fmt.Sprintf("%s%s", fwdPrefix, from)
+		revRedirectKey := fmt.Sprintf("%s%s", revPrefix, to)
+
+		// We need the old value in case this is an update.
+		oldValue, err := ds.Backend.GetValue(ctx, fwdRedirectKey)
+		if err != nil && err != disRedis.ErrKeyNotFound {
+			return fmt.Errorf("failed to get old redirect value: %w", err)
+		}
+
+		oldRevRedirectKey := fmt.Sprintf("%s%s", revPrefix, oldValue)
+
+		_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
+			pipe.Set(ctx, fwdRedirectKey, to, 0)
+			pipe.SAdd(ctx, revRedirectKey, from)
+			if oldValue != "" {
+				pipe.SRem(ctx, oldRevRedirectKey, from)
+			}
+		})
+		if err != nil {
+			return fmt.Errorf("transaction failed: %w", err)
+		}
+
+		return nil
+	}
+
+	return ds.Backend.SetValue(ctx, from, to, 0)
 }
 
 // DeleteValue removes a value from the datastore based on the

@@ -19,6 +19,7 @@ import (
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
 	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -278,6 +279,9 @@ func TestUpsertRedirect(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			TransactionFunc: func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
+				return nil, nil
 			},
 			SetValueFunc: func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
 				return nil
