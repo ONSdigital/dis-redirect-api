@@ -25,6 +25,14 @@ var (
 	ctx               = context.Background()
 )
 
+func TestClientImplementsClienter(t *testing.T) {
+	c.Convey("Given a redirect API client", t, func() {
+		c.Convey("Then it should implement the Clienter interface", func() {
+			c.So(&Client{}, c.ShouldImplement, (*Clienter)(nil))
+		})
+	})
+}
+
 func TestHealthCheckerClient(t *testing.T) {
 	t.Parallel()
 
