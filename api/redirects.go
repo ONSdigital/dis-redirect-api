@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -164,23 +165,14 @@ func (api *RedirectAPI) DeleteRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	key := string(keyBytes)
-
-	// Check if the key exists
 	logData = log.Data{"key": key}
-	_, err = api.RedirectStore.GetValue(ctx, key)
-	if err != nil {
-		if err == disRedis.ErrKeyNotFound {
+
+	if err := api.RedirectStore.DeleteRedirect(ctx, key); err != nil {
+		if errors.Is(err, disRedis.ErrKeyNotFound) {
 			log.Info(ctx, "redirect not found", logData)
 			api.handleError(ctx, w, ErrNotFound, http.StatusNotFound)
 			return
 		}
-		log.Error(ctx, "redis failed on checking redirect existence", err, logData)
-		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
-		return
-	}
-
-	// Proceed to delete
-	if err := api.RedirectStore.DeleteValue(ctx, key); err != nil {
 		log.Error(ctx, "redis failed on deleting redirect", err, logData)
 		api.handleError(ctx, w, ErrInternal, http.StatusInternalServerError)
 		return

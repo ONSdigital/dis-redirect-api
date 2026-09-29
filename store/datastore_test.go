@@ -165,7 +165,7 @@ func TestDatastoreUpsertRedirect(t *testing.T) {
 }
 
 func TestDatastoreGetRedirect(t *testing.T) {
-	Convey("Given a datastore getting a redirect", t, func() {
+	Convey("Given a datastore retrieving a redirect", t, func() {
 		ctx := context.Background()
 
 		Convey("When reverse lookup is disabled", func() {

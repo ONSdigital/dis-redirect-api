@@ -173,7 +173,33 @@ func (ds *Datastore) UpsertRedirect(ctx context.Context, from, to string) error 
 
 // DeleteValue removes a value from the datastore based on the
 // provided redirectID.
+//
+// Deprecated: Use DeleteRedirect instead.
 func (ds *Datastore) DeleteValue(ctx context.Context, redirectID string) error {
+	return ds.Backend.DeleteValue(ctx, redirectID)
+}
+
+// DeleteRedirect removes a redirect and its reverse lookup entry from the
+// datastore based on the provided redirectID.
+func (ds *Datastore) DeleteRedirect(ctx context.Context, redirectID string) error {
+	if ds.cfg.EnableReverseLookup {
+		fwdRedirectKey := fwdPrefix + redirectID
+		to, err := ds.GetRedirect(ctx, fwdRedirectKey)
+		if err != nil {
+			return fmt.Errorf("failed to get redirect value: %w", err)
+		}
+
+		_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
+			pipe.Del(ctx, fwdRedirectKey)
+			pipe.SRem(ctx, revPrefix+to, redirectID)
+		})
+		if err != nil {
+			return fmt.Errorf("transaction failed: %w", err)
+		}
+
+		return nil
+	}
+
 	return ds.Backend.DeleteValue(ctx, redirectID)
 }
 

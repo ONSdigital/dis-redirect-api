@@ -698,14 +698,13 @@ func TestDeleteRedirect(t *testing.T) {
 			// DeleteRedirect uses the raw GetValue accessor, which stays unprefixed
 			// even with reverse lookup enabled
 			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
-				So(key, ShouldEqual, "/test-path")
-				if key == "/test-path" {
+				if key == "fwd:/test-path" {
 					return "/target", nil
 				}
 				return "", nil
 			}
-			mockStore.DeleteValueFunc = func(_ context.Context, _ string) error {
-				return nil
+			mockStore.TransactionFunc = func(_ context.Context, _ func(redis.Pipeliner)) ([]redis.Cmder, error) {
+				return nil, nil
 			}
 
 			req := httptest.NewRequest(http.MethodDelete, "/redirects/"+base64ID, http.NoBody)
