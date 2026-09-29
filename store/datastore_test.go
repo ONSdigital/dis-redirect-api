@@ -175,31 +175,81 @@ func TestDatastoreGetRedirect(t *testing.T) {
 					return "/new", nil
 				},
 			}
+
 			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
+			value, err := datastore.GetRedirect(ctx, "/old")
 
-			redirect, err := datastore.GetRedirect(ctx, "/old")
-
-			Convey("Then the unprefixed redirect should be retrieved", func() {
+			Convey("Then the unprefixed key should be read", func() {
 				So(err, ShouldBeNil)
-				So(redirect, ShouldEqual, "/new")
+				So(value, ShouldEqual, "/new")
+
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, "/old")
 			})
 		})
 
 		Convey("When reverse lookup is enabled", func() {
 			mockStore := &storetest.StorerMock{
 				GetValueFunc: func(_ context.Context, key string) (string, error) {
-					So(key, ShouldEqual, "/old")
+					So(key, ShouldEqual, "fwd:/old")
 					return "/new", nil
 				},
 			}
+
 			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			value, err := datastore.GetRedirect(ctx, "/old")
 
-			redirect, err := datastore.GetRedirect(ctx, "/old")
-
-			Convey("Then the redirect key should not be modified", func() {
+			Convey("Then the forward lookup prefixed key should be read", func() {
 				So(err, ShouldBeNil)
-				So(redirect, ShouldEqual, "/new")
+				So(value, ShouldEqual, "/new")
+
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, "fwd:/old")
 			})
+		})
+
+		Convey("When reverse lookup is enabled and the key does not exist", func() {
+			mockStore := &storetest.StorerMock{
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, "fwd:/old")
+					return "", disRedis.ErrKeyNotFound
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			value, err := datastore.GetRedirect(ctx, "/old")
+
+			Convey("Then the error should be returned unwrapped so callers can compare it", func() {
+				So(err, ShouldEqual, disRedis.ErrKeyNotFound)
+				So(value, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestDatastoreGetValue(t *testing.T) {
+	Convey("Given a datastore getting a raw value with reverse lookup enabled", t, func() {
+		ctx := context.Background()
+
+		mockStore := &storetest.StorerMock{
+			GetValueFunc: func(_ context.Context, key string) (string, error) {
+				So(key, ShouldEqual, "/old")
+				return "/new", nil
+			},
+		}
+
+		datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+		value, err := datastore.GetValue(ctx, "/old")
+
+		Convey("Then the key should not be prefixed, unlike GetRedirect", func() {
+			So(err, ShouldBeNil)
+			So(value, ShouldEqual, "/new")
+
+			getValueCalls := mockStore.GetValueCalls()
+			So(getValueCalls, ShouldHaveLength, 1)
+			So(getValueCalls[0].Key, ShouldEqual, "/old")
 		})
 	})
 }
@@ -219,11 +269,14 @@ func TestDatastoreDeleteRedirect(t *testing.T) {
 			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
 			err := datastore.DeleteRedirect(ctx, "/old")
 
-			Convey("Then the unprefixed redirect should be deleted", func() {
+			Convey("Then the unprefixed key should be deleted directly", func() {
 				So(err, ShouldBeNil)
 				So(mockStore.GetValueCalls(), ShouldBeEmpty)
 				So(mockStore.TransactionCalls(), ShouldBeEmpty)
-				So(mockStore.DeleteValueCalls(), ShouldHaveLength, 1)
+
+				deleteValueCalls := mockStore.DeleteValueCalls()
+				So(deleteValueCalls, ShouldHaveLength, 1)
+				So(deleteValueCalls[0].Key, ShouldEqual, "/old")
 			})
 		})
 
@@ -249,9 +302,13 @@ func TestDatastoreDeleteRedirect(t *testing.T) {
 			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
 			err := datastore.DeleteRedirect(ctx, "/old")
 
-			Convey("Then the forward redirect and reverse set member should be removed atomically", func() {
+			Convey("Then the key should be prefixed exactly once and the reverse entry removed", func() {
 				So(err, ShouldBeNil)
-				So(mockStore.DeleteValueCalls(), ShouldBeEmpty)
+
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, "fwd:/old")
+
 				So(mockStore.TransactionCalls(), ShouldHaveLength, 1)
 				So(queuedCommands, ShouldHaveLength, 2)
 				So(queuedCommands[0].Name(), ShouldEqual, "del")
@@ -259,6 +316,24 @@ func TestDatastoreDeleteRedirect(t *testing.T) {
 				So(queuedCommands[1].Name(), ShouldEqual, "srem")
 				So(queuedCommands[1].Args()[1], ShouldEqual, "rev:/new")
 				So(queuedCommands[1].Args()[2], ShouldEqual, "/old")
+			})
+		})
+
+		Convey("When reverse lookup is enabled and the redirect does not exist", func() {
+			mockStore := &storetest.StorerMock{
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, "fwd:/old")
+					return "", disRedis.ErrKeyNotFound
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			err := datastore.DeleteRedirect(ctx, "/old")
+
+			Convey("Then a not found error should be returned and nothing deleted", func() {
+				So(err, ShouldNotBeNil)
+				So(errors.Is(err, disRedis.ErrKeyNotFound), ShouldBeTrue)
+				So(mockStore.TransactionCalls(), ShouldBeEmpty)
 			})
 		})
 	})

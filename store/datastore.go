@@ -61,8 +61,16 @@ type Storer interface {
 }
 
 // GetRedirect retrieves a redirect value from the
-// datastore based on the provided redirectID.
+// datastore based on the provided redirectID. When reverse lookup is
+// enabled the redirect is stored under the forward lookup prefix, so
+// the key is prefixed before reading. The error is returned unwrapped
+// so that callers can compare it against disRedis.ErrKeyNotFound.
 func (ds *Datastore) GetRedirect(ctx context.Context, redirectID string) (string, error) {
+	if ds.cfg.EnableReverseLookup {
+		fwdRedirectKey := fmt.Sprintf("%s%s", fwdPrefix, redirectID)
+		return ds.Backend.GetValue(ctx, fwdRedirectKey)
+	}
+
 	return ds.Backend.GetValue(ctx, redirectID)
 }
 
@@ -102,7 +110,10 @@ func (ds *Datastore) GetTotalCount(ctx context.Context, to string) (totalCount i
 }
 
 // GetValue retrieves a value from the datastore based on the
-// provided redirectID.
+// provided redirectID. This is the raw key accessor and deliberately
+// applies no prefix, regardless of the reverse lookup flag: its callers
+// either pass an already prefixed key or intend to read the unprefixed
+// one. Use GetRedirect for prefix aware redirect lookups.
 func (ds *Datastore) GetValue(ctx context.Context, redirectID string) (string, error) {
 	return ds.Backend.GetValue(ctx, redirectID)
 }
@@ -173,7 +184,9 @@ func (ds *Datastore) DeleteValue(ctx context.Context, redirectID string) error {
 func (ds *Datastore) DeleteRedirect(ctx context.Context, redirectID string) error {
 	if ds.cfg.EnableReverseLookup {
 		fwdRedirectKey := fwdPrefix + redirectID
-		to, err := ds.GetRedirect(ctx, fwdRedirectKey)
+		// GetValue, not GetRedirect: the key is already prefixed here, and
+		// GetRedirect would prefix it a second time.
+		to, err := ds.Backend.GetValue(ctx, fwdRedirectKey)
 		if err != nil {
 			return fmt.Errorf("failed to get redirect value: %w", err)
 		}
