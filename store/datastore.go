@@ -184,7 +184,9 @@ func (ds *Datastore) DeleteValue(ctx context.Context, redirectID string) error {
 func (ds *Datastore) DeleteRedirect(ctx context.Context, redirectID string) error {
 	if ds.cfg.EnableReverseLookup {
 		fwdRedirectKey := fwdPrefix + redirectID
-		to, err := ds.GetRedirect(ctx, fwdRedirectKey)
+		// GetValue, not GetRedirect: the key is already prefixed here, and
+		// GetRedirect would prefix it a second time.
+		to, err := ds.Backend.GetValue(ctx, fwdRedirectKey)
 		if err != nil {
 			return fmt.Errorf("failed to get redirect value: %w", err)
 		}
