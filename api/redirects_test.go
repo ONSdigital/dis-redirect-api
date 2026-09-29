@@ -695,13 +695,14 @@ func TestDeleteRedirect(t *testing.T) {
 		base64ID := base64.URLEncoding.EncodeToString([]byte("/test-path"))
 
 		Convey("When the redirect exists and is deleted successfully", func() {
-			// DeleteRedirect uses the raw GetValue accessor, which stays unprefixed
-			// even with reverse lookup enabled
+			// reverse lookup is enabled, so the key must be prefixed exactly once.
+			// Unmatched keys return ErrKeyNotFound, as real Redis would.
 			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
+				So(key, ShouldEqual, "fwd:/test-path")
 				if key == "fwd:/test-path" {
 					return "/target", nil
 				}
-				return "", nil
+				return "", disRedis.ErrKeyNotFound
 			}
 			mockStore.TransactionFunc = func(_ context.Context, _ func(redis.Pipeliner)) ([]redis.Cmder, error) {
 				return nil, nil
