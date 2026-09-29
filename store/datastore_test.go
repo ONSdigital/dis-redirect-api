@@ -253,3 +253,88 @@ func TestDatastoreGetValue(t *testing.T) {
 		})
 	})
 }
+
+func TestDatastoreDeleteRedirect(t *testing.T) {
+	Convey("Given a datastore deleting redirects", t, func() {
+		ctx := context.Background()
+
+		Convey("When reverse lookup is disabled", func() {
+			mockStore := &storetest.StorerMock{
+				DeleteValueFunc: func(_ context.Context, key string) error {
+					So(key, ShouldEqual, "/old")
+					return nil
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
+			err := datastore.DeleteRedirect(ctx, "/old")
+
+			Convey("Then the unprefixed key should be deleted directly", func() {
+				So(err, ShouldBeNil)
+				So(mockStore.GetValueCalls(), ShouldBeEmpty)
+				So(mockStore.TransactionCalls(), ShouldBeEmpty)
+
+				deleteValueCalls := mockStore.DeleteValueCalls()
+				So(deleteValueCalls, ShouldHaveLength, 1)
+				So(deleteValueCalls[0].Key, ShouldEqual, "/old")
+			})
+		})
+
+		Convey("When reverse lookup is enabled", func() {
+			mockStore := &storetest.StorerMock{}
+			var queuedCommands []redis.Cmder
+
+			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
+				So(key, ShouldEqual, "fwd:/old")
+				return "/new", nil
+			}
+			mockStore.TransactionFunc = func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
+				client := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
+				defer client.Close()
+
+				pipe := client.Pipeline()
+				queue(pipe)
+				queuedCommands = append([]redis.Cmder(nil), pipe.Cmds()...)
+
+				return nil, nil
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			err := datastore.DeleteRedirect(ctx, "/old")
+
+			Convey("Then the key should be prefixed exactly once and the reverse entry removed", func() {
+				So(err, ShouldBeNil)
+
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, "fwd:/old")
+
+				So(mockStore.TransactionCalls(), ShouldHaveLength, 1)
+				So(queuedCommands, ShouldHaveLength, 2)
+				So(queuedCommands[0].Name(), ShouldEqual, "del")
+				So(queuedCommands[0].Args()[1], ShouldEqual, "fwd:/old")
+				So(queuedCommands[1].Name(), ShouldEqual, "srem")
+				So(queuedCommands[1].Args()[1], ShouldEqual, "rev:/new")
+				So(queuedCommands[1].Args()[2], ShouldEqual, "/old")
+			})
+		})
+
+		Convey("When reverse lookup is enabled and the redirect does not exist", func() {
+			mockStore := &storetest.StorerMock{
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, "fwd:/old")
+					return "", disRedis.ErrKeyNotFound
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			err := datastore.DeleteRedirect(ctx, "/old")
+
+			Convey("Then a not found error should be returned and nothing deleted", func() {
+				So(err, ShouldNotBeNil)
+				So(errors.Is(err, disRedis.ErrKeyNotFound), ShouldBeTrue)
+				So(mockStore.TransactionCalls(), ShouldBeEmpty)
+			})
+		})
+	})
+}
