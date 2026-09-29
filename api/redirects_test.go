@@ -649,13 +649,13 @@ func TestDeleteRedirect(t *testing.T) {
 
 		Convey("When the redirect exists and is deleted successfully", func() {
 			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
-				if key == "/test-path" {
+				if key == "fwd:/test-path" {
 					return "/target", nil
 				}
 				return "", nil
 			}
-			mockStore.DeleteValueFunc = func(_ context.Context, _ string) error {
-				return nil
+			mockStore.TransactionFunc = func(_ context.Context, _ func(redis.Pipeliner)) ([]redis.Cmder, error) {
+				return nil, nil
 			}
 
 			req := httptest.NewRequest(http.MethodDelete, "/redirects/"+base64ID, http.NoBody)
