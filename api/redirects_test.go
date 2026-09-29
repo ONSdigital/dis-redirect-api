@@ -28,9 +28,11 @@ var (
 	getRedirectsBaseURL = "http://localhost:29900/v1/redirects"
 	selfBaseURL         = "http://localhost:29900/redirects/" // TODO Change this to be "http://localhost:29900/v1/redirects/" when dp-net has been fixed
 	existingBase64Key   = "L2Vjb25vbXkvb2xkLXBhdGg="
-	redirectFrom        = "/economy/old-path"
-	redirectTo          = "/economy/new-path"
-	validRedirect       = &models.Redirect{
+	// fwdPrefix mirrors the unexported forward lookup prefix in the store package
+	fwdPrefix     = "fwd:"
+	redirectFrom  = "/economy/old-path"
+	redirectTo    = "/economy/new-path"
+	validRedirect = &models.Redirect{
 		From: redirectFrom,
 		To:   redirectTo,
 	}
@@ -90,18 +92,60 @@ func GetRedirectAPIWithReverseLookup(backend store.Storer, enableReverseLookup b
 
 func TestGetRedirectEndpoint(t *testing.T) {
 	Convey("Given a GET /redirects/{id} request", t, func() {
-		Convey("When the id is valid and encoded in base64", func() {
+		Convey("When the id is valid and encoded in base64 and reverse lookup is enabled", func() {
 			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(_ context.Context, _ string) (string, error) {
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, fwdPrefix+redirectFrom)
 					return redirectTo, nil
 				},
 			}
 
 			redirectAPI := GetRedirectAPIWithMocks(mockStore)
 			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the forward lookup prefixed key should be read", func() {
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, fwdPrefix+redirectFrom)
+			})
+
+			Convey("Then the response status code should be 200 and the prefix should not appear in the response", func() {
+				So(responseRecorder.Code, ShouldEqual, http.StatusOK)
+
+				var response models.Redirect
+				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
+				So(err, ShouldBeNil)
+
+				So(response.From, ShouldEqual, validRedirect.From)
+				So(response.To, ShouldEqual, validRedirect.To)
+				So(response.ID, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.ID, ShouldEqual, existingBase64Key)
+				So(response.Links.Self.Href, ShouldEqual, selfBaseURL+existingBase64Key)
+			})
+		})
+
+		Convey("When the id is valid and encoded in base64 and reverse lookup is disabled", func() {
+			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+existingBase64Key, http.NoBody)
+			responseRecorder := httptest.NewRecorder()
+
+			mockStore := &storetest.StorerMock{
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, redirectFrom)
+					return redirectTo, nil
+				},
+			}
+
+			redirectAPI := GetRedirectAPIWithReverseLookup(mockStore, false)
+			redirectAPI.Router.ServeHTTP(responseRecorder, request)
+
+			Convey("Then the unprefixed key should be read", func() {
+				getValueCalls := mockStore.GetValueCalls()
+				So(getValueCalls, ShouldHaveLength, 1)
+				So(getValueCalls[0].Key, ShouldEqual, redirectFrom)
+			})
 
 			Convey("Then the response status code should be 200", func() {
 				So(responseRecorder.Code, ShouldEqual, http.StatusOK)
@@ -172,8 +216,10 @@ func TestGetRedirectReturns404(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, getRedirectBaseURL+nonExistentBase64Key, http.NoBody)
 			responseRecorder := httptest.NewRecorder()
 
+			// reverse lookup is enabled, so the prefixed key is the one that must miss
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(_ context.Context, _ string) (string, error) {
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, fwdPrefix+"old-path")
 					return "", disRedis.ErrKeyNotFound
 				},
 			}
@@ -195,7 +241,8 @@ func TestGetRedirectReturns500(t *testing.T) {
 			responseRecorder := httptest.NewRecorder()
 
 			mockStore := &storetest.StorerMock{
-				GetValueFunc: func(_ context.Context, _ string) (string, error) {
+				GetValueFunc: func(_ context.Context, key string) (string, error) {
+					So(key, ShouldEqual, redirectFrom)
 					return "", api.ErrInternal
 				},
 			}
@@ -648,7 +695,10 @@ func TestDeleteRedirect(t *testing.T) {
 		base64ID := base64.URLEncoding.EncodeToString([]byte("/test-path"))
 
 		Convey("When the redirect exists and is deleted successfully", func() {
+			// DeleteRedirect uses the raw GetValue accessor, which stays unprefixed
+			// even with reverse lookup enabled
 			mockStore.GetValueFunc = func(_ context.Context, key string) (string, error) {
+				So(key, ShouldEqual, "/test-path")
 				if key == "/test-path" {
 					return "/target", nil
 				}
