@@ -11,7 +11,7 @@ import (
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
-	c "github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 const testHost = "http://localhost:23900"
@@ -26,9 +26,9 @@ var (
 )
 
 func TestClientImplementsClienter(t *testing.T) {
-	c.Convey("Given a redirect API client", t, func() {
-		c.Convey("Then it should implement the Clienter interface", func() {
-			c.So(&Client{}, c.ShouldImplement, (*Clienter)(nil))
+	Convey("Given a redirect API client", t, func() {
+		Convey("Then it should implement the Clienter interface", func() {
+			So(&Client{}, ShouldImplement, (*Clienter)(nil))
 		})
 	})
 }
@@ -39,57 +39,57 @@ func TestHealthCheckerClient(t *testing.T) {
 	timePriorHealthCheck := time.Now().UTC()
 	path := "/health"
 
-	c.Convey("Given clienter.Do returns an error", t, func() {
+	Convey("Given clienter.Do returns an error", t, func() {
 		clientError := errors.New("unexpected error")
 		httpClient := newMockHTTPClient(&http.Response{}, clientError)
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
 		check := initialTestState
 
-		c.Convey("When redirect API client Checker is called", func() {
+		Convey("When redirect API client Checker is called", func() {
 			err := redirectAPIClient.Checker(ctx, &check)
-			c.So(err, c.ShouldBeNil)
+			So(err, ShouldBeNil)
 
-			c.Convey("Then the expected check is returned", func() {
-				c.So(check.Name(), c.ShouldEqual, service)
-				c.So(check.Status(), c.ShouldEqual, health.StatusCritical)
-				c.So(check.StatusCode(), c.ShouldEqual, 0)
-				c.So(check.Message(), c.ShouldEqual, clientError.Error())
-				c.So(*check.LastChecked(), c.ShouldHappenAfter, timePriorHealthCheck)
-				c.So(check.LastSuccess(), c.ShouldBeNil)
-				c.So(*check.LastFailure(), c.ShouldHappenAfter, timePriorHealthCheck)
+			Convey("Then the expected check is returned", func() {
+				So(check.Name(), ShouldEqual, service)
+				So(check.Status(), ShouldEqual, health.StatusCritical)
+				So(check.StatusCode(), ShouldEqual, 0)
+				So(check.Message(), ShouldEqual, clientError.Error())
+				So(*check.LastChecked(), ShouldHappenAfter, timePriorHealthCheck)
+				So(check.LastSuccess(), ShouldBeNil)
+				So(*check.LastFailure(), ShouldHappenAfter, timePriorHealthCheck)
 			})
 
-			c.Convey("And client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
-				c.So(doCalls, c.ShouldHaveLength, 1)
-				c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, path)
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
 			})
 		})
 	})
 
-	c.Convey("Given a 500 response for health check", t, func() {
+	Convey("Given a 500 response for health check", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
 		redirectAPIClient := newRedirectAPIClient(t, httpClient)
 		check := initialTestState
 
-		c.Convey("When redirect API client Checker is called", func() {
+		Convey("When redirect API client Checker is called", func() {
 			err := redirectAPIClient.Checker(ctx, &check)
-			c.So(err, c.ShouldBeNil)
+			So(err, ShouldBeNil)
 
-			c.Convey("Then the expected check is returned", func() {
-				c.So(check.Name(), c.ShouldEqual, service)
-				c.So(check.Status(), c.ShouldEqual, health.StatusCritical)
-				c.So(check.StatusCode(), c.ShouldEqual, 500)
-				c.So(check.Message(), c.ShouldEqual, service+healthcheck.StatusMessage[health.StatusCritical])
-				c.So(*check.LastChecked(), c.ShouldHappenAfter, timePriorHealthCheck)
-				c.So(check.LastSuccess(), c.ShouldBeNil)
-				c.So(*check.LastFailure(), c.ShouldHappenAfter, timePriorHealthCheck)
+			Convey("Then the expected check is returned", func() {
+				So(check.Name(), ShouldEqual, service)
+				So(check.Status(), ShouldEqual, health.StatusCritical)
+				So(check.StatusCode(), ShouldEqual, 500)
+				So(check.Message(), ShouldEqual, service+healthcheck.StatusMessage[health.StatusCritical])
+				So(*check.LastChecked(), ShouldHappenAfter, timePriorHealthCheck)
+				So(check.LastSuccess(), ShouldBeNil)
+				So(*check.LastFailure(), ShouldHappenAfter, timePriorHealthCheck)
 			})
 
-			c.Convey("And client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
-				c.So(doCalls, c.ShouldHaveLength, 1)
-				c.So(doCalls[0].Req.URL.Path, c.ShouldEqual, path)
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
 			})
 		})
 	})
