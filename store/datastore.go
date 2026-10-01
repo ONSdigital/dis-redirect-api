@@ -43,6 +43,8 @@ type dataRedis interface {
 	GetSetMemberValues(ctx context.Context, setKey, matchPattern, valuePrefix string, count int64, cursor uint64) (map[string]string, uint64, error)
 	GetSetMemberCount(ctx context.Context, setKey string) (count int64, err error)
 	SetValue(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	SetAdd(ctx context.Context, key string, members ...interface{}) error
+	SetRem(ctx context.Context, key string, members ...interface{}) error
 	GetKeys(ctx context.Context, matchPattern string, count int64, cursor uint64) (keys []string, newCursor uint64, err error)
 	Transaction(ctx context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error)
 	DeleteValue(ctx context.Context, key string) error
@@ -154,15 +156,16 @@ func (ds *Datastore) UpsertRedirect(ctx context.Context, from, to string) error 
 
 		oldRevRedirectKey := fmt.Sprintf("%s%s", revPrefix, oldValue)
 
-		_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
-			pipe.Set(ctx, fwdRedirectKey, to, 0)
-			pipe.SAdd(ctx, revRedirectKey, from)
-			if oldValue != "" {
-				pipe.SRem(ctx, oldRevRedirectKey, from)
+		if err := ds.Backend.SetAdd(ctx, revRedirectKey, from); err != nil {
+			return fmt.Errorf("failed to add reverse lookup: %w", err)
+		}
+		if err := ds.Backend.SetValue(ctx, fwdRedirectKey, to, 0); err != nil {
+			return fmt.Errorf("failed to set redirect value: %w", err)
+		}
+		if oldValue != "" {
+			if err := ds.Backend.SetRem(ctx, oldRevRedirectKey, from); err != nil {
+				return fmt.Errorf("failed to remove old reverse lookup: %w", err)
 			}
-		})
-		if err != nil {
-			return fmt.Errorf("transaction failed: %w", err)
 		}
 
 		return nil
@@ -191,12 +194,11 @@ func (ds *Datastore) DeleteRedirect(ctx context.Context, redirectID string) erro
 			return fmt.Errorf("failed to get redirect value: %w", err)
 		}
 
-		_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
-			pipe.Del(ctx, fwdRedirectKey)
-			pipe.SRem(ctx, revPrefix+to, redirectID)
-		})
-		if err != nil {
-			return fmt.Errorf("transaction failed: %w", err)
+		if err := ds.Backend.SetRem(ctx, revPrefix+to, redirectID); err != nil {
+			return fmt.Errorf("failed to remove reverse lookup: %w", err)
+		}
+		if err := ds.Backend.DeleteValue(ctx, fwdRedirectKey); err != nil && err != disRedis.ErrKeyNotFound {
+			return fmt.Errorf("failed to delete redirect value: %w", err)
 		}
 
 		return nil
@@ -217,13 +219,14 @@ func (ds *Datastore) ConvertRedirectFormatToReverseLookup(ctx context.Context, k
 	fwdRedirectKey := fmt.Sprintf("%s%s", fwdPrefix, key)
 	revRedirectKey := fmt.Sprintf("%s%s", revPrefix, value)
 
-	_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
-		pipe.Set(ctx, fwdRedirectKey, value, 0)
-		pipe.SAdd(ctx, revRedirectKey, key)
-		pipe.Del(ctx, key)
-	})
-	if err != nil {
-		return fmt.Errorf("transaction failed: %w", err)
+	if err := ds.Backend.SetValue(ctx, fwdRedirectKey, value, 0); err != nil {
+		return fmt.Errorf("set forward redirect failed: %w", err)
+	}
+	if err := ds.Backend.SetAdd(ctx, revRedirectKey, key); err != nil {
+		return fmt.Errorf("add reverse lookup failed: %w", err)
+	}
+	if err := ds.Backend.DeleteValue(ctx, key); err != nil && err != disRedis.ErrKeyNotFound {
+		return fmt.Errorf("delete original redirect failed: %w", err)
 	}
 	return nil
 }
@@ -239,13 +242,14 @@ func (ds *Datastore) ConvertRedirectFormatToForwardLookupOnly(ctx context.Contex
 	fwdRedirectKey := strings.TrimPrefix(key, fwdPrefix)
 	revRedirectKey := fmt.Sprintf("%s%s", revPrefix, value)
 
-	_, err = ds.Backend.Transaction(ctx, func(pipe redis.Pipeliner) {
-		pipe.Set(ctx, fwdRedirectKey, value, 0)
-		pipe.SRem(ctx, revRedirectKey, fwdRedirectKey)
-		pipe.Del(ctx, key)
-	})
-	if err != nil {
-		return fmt.Errorf("transaction failed: %w", err)
+	if err := ds.Backend.SetValue(ctx, fwdRedirectKey, value, 0); err != nil {
+		return fmt.Errorf("set forward redirect failed: %w", err)
+	}
+	if err := ds.Backend.SetRem(ctx, revRedirectKey, fwdRedirectKey); err != nil {
+		return fmt.Errorf("remove reverse lookup failed: %w", err)
+	}
+	if err := ds.Backend.DeleteValue(ctx, key); err != nil && err != disRedis.ErrKeyNotFound {
+		return fmt.Errorf("delete original redirect failed: %w", err)
 	}
 	return nil
 }

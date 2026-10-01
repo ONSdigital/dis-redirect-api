@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/ONSdigital/dis-redirect-api/store"
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
-	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -42,9 +42,16 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 				}
 			}
 
-			mockStore.TransactionFunc = func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
-				So(queue, ShouldNotBeNil)
-				return nil, nil
+			mockStore.SetValueFunc = func(_ context.Context, key string, value interface{}, expiration time.Duration) error {
+				return nil
+			}
+
+			mockStore.SetAddFunc = func(_ context.Context, key string, members ...interface{}) error {
+				return nil
+			}
+
+			mockStore.DeleteValueFunc = func(_ context.Context, key string) error {
+				return nil
 			}
 
 			reconciler := store.NewReverseLookupReconciler(&store.Datastore{Backend: mockStore})
@@ -68,8 +75,17 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 				So(getValueCalls[0].Key, ShouldEqual, "/old-1")
 				So(getValueCalls[1].Key, ShouldEqual, "/old-2")
 
-				transactionCalls := mockStore.TransactionCalls()
-				So(transactionCalls, ShouldHaveLength, 2)
+				setValueCalls := mockStore.SetValueCalls()
+				So(setValueCalls, ShouldHaveLength, 2)
+				So(setValueCalls[0].Key, ShouldEqual, "fwd:/old-1")
+				So(setValueCalls[1].Key, ShouldEqual, "fwd:/old-2")
+
+				setAddCalls := mockStore.SetAddCalls()
+				So(setAddCalls, ShouldHaveLength, 2)
+				So(setAddCalls[0].Key, ShouldEqual, "rev:/new-1")
+				So(setAddCalls[0].Members, ShouldResemble, []interface{}{"/old-1"})
+				So(setAddCalls[1].Key, ShouldEqual, "rev:/new-2")
+				So(setAddCalls[1].Members, ShouldResemble, []interface{}{"/old-2"})
 			})
 		})
 
@@ -107,7 +123,7 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 					errMessage:  "get failed",
 				},
 				{
-					name: "transaction failure",
+					name: "set value failure",
 					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
 						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
 							return []string{"/old"}, 0, nil
@@ -115,14 +131,56 @@ func TestReverseLookupReconcilerReconcile(t *testing.T) {
 						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 							return "/new", nil
 						}
-						mockStore.TransactionFunc = func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
-							So(queue, ShouldNotBeNil)
-							return nil, expectedErr
+						mockStore.SetValueFunc = func(_ context.Context, key string, value interface{}, expiration time.Duration) error {
+							return expectedErr
 						}
 					},
 					wantChanges: 0,
-					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to reverse lookup failed: transaction failed: transaction failed",
-					errMessage:  "transaction failed",
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to reverse lookup failed: set forward redirect failed: set failed",
+					errMessage:  "set failed",
+				},
+				{
+					name: "set add failure",
+					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
+						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+							return []string{"/old"}, 0, nil
+						}
+						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
+							return "/new", nil
+						}
+						mockStore.SetValueFunc = func(_ context.Context, key string, value interface{}, expiration time.Duration) error {
+							return nil
+						}
+						mockStore.SetAddFunc = func(_ context.Context, key string, members ...interface{}) error {
+							return expectedErr
+						}
+					},
+					wantChanges: 0,
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to reverse lookup failed: add reverse lookup failed: set add failed",
+					errMessage:  "set add failed",
+				},
+				{
+					name: "delete value failure",
+					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
+						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+							return []string{"/old"}, 0, nil
+						}
+						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
+							return "/new", nil
+						}
+						mockStore.SetValueFunc = func(_ context.Context, key string, value interface{}, expiration time.Duration) error {
+							return nil
+						}
+						mockStore.SetAddFunc = func(_ context.Context, key string, members ...interface{}) error {
+							return nil
+						}
+						mockStore.DeleteValueFunc = func(_ context.Context, key string) error {
+							return expectedErr
+						}
+					},
+					wantChanges: 0,
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to reverse lookup failed: delete original redirect failed: delete failed",
+					errMessage:  "delete failed",
 				},
 			}
 
@@ -176,9 +234,16 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 				}
 			}
 
-			mockStore.TransactionFunc = func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
-				So(queue, ShouldNotBeNil)
-				return nil, nil
+			mockStore.SetRemFunc = func(_ context.Context, key string, members ...interface{}) error {
+				return nil
+			}
+
+			mockStore.SetValueFunc = func(_ context.Context, key string, value interface{}, expiration time.Duration) error {
+				return nil
+			}
+
+			mockStore.DeleteValueFunc = func(_ context.Context, key string) error {
+				return nil
 			}
 
 			reconciler := store.NewForwardLookupOnlyReconciler(&store.Datastore{Backend: mockStore})
@@ -202,8 +267,19 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 				So(getValueCalls[0].Key, ShouldEqual, "fwd:/old-1")
 				So(getValueCalls[1].Key, ShouldEqual, "fwd:/old-2")
 
-				transactionCalls := mockStore.TransactionCalls()
-				So(transactionCalls, ShouldHaveLength, 2)
+				setRemCalls := mockStore.SetRemCalls()
+				So(setRemCalls, ShouldHaveLength, 2)
+				So(setRemCalls[0].Key, ShouldEqual, "rev:/new-1")
+				So(setRemCalls[0].Members, ShouldResemble, []interface{}{"/old-1"})
+
+				setValueCalls := mockStore.SetValueCalls()
+				So(setValueCalls, ShouldHaveLength, 2)
+				So(setValueCalls[0].Key, ShouldEqual, "/old-1")
+				So(setValueCalls[0].Value, ShouldEqual, "/new-1")
+
+				deleteValueCalls := mockStore.DeleteValueCalls()
+				So(deleteValueCalls, ShouldHaveLength, 2)
+				So(deleteValueCalls[0].Key, ShouldEqual, "fwd:/old-1")
 			})
 		})
 
@@ -241,7 +317,7 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 					errMessage:  "get failed",
 				},
 				{
-					name: "transaction failure",
+					name: "set value failure",
 					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
 						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
 							return []string{"fwd:/old"}, 0, nil
@@ -249,14 +325,56 @@ func TestForwardLookupOnlyReconcilerReconcile(t *testing.T) {
 						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
 							return "/new", nil
 						}
-						mockStore.TransactionFunc = func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
-							So(queue, ShouldNotBeNil)
-							return nil, expectedErr
+						mockStore.SetValueFunc = func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+							return expectedErr
 						}
 					},
 					wantChanges: 0,
-					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to forward lookup only failed: transaction failed: transaction failed",
-					errMessage:  "transaction failed",
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to forward lookup only failed: set forward redirect failed: set value failed",
+					errMessage:  "set value failed",
+				},
+				{
+					name: "set rem failure",
+					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
+						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+							return []string{"fwd:/old"}, 0, nil
+						}
+						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
+							return "/new", nil
+						}
+						mockStore.SetValueFunc = func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+							return nil
+						}
+						mockStore.SetRemFunc = func(ctx context.Context, key string, members ...interface{}) error {
+							return expectedErr
+						}
+					},
+					wantChanges: 0,
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to forward lookup only failed: remove reverse lookup failed: set rem failed",
+					errMessage:  "set rem failed",
+				},
+				{
+					name: "delete value failure",
+					configureMock: func(mockStore *storetest.StorerMock, expectedErr error) {
+						mockStore.GetKeysFunc = func(_ context.Context, _ string, _ int64, _ uint64) ([]string, uint64, error) {
+							return []string{"fwd:/old"}, 0, nil
+						}
+						mockStore.GetValueFunc = func(_ context.Context, _ string) (string, error) {
+							return "/new", nil
+						}
+						mockStore.SetValueFunc = func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+							return nil
+						}
+						mockStore.SetRemFunc = func(ctx context.Context, key string, members ...interface{}) error {
+							return nil
+						}
+						mockStore.DeleteValueFunc = func(ctx context.Context, key string) error {
+							return expectedErr
+						}
+					},
+					wantChanges: 0,
+					wantErr:     "reconcile batch scan failed: cursor=0: convert redirect format to forward lookup only failed: delete original redirect failed: delete value failed",
+					errMessage:  "delete value failed",
 				},
 			}
 
