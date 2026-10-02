@@ -19,7 +19,6 @@ import (
 	storetest "github.com/ONSdigital/dis-redirect-api/store/datastoretest"
 	disRedis "github.com/ONSdigital/dis-redis"
 	"github.com/gorilla/mux"
-	"github.com/redis/go-redis/v9"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -326,10 +325,10 @@ func TestUpsertRedirect(t *testing.T) {
 					return "", nil
 				}
 			},
-			TransactionFunc: func(_ context.Context, queue func(redis.Pipeliner)) ([]redis.Cmder, error) {
-				return nil, nil
+			SetAddFunc: func(ctx context.Context, key string, members ...interface{}) error {
+				return nil
 			},
-			SetValueFunc: func(_ context.Context, _ string, _ interface{}, _ time.Duration) error {
+			SetValueFunc: func(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 				return nil
 			},
 		}
@@ -703,8 +702,11 @@ func TestDeleteRedirect(t *testing.T) {
 				}
 				return "", disRedis.ErrKeyNotFound
 			}
-			mockStore.TransactionFunc = func(_ context.Context, _ func(redis.Pipeliner)) ([]redis.Cmder, error) {
-				return nil, nil
+			mockStore.SetRemFunc = func(_ context.Context, key string, members ...interface{}) error {
+				return nil
+			}
+			mockStore.DeleteValueFunc = func(_ context.Context, key string) error {
+				return nil
 			}
 
 			req := httptest.NewRequest(http.MethodDelete, "/redirects/"+base64ID, http.NoBody)
@@ -722,7 +724,6 @@ func TestDeleteRedirect(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/redirects/"+base64ID, http.NoBody)
 			rr := httptest.NewRecorder()
 			router.ServeHTTP(rr, req)
-
 			So(rr.Code, ShouldEqual, http.StatusNotFound)
 			So(rr.Body.String(), ShouldContainSubstring, "not found")
 		})
