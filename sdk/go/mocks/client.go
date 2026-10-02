@@ -19,37 +19,37 @@ var _ sdk.Clienter = &ClienterMock{}
 
 // ClienterMock is a mock implementation of sdk.Clienter.
 //
-//	func TestSomethingThatUsesClienter(t *testing.T) {
+// 	func TestSomethingThatUsesClienter(t *testing.T) {
 //
-//		// make and configure a mocked sdk.Clienter
-//		mockedClienter := &ClienterMock{
-//			CheckerFunc: func(ctx context.Context, check *health.CheckState) error {
-//				panic("mock out the Checker method")
-//			},
-//			DeleteRedirectFunc: func(ctx context.Context, options sdk.Options, id string) apiError.Error {
-//				panic("mock out the DeleteRedirect method")
-//			},
-//			GetRedirectFunc: func(ctx context.Context, options sdk.Options, key string) (*models.Redirect, apiError.Error) {
-//				panic("mock out the GetRedirect method")
-//			},
-//			GetRedirectsFunc: func(ctx context.Context, options sdk.Options) (*models.Redirects, apiError.Error) {
-//				panic("mock out the GetRedirects method")
-//			},
-//			HealthFunc: func() *healthcheck.Client {
-//				panic("mock out the Health method")
-//			},
-//			PutRedirectFunc: func(ctx context.Context, options sdk.Options, id string, payload models.Redirect) apiError.Error {
-//				panic("mock out the PutRedirect method")
-//			},
-//			URLFunc: func() string {
-//				panic("mock out the URL method")
-//			},
-//		}
+// 		// make and configure a mocked sdk.Clienter
+// 		mockedClienter := &ClienterMock{
+// 			CheckerFunc: func(ctx context.Context, check *health.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			DeleteRedirectFunc: func(ctx context.Context, options sdk.Options, id string) apiError.Error {
+// 				panic("mock out the DeleteRedirect method")
+// 			},
+// 			GetRedirectFunc: func(ctx context.Context, options sdk.Options, key string) (*models.Redirect, apiError.Error) {
+// 				panic("mock out the GetRedirect method")
+// 			},
+// 			GetRedirectsFunc: func(ctx context.Context, options sdk.Options) (*models.Redirects, apiError.Error) {
+// 				panic("mock out the GetRedirects method")
+// 			},
+// 			HealthFunc: func() *healthcheck.Client {
+// 				panic("mock out the Health method")
+// 			},
+// 			PutRedirectFunc: func(ctx context.Context, options sdk.Options, id string, payload models.Redirect) apiError.Error {
+// 				panic("mock out the PutRedirect method")
+// 			},
+// 			URLFunc: func() string {
+// 				panic("mock out the URL method")
+// 			},
+// 		}
 //
-//		// use mockedClienter in code that requires sdk.Clienter
-//		// and then make assertions.
+// 		// use mockedClienter in code that requires sdk.Clienter
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type ClienterMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, check *health.CheckState) error
@@ -153,8 +153,7 @@ func (mock *ClienterMock) Checker(ctx context.Context, check *health.CheckState)
 
 // CheckerCalls gets all the calls that were made to Checker.
 // Check the length with:
-//
-//	len(mockedClienter.CheckerCalls())
+//     len(mockedClienter.CheckerCalls())
 func (mock *ClienterMock) CheckerCalls() []struct {
 	Ctx   context.Context
 	Check *health.CheckState
@@ -191,8 +190,7 @@ func (mock *ClienterMock) DeleteRedirect(ctx context.Context, options sdk.Option
 
 // DeleteRedirectCalls gets all the calls that were made to DeleteRedirect.
 // Check the length with:
-//
-//	len(mockedClienter.DeleteRedirectCalls())
+//     len(mockedClienter.DeleteRedirectCalls())
 func (mock *ClienterMock) DeleteRedirectCalls() []struct {
 	Ctx     context.Context
 	Options sdk.Options
@@ -231,8 +229,7 @@ func (mock *ClienterMock) GetRedirect(ctx context.Context, options sdk.Options, 
 
 // GetRedirectCalls gets all the calls that were made to GetRedirect.
 // Check the length with:
-//
-//	len(mockedClienter.GetRedirectCalls())
+//     len(mockedClienter.GetRedirectCalls())
 func (mock *ClienterMock) GetRedirectCalls() []struct {
 	Ctx     context.Context
 	Options sdk.Options
@@ -269,8 +266,7 @@ func (mock *ClienterMock) GetRedirects(ctx context.Context, options sdk.Options)
 
 // GetRedirectsCalls gets all the calls that were made to GetRedirects.
 // Check the length with:
-//
-//	len(mockedClienter.GetRedirectsCalls())
+//     len(mockedClienter.GetRedirectsCalls())
 func (mock *ClienterMock) GetRedirectsCalls() []struct {
 	Ctx     context.Context
 	Options sdk.Options
@@ -300,8 +296,7 @@ func (mock *ClienterMock) Health() *healthcheck.Client {
 
 // HealthCalls gets all the calls that were made to Health.
 // Check the length with:
-//
-//	len(mockedClienter.HealthCalls())
+//     len(mockedClienter.HealthCalls())
 func (mock *ClienterMock) HealthCalls() []struct {
 } {
 	var calls []struct {
@@ -336,8 +331,7 @@ func (mock *ClienterMock) PutRedirect(ctx context.Context, options sdk.Options, 
 
 // PutRedirectCalls gets all the calls that were made to PutRedirect.
 // Check the length with:
-//
-//	len(mockedClienter.PutRedirectCalls())
+//     len(mockedClienter.PutRedirectCalls())
 func (mock *ClienterMock) PutRedirectCalls() []struct {
 	Ctx     context.Context
 	Options sdk.Options
@@ -371,8 +365,7 @@ func (mock *ClienterMock) URL() string {
 
 // URLCalls gets all the calls that were made to URL.
 // Check the length with:
-//
-//	len(mockedClienter.URLCalls())
+//     len(mockedClienter.URLCalls())
 func (mock *ClienterMock) URLCalls() []struct {
 } {
 	var calls []struct {

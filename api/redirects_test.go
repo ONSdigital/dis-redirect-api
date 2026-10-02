@@ -37,11 +37,11 @@ var (
 		To:   redirectTo,
 	}
 	notANumber         = "this-is-not-a-number"
-	economyBulletin1   = "/economy/mybulletin1"
+	economyBulletin1   = "fwd:/economy/mybulletin1"
 	financeBulletin1   = "/finance/mybulletin1"
-	economyBulletin2   = "/economy/mybulletin2"
+	economyBulletin2   = "fwd:/economy/mybulletin2"
 	financeBulletin2   = "/finance/mybulletin2"
-	economyBulletin3   = "/economy/mybulletin3"
+	economyBulletin3   = "fwd:/economy/mybulletin3"
 	financeBulletin3   = "/finance/mybulletin3"
 	nonRedirectURL     = "/non-redirect-url"
 	testFromURL        = "/foo"
@@ -267,13 +267,13 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 			keyValuePairs[economyBulletin1] = financeBulletin1
 			keyValuePairs[economyBulletin2] = financeBulletin2
 			keyValuePairs[economyBulletin3] = financeBulletin3
-			keyValuePairs["/economy/mybulletin4"] = "/finance/mybulletin4"
-			keyValuePairs["/economy/mybulletin5"] = "/finance/mybulletin5"
-			keyValuePairs["/economy/mybulletin6"] = "/finance/mybulletin6"
-			keyValuePairs["/economy/mybulletin7"] = "/finance/mybulletin7"
-			keyValuePairs["/economy/mybulletin8"] = "/finance/mybulletin8"
-			keyValuePairs["/economy/mybulletin9"] = "/finance/mybulletin9"
-			keyValuePairs["/economy/mybulletin10"] = "/finance/mybulletin10"
+			keyValuePairs["fwd:/economy/mybulletin4"] = "/finance/mybulletin4"
+			keyValuePairs["fwd:/economy/mybulletin5"] = "/finance/mybulletin5"
+			keyValuePairs["fwd:/economy/mybulletin6"] = "/finance/mybulletin6"
+			keyValuePairs["fwd:/economy/mybulletin7"] = "/finance/mybulletin7"
+			keyValuePairs["fwd:/economy/mybulletin8"] = "/finance/mybulletin8"
+			keyValuePairs["fwd:/economy/mybulletin9"] = "/finance/mybulletin9"
+			keyValuePairs["fwd:/economy/mybulletin10"] = "/finance/mybulletin10"
 
 			mockStore := &storetest.StorerMock{
 				GetKeyValuePairsFunc: func(_ context.Context, _ string, _ int64, _ uint64) (map[string]string, uint64, error) {
@@ -297,8 +297,7 @@ func TestGetRedirectsSuccessWithDefaultParams(t *testing.T) {
 				respRedirectList := response.RedirectList
 				respItem1 := respRedirectList[0]
 				respItem1From := respItem1.From
-				expectedID := encodeBase64(respItem1From)
-
+				expectedID := encodeBase64("fwd:" + respItem1From)
 				So(response.Count, ShouldEqual, 10)
 				So(len(respRedirectList), ShouldEqual, 10)
 				So(respItem1From, ShouldNotBeEmpty)
@@ -438,7 +437,7 @@ func TestGetRedirectsSuccessWithValidParams(t *testing.T) {
 				respRedirectList := response.RedirectList
 				respItem1 := respRedirectList[0]
 				respItem1From := respItem1.From
-				expectedID := encodeBase64(respItem1From)
+				expectedID := encodeBase64("fwd:" + respItem1From)
 
 				So(response.Count, ShouldEqual, 3)
 				So(len(respRedirectList), ShouldEqual, 3)
@@ -489,7 +488,7 @@ func TestGetRedirectsSuccessWithToFilter(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(response.Count, ShouldEqual, 1)
 				So(len(response.RedirectList), ShouldEqual, 1)
-				So(response.RedirectList[0].From, ShouldEqual, economyBulletin1)
+				So(response.RedirectList[0].From, ShouldEqual, economyBulletin1[4:])
 				So(response.RedirectList[0].To, ShouldEqual, filterTo)
 				So(response.Cursor, ShouldEqual, "0")
 				So(response.NextCursor, ShouldEqual, "4")
@@ -674,7 +673,7 @@ func TestGetRedirectsURLRewriting(t *testing.T) {
 				respRedirectList := response.RedirectList
 				respItem1 := respRedirectList[0]
 				respItem1From := respItem1.From
-				expectedID := encodeBase64(respItem1From)
+				expectedID := encodeBase64("fwd:" + respItem1From)
 				So(respItem1.Links.Self.ID, ShouldEqual, expectedID)
 				So(respItem1.Links.Self.Href, ShouldEqual, fmt.Sprintf("%s://%s/%s/redirects/%s", expectedProto, expectedHost, expectedPathPrefix, expectedID))
 			})

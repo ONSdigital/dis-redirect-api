@@ -282,7 +282,11 @@ func (api *RedirectAPI) getRedirects(w http.ResponseWriter, req *http.Request) {
 		redirectLinks := models.RedirectLinks{
 			Self: redirectSelf,
 		}
-		redirect.From = key
+		if api.enableReverseLookup {
+			redirect.From = key[4:] // remove 'fwd:' prefix from the output
+		} else {
+			redirect.From = key
+		}
 		redirect.To = value
 		redirect.ID = redirectID
 		redirect.Links = redirectLinks
