@@ -94,10 +94,13 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 		matchPattern = "fwd*"
 	}
 	keyValuePairs, newCursor, err = ds.Backend.GetKeyValuePairs(ctx, matchPattern, count, cursor)
+	if err != nil {
+		log.Error(ctx, "failed to get key value pairs from redis", err)
+		return nil, 0, err
+	}
 
 	logData := log.Data{"enableReverseLookup:": enableReverseLookup}
 	if enableReverseLookup {
-		log.Info(ctx, "removing the fwd: prefix from the output", logData)
 		for key := range keyValuePairs {
 			// check the index of the first instance of "fwd:" in key; will give -1 if substr is not present
 			i := strings.Index(key, "fwd:")

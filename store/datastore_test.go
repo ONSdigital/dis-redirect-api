@@ -462,10 +462,10 @@ func TestDatastoreGetRedirects(t *testing.T) {
 			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
 			redirects, newCursor, err := datastore.GetRedirects(ctx, "", count, cursor)
 
-			Convey("Then it should return the backend results and error", func() {
+			Convey("Then it should return an error to say that the lookup failed", func() {
 				So(err, ShouldEqual, expectedErr)
-				So(redirects, ShouldResemble, map[string]string{"/old": "/new"})
-				So(newCursor, ShouldEqual, 3)
+				So(redirects, ShouldResemble, map[string]string(nil))
+				So(newCursor, ShouldEqual, 0)
 			})
 		})
 	})
