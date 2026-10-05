@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/log.go/v2/log"
 	"strings"
 	"time"
 
@@ -86,10 +87,29 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 	}
 
 	var matchPattern = ""
-	if ds.cfg.EnableReverseLookup {
+	enableReverseLookup := ds.cfg.EnableReverseLookup
+
+	if enableReverseLookup {
 		matchPattern = "fwd*"
 	}
-	return ds.Backend.GetKeyValuePairs(ctx, matchPattern, count, cursor)
+	keyValuePairs, newCursor, err = ds.Backend.GetKeyValuePairs(ctx, matchPattern, count, cursor)
+
+	logData := log.Data{"enableReverseLookup:": enableReverseLookup}
+	if enableReverseLookup {
+		log.Info(ctx, "removing the fwd: prefix from the output", logData)
+		for key, _ := range keyValuePairs {
+			// check the index of the first instance of "fwd:" in key; will give -1 if substr is not present
+			i := strings.Index(key, "fwd:")
+			if i == 0 {
+				cutKey := key[4:]
+				keyValuePairs[cutKey] = keyValuePairs[key]
+				delete(keyValuePairs, key)
+			}
+		}
+	} else {
+		log.Info(ctx, "not expecting the redirects to have the fwd: prefix", logData)
+	}
+	return keyValuePairs, newCursor, err
 }
 
 // GetTotalCount retrieves the total count of redirects from the datastore.
