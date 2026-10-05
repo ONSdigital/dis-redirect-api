@@ -24,6 +24,10 @@ Feature: GET redirect endpoint for private mode with to filter
       | id                | 'from' value encoded as Base64 string         |
       | links: self: href | https://api.beta.ons.gov.uk/v1/redirects/{id} |
       | links: self: id   | {id}                                          |
+    And the redirects list should contain only the following redirects:
+      | from              | to                |
+      | /economy/old-path1 | /economy/new-path1 |
+      | /economy/old-path2 | /economy/new-path1 |
     And the list of redirects should also contain the following values:
       | count | cursor | next_cursor | total_count |
       | 2     | 1      | 0           | 2           |

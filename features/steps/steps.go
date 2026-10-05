@@ -27,6 +27,7 @@ func (c *RedirectComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be three or more redirects returned in a list$`, c.iWouldExpectThereToBeThreeOrMoreRedirectsReturnedInAList)
 	ctx.Step(`^in each redirect I would expect the response to contain values that have these structures$`, c.inEachRedirectIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
 	ctx.Step(`^the list of redirects should also contain the following values:$`, c.theListOfRedirectsShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^the redirects list should contain only the following redirects:$`, c.theRedirectsListShouldContainOnlyTheFollowingRedirects)
 	ctx.Step(`^I would expect there to be (\d+) redirects returned in a list$`, c.iWouldExpectThereToBeRedirectsReturnedInAList)
 }
 
@@ -137,6 +138,29 @@ func (c *RedirectComponent) theListOfRedirectsShouldAlsoContainTheFollowingValue
 		}
 		c.checkValuesInRedirects(row, response)
 	}
+
+	return nil
+}
+
+func (c *RedirectComponent) theRedirectsListShouldContainOnlyTheFollowingRedirects(table *godog.Table) error {
+	var response models.Redirects
+	if err := json.Unmarshal(c.responseBody, &response); err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	expectedRedirects := make(map[string]string, len(table.Rows)-1)
+	for i, row := range table.Rows {
+		if i == 0 {
+			continue
+		}
+		expectedRedirects[row.Cells[0].Value] = row.Cells[1].Value
+	}
+
+	observedRedirects := make(map[string]string, len(response.RedirectList))
+	for _, redirect := range response.RedirectList {
+		observedRedirects[redirect.From] = redirect.To
+	}
+	assert.Equal(&c.ErrorFeature, expectedRedirects, observedRedirects)
 
 	return nil
 }
