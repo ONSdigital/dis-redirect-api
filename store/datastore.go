@@ -10,7 +10,6 @@ import (
 
 	"github.com/ONSdigital/dis-redirect-api/config"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -90,8 +89,6 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 	if ds.cfg.EnableReverseLookup {
 		matchPattern = "fwd*"
 	}
-	logData := log.Data{"EnableReverseLookup:": ds.cfg.EnableReverseLookup, "matchPattern:": matchPattern}
-	log.Info(ctx, "if ENABLE_REVERSE_LOOKUP is true, the redirects returned should have the fwd prefix", logData)
 	return ds.Backend.GetKeyValuePairs(ctx, matchPattern, count, cursor)
 }
 
