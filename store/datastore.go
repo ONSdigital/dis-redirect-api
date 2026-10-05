@@ -3,9 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/log.go/v2/log"
 	"strings"
 	"time"
+
+	"github.com/ONSdigital/log.go/v2/log"
 
 	disRedis "github.com/ONSdigital/dis-redis"
 
@@ -97,7 +98,7 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 	logData := log.Data{"enableReverseLookup:": enableReverseLookup}
 	if enableReverseLookup {
 		log.Info(ctx, "removing the fwd: prefix from the output", logData)
-		for key, _ := range keyValuePairs {
+		for key := range keyValuePairs {
 			// check the index of the first instance of "fwd:" in key; will give -1 if substr is not present
 			i := strings.Index(key, "fwd:")
 			if i == 0 {
