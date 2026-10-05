@@ -329,3 +329,144 @@ func TestDatastoreDeleteRedirect(t *testing.T) {
 		})
 	})
 }
+
+func TestDatastoreGetRedirects(t *testing.T) {
+	Convey("Given a datastore retrieving redirects", t, func() {
+		ctx := context.Background()
+		const count int64 = 25
+		const cursor uint64 = 4
+
+		Convey("When reverse lookup is disabled", func() {
+			var receivedPattern string
+			var receivedCount int64
+			var receivedCursor uint64
+
+			mockStore := &storetest.StorerMock{
+				GetKeyValuePairsFunc: func(
+					_ context.Context,
+					matchPattern string,
+					requestedCount int64,
+					requestedCursor uint64,
+				) (map[string]string, uint64, error) {
+					receivedPattern = matchPattern
+					receivedCount = requestedCount
+					receivedCursor = requestedCursor
+					return map[string]string{"/old": "/new"}, 9, nil
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
+			redirects, newCursor, err := datastore.GetRedirects(ctx, "", count, cursor)
+
+			Convey("Then it should return redirects and pass through pagination arguments", func() {
+				So(err, ShouldBeNil)
+				So(redirects, ShouldResemble, map[string]string{"/old": "/new"})
+				So(newCursor, ShouldEqual, 9)
+				So(receivedPattern, ShouldBeEmpty)
+				So(receivedCount, ShouldEqual, count)
+				So(receivedCursor, ShouldEqual, cursor)
+				So(mockStore.GetKeyValuePairsCalls(), ShouldHaveLength, 1)
+				So(mockStore.GetSetMemberValuesCalls(), ShouldBeEmpty)
+			})
+		})
+
+		Convey("When reverse lookup is enabled", func() {
+			var receivedPattern string
+
+			mockStore := &storetest.StorerMock{
+				GetKeyValuePairsFunc: func(
+					_ context.Context,
+					matchPattern string,
+					_ int64,
+					_ uint64,
+				) (map[string]string, uint64, error) {
+					receivedPattern = matchPattern
+					return map[string]string{
+						"fwd:/old":   "/new",
+						"fwd:/other": "/destination",
+					}, 12, nil
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			redirects, newCursor, err := datastore.GetRedirects(ctx, "", count, cursor)
+
+			Convey("Then it should filter forward keys and remove their prefixes", func() {
+				So(err, ShouldBeNil)
+				So(redirects, ShouldResemble, map[string]string{
+					"/old":   "/new",
+					"/other": "/destination",
+				})
+				So(newCursor, ShouldEqual, 12)
+				So(receivedPattern, ShouldEqual, "fwd*")
+				So(mockStore.GetKeyValuePairsCalls(), ShouldHaveLength, 1)
+				So(mockStore.GetSetMemberValuesCalls(), ShouldBeEmpty)
+			})
+		})
+
+		Convey("When a destination is provided", func() {
+			var receivedSetKey string
+			var receivedPattern string
+			var receivedPrefix string
+			var receivedCount int64
+			var receivedCursor uint64
+
+			mockStore := &storetest.StorerMock{
+				GetSetMemberValuesFunc: func(
+					_ context.Context,
+					setKey string,
+					matchPattern string,
+					valuePrefix string,
+					requestedCount int64,
+					requestedCursor uint64,
+				) (map[string]string, uint64, error) {
+					receivedSetKey = setKey
+					receivedPattern = matchPattern
+					receivedPrefix = valuePrefix
+					receivedCount = requestedCount
+					receivedCursor = requestedCursor
+					return map[string]string{"/old": "/destination"}, 6, nil
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: true})
+			redirects, newCursor, err := datastore.GetRedirects(ctx, "/destination", count, cursor)
+
+			Convey("Then it should retrieve members from the destination reverse index", func() {
+				So(err, ShouldBeNil)
+				So(redirects, ShouldResemble, map[string]string{"/old": "/destination"})
+				So(newCursor, ShouldEqual, 6)
+				So(receivedSetKey, ShouldEqual, "rev:/destination")
+				So(receivedPattern, ShouldBeEmpty)
+				So(receivedPrefix, ShouldEqual, "fwd:")
+				So(receivedCount, ShouldEqual, count)
+				So(receivedCursor, ShouldEqual, cursor)
+				So(mockStore.GetSetMemberValuesCalls(), ShouldHaveLength, 1)
+				So(mockStore.GetKeyValuePairsCalls(), ShouldBeEmpty)
+			})
+		})
+
+		Convey("When retrieving all redirects fails", func() {
+			expectedErr := errors.New("lookup failed")
+			mockStore := &storetest.StorerMock{
+				GetKeyValuePairsFunc: func(
+					_ context.Context,
+					_ string,
+					_ int64,
+					_ uint64,
+				) (map[string]string, uint64, error) {
+					return map[string]string{"/old": "/new"}, 3, expectedErr
+				},
+			}
+
+			datastore := store.NewDatastore(mockStore, &config.Config{EnableReverseLookup: false})
+			redirects, newCursor, err := datastore.GetRedirects(ctx, "", count, cursor)
+
+			Convey("Then it should return the backend results and error", func() {
+				So(err, ShouldEqual, expectedErr)
+				So(redirects, ShouldResemble, map[string]string{"/old": "/new"})
+				So(newCursor, ShouldEqual, 3)
+			})
+		})
+	})
+}
