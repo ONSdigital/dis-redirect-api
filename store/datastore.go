@@ -99,7 +99,6 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 		return nil, 0, err
 	}
 
-	logData := log.Data{"enableReverseLookup:": enableReverseLookup}
 	if enableReverseLookup {
 		for key := range keyValuePairs {
 			// check the index of the first instance of "fwd:" in key; will give -1 if substr is not present
@@ -110,8 +109,6 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 				delete(keyValuePairs, key)
 			}
 		}
-	} else {
-		log.Info(ctx, "not expecting the redirects to have the fwd: prefix", logData)
 	}
 	return keyValuePairs, newCursor, err
 }
