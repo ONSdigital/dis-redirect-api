@@ -335,6 +335,7 @@ func TestDatastoreGetRedirects(t *testing.T) {
 		ctx := context.Background()
 		const count int64 = 25
 		const cursor uint64 = 4
+		const maxCount int64 = 1000
 
 		Convey("When reverse lookup is disabled", func() {
 			var receivedPattern string
@@ -363,7 +364,7 @@ func TestDatastoreGetRedirects(t *testing.T) {
 				So(redirects, ShouldResemble, map[string]string{"/old": "/new"})
 				So(newCursor, ShouldEqual, 9)
 				So(receivedPattern, ShouldBeEmpty)
-				So(receivedCount, ShouldEqual, count)
+				So(receivedCount, ShouldEqual, maxCount)
 				So(receivedCursor, ShouldEqual, cursor)
 				So(mockStore.GetKeyValuePairsCalls(), ShouldHaveLength, 1)
 				So(mockStore.GetSetMemberValuesCalls(), ShouldBeEmpty)

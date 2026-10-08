@@ -93,10 +93,24 @@ func (ds *Datastore) GetRedirects(ctx context.Context, to string, count int64, c
 	if enableReverseLookup {
 		matchPattern = "fwd*"
 	}
-	keyValuePairs, newCursor, err = ds.Backend.GetKeyValuePairs(ctx, matchPattern, count, cursor)
+	var allKeyValuePairs map[string]string
+	// Use a count of 1000 to bring back up to the maximum number of redirects before we count the number we need - otherwise this won't
+	// bring back the correct number if using a matchPattern e.g. fwd*
+	allKeyValuePairs, newCursor, err = ds.Backend.GetKeyValuePairs(ctx, matchPattern, 1000, cursor)
 	if err != nil {
 		log.Error(ctx, "failed to get key value pairs from redis", err)
 		return nil, 0, err
+	}
+
+	// Loop through the returned redirects and count the required number into the keyValuePairs map
+	var i int64 = 0
+	keyValuePairs = make(map[string]string)
+	for key, value := range allKeyValuePairs {
+		if i == count {
+			break
+		}
+		keyValuePairs[key] = value
+		i++
 	}
 
 	if enableReverseLookup {
