@@ -100,7 +100,7 @@ func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, hea
 		req.Header.Add("Content-type", "application/json")
 	}
 
-	// add the supported query values to the path URL
+	// add the count, cursor and to values, if present, to the path URL
 	q := req.URL.Query()
 	q.Add(api.QueryParameterCount, queryParams.Get(api.QueryParameterCount))
 	q.Add(api.QueryParameterCursor, queryParams.Get(api.QueryParameterCursor))
