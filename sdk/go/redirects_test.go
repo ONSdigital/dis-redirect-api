@@ -174,6 +174,19 @@ func TestGetRedirects(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When GetRedirects is called with a target URI", func() {
+			queryValues.Set("to", "/economy/datasets/TS056")
+			resp, err := redirectAPIClient.GetRedirects(ctx, Options{Headers: headers, Query: queryValues})
+
+			Convey("Then the target URI is sent as a query parameter", func() {
+				So(err, ShouldBeNil)
+				So(*resp, ShouldResemble, getRedirectsResponse)
+				calls := httpClient.DoCalls()
+				So(calls, ShouldHaveLength, 1)
+				So(calls[0].Req.URL.Query().Get("to"), ShouldEqual, "/economy/datasets/TS056")
+			})
+		})
 	})
 }
 

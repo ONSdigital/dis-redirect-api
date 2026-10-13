@@ -100,10 +100,13 @@ func (cli *Client) callRedirectAPI(ctx context.Context, path, method string, hea
 		req.Header.Add("Content-type", "application/json")
 	}
 
-	// add the count and cursor values, if present, to the path URL
+	// add the supported query values to the path URL
 	q := req.URL.Query()
 	q.Add(api.QueryParameterCount, queryParams.Get(api.QueryParameterCount))
 	q.Add(api.QueryParameterCursor, queryParams.Get(api.QueryParameterCursor))
+	if to := queryParams.Get(api.QueryParameterTo); to != "" {
+		q.Set(api.QueryParameterTo, to)
+	}
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
