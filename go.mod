@@ -5,10 +5,10 @@ go 1.27.0
 retract v0.37.0 // Retracted due to accidental release.
 
 require (
-	github.com/ONSdigital/dis-redis v0.11.0
+	github.com/ONSdigital/dis-redis v0.12.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.36.0
-	github.com/ONSdigital/dp-component-test v1.5.1
+	github.com/ONSdigital/dp-component-test v1.5.2
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-net/v3 v3.8.0
