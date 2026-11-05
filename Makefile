@@ -35,6 +35,10 @@ audit-java:
 		{ echo "❌ OSS Index API/auth/network error (CMS) — see target/ossindex-audit-dis-redirect-api.log"; exit 1; }; \
 	exit $$status
 
+.PHONY: analyze-dependencies
+analyze-dependencies:
+	mvn -f $(JAVA_SDK_DIR) -Dossindex.skip=true -DfailOnWarning=true dependency:analyze 
+
 .PHONY: build
 build: build-go build-java
 
