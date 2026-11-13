@@ -14,9 +14,10 @@ concurrency:
 
 # Single source of truth for tool versions
 env:
-  GO_VERSION: '1.27.3'
+  GO_VERSION: '1.27.4'
   JAVA_VERSION: '8'
-  GOLANGCI_LINT_VERSION: 'v2.14.0'
+  GOLANGCI_LINT_VERSION: 'v2.15.0'
+  GOPRIVATE: github.com/ONSdigital/*
 
 jobs:
   dis-redirect-api-audit-java:
@@ -62,6 +63,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure internal Go module access
+        env:
+          GH_USERNAME: ${{ secrets.GO_MODULES_USERNAME }}
+          GH_TOKEN: ${{ secrets.GO_MODULES_TOKEN }}
+        run: |
+          if [[ -z "$GH_USERNAME" || -z "$GH_TOKEN" ]]; then
+            echo "::error::GO_MODULES_USERNAME and GO_MODULES_TOKEN secrets are required to download internal Go modules."
+            exit 1
+          fi
+          git config --global \
+            url."https://${GH_USERNAME}:${GH_TOKEN}@github.com/ONSdigital/".insteadOf \
+            "https://github.com/ONSdigital/"
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -76,6 +91,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure internal Go module access
+        env:
+          GH_USERNAME: ${{ secrets.GO_MODULES_USERNAME }}
+          GH_TOKEN: ${{ secrets.GO_MODULES_TOKEN }}
+        run: |
+          if [[ -z "$GH_USERNAME" || -z "$GH_TOKEN" ]]; then
+            echo "::error::GO_MODULES_USERNAME and GO_MODULES_TOKEN secrets are required to download internal Go modules."
+            exit 1
+          fi
+          git config --global \
+            url."https://${GH_USERNAME}:${GH_TOKEN}@github.com/ONSdigital/".insteadOf \
+            "https://github.com/ONSdigital/"
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -99,6 +128,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure internal Go module access
+        env:
+          GH_USERNAME: ${{ secrets.GO_MODULES_USERNAME }}
+          GH_TOKEN: ${{ secrets.GO_MODULES_TOKEN }}
+        run: |
+          if [[ -z "$GH_USERNAME" || -z "$GH_TOKEN" ]]; then
+            echo "::error::GO_MODULES_USERNAME and GO_MODULES_TOKEN secrets are required to download internal Go modules."
+            exit 1
+          fi
+          git config --global \
+            url."https://${GH_USERNAME}:${GH_TOKEN}@github.com/ONSdigital/".insteadOf \
+            "https://github.com/ONSdigital/"
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -119,6 +162,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure internal Go module access
+        env:
+          GH_USERNAME: ${{ secrets.GO_MODULES_USERNAME }}
+          GH_TOKEN: ${{ secrets.GO_MODULES_TOKEN }}
+        run: |
+          if [[ -z "$GH_USERNAME" || -z "$GH_TOKEN" ]]; then
+            echo "::error::GO_MODULES_USERNAME and GO_MODULES_TOKEN secrets are required to download internal Go modules."
+            exit 1
+          fi
+          git config --global \
+            url."https://${GH_USERNAME}:${GH_TOKEN}@github.com/ONSdigital/".insteadOf \
+            "https://github.com/ONSdigital/"
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -139,6 +196,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure internal Go module access
+        env:
+          GH_USERNAME: ${{ secrets.GO_MODULES_USERNAME }}
+          GH_TOKEN: ${{ secrets.GO_MODULES_TOKEN }}
+        run: |
+          if [[ -z "$GH_USERNAME" || -z "$GH_TOKEN" ]]; then
+            echo "::error::GO_MODULES_USERNAME and GO_MODULES_TOKEN secrets are required to download internal Go modules."
+            exit 1
+          fi
+          git config --global \
+            url."https://${GH_USERNAME}:${GH_TOKEN}@github.com/ONSdigital/".insteadOf \
+            "https://github.com/ONSdigital/"
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
